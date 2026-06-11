@@ -35,3 +35,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Kiro MCP settings (contains API tokens — never commit)
+.kiro/settings/mcp.json

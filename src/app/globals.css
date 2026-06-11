@@ -1,146 +1,298 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+@plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─────────────────────────────────────────────────────────────
+   Tailwind v4 color bridge — maps CSS vars → utility classes
+───────────────────────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
-  --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --color-background:              var(--background);
+  --color-foreground:              var(--foreground);
+  --color-card:                    var(--card);
+  --color-card-foreground:         var(--card-foreground);
+  --color-popover:                 var(--popover);
+  --color-popover-foreground:      var(--popover-foreground);
+  --color-primary:                 var(--primary);
+  --color-primary-foreground:      var(--primary-foreground);
+  --color-secondary:               var(--secondary);
+  --color-secondary-foreground:    var(--secondary-foreground);
+  --color-muted:                   var(--muted);
+  --color-muted-foreground:        var(--muted-foreground);
+  --color-accent:                  var(--accent);
+  --color-accent-foreground:       var(--accent-foreground);
+  --color-destructive:             var(--destructive);
+  --color-destructive-foreground:  var(--destructive-foreground);
+  --color-border:                  var(--border);
+  --color-input:                   var(--input);
+  --color-ring:                    var(--ring);
+
+  /* EduFlow status extensions */
+  --color-success:                 var(--success);
+  --color-success-foreground:      var(--success-foreground);
+  --color-warning:                 var(--warning);
+  --color-warning-foreground:      var(--warning-foreground);
+  --color-info:                    var(--info);
+  --color-info-foreground:         var(--info-foreground);
+
+  /* Charts */
+  --color-chart-1:                 var(--chart-1);
+  --color-chart-2:                 var(--chart-2);
+  --color-chart-3:                 var(--chart-3);
+  --color-chart-4:                 var(--chart-4);
+  --color-chart-5:                 var(--chart-5);
+
+  /* Sidebar */
+  --color-sidebar:                        var(--sidebar);
+  --color-sidebar-foreground:             var(--sidebar-foreground);
+  --color-sidebar-primary:                var(--sidebar-primary);
+  --color-sidebar-primary-foreground:     var(--sidebar-primary-foreground);
+  --color-sidebar-accent:                 var(--sidebar-accent);
+  --color-sidebar-accent-foreground:      var(--sidebar-accent-foreground);
+  --color-sidebar-border:                 var(--sidebar-border);
+  --color-sidebar-ring:                   var(--sidebar-ring);
+
+  /* Radius scale — Figma source: 6px base (New York style) */
+  --radius-sm:   calc(var(--radius) - 2px);   /* 4px  */
+  --radius-md:   var(--radius);               /* 6px  */
+  --radius-lg:   calc(var(--radius) + 2px);   /* 8px  */
+  --radius-xl:   calc(var(--radius) + 6px);   /* 12px */
+  --radius-2xl:  calc(var(--radius) + 10px);  /* 16px */
+  --radius-pill: 9999px;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   LIGHT MODE
+   Source: Figma BlFqAE1yNoGDD4IFKyqaIV · New York style
+   Colors extracted directly via Figma MCP 2026-06-11
+───────────────────────────────────────────────────────────── */
 :root {
-  --radius: 0.625rem;
+  /* Base radius — Figma button borderRadius: 6px */
+  --radius: 0.375rem; /* 6px */
 
-  /* ── Zinc base (shadcn PRO V6 — light mode) ── */
-  --background:             oklch(0.985 0 0);
-  --foreground:             oklch(0.141 0.005 285.75);
-  --card:                   oklch(1 0 0);
-  --card-foreground:        oklch(0.141 0.005 285.75);
-  --popover:                oklch(1 0 0);
-  --popover-foreground:     oklch(0.141 0.005 285.75);
-  --primary:                oklch(0.21 0.006 285.75);
-  --primary-foreground:     oklch(0.985 0 0);
-  --secondary:              oklch(0.967 0.001 286.375);
-  --secondary-foreground:   oklch(0.21 0.006 285.75);
-  --muted:                  oklch(0.967 0.001 286.375);
-  --muted-foreground:       oklch(0.552 0.016 285.938);
-  --accent:                 oklch(0.967 0.001 286.375);
-  --accent-foreground:      oklch(0.21 0.006 285.75);
-  --destructive:            oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border:                 oklch(0.92 0.004 286.32);
-  --input:                  oklch(0.92 0.004 286.32);
-  --ring:                   oklch(0.705 0.015 286.067);
+  /* ── EduFlow brand primitives (iOS palette) ── */
+  --ef-brand:        #007AFF;   /* iOS blue — primary CTA */
+  --ef-brand-hover:  #0062CC;
+  --ef-brand-light:  #EAF3FF;
+  --ef-brand-muted:  rgba(0, 122, 255, 0.08);
+  --ef-green:        #34C759;   /* available / success */
+  --ef-green-light:  #E5F9EC;
+  --ef-green-dark:   #15803D;   /* from Figma fill_TUJE1A */
+  --ef-amber:        #FF9500;   /* warning */
+  --ef-amber-light:  #FFF2D6;
+  --ef-amber-dark:   #92400E;
+  --ef-red:          #FF3B30;   /* danger */
+  --ef-red-light:    #FFE8E7;
+  --ef-red-dark:     #B91C1C;   /* from Figma fill_XEZ70X */
+  --ef-purple:       #4147D5;   /* from Figma fill — indigo */
+  --ef-purple-light: #D7E0FF;   /* from Figma fill_D7E0FF */
+  --ef-purple-mid:   #948BFF;   /* from Figma fill_948BFF */
+  --ef-cyan:         #2F88FF;   /* from Figma fill_NKGP8F */
+  --ef-cyan-light:   #43CCF8;   /* from Figma fill_UBGH9M */
 
-  /* ── EduFlow brand extension ── */
-  --success:                oklch(0.946 0.082 142.5);
-  --success-foreground:     oklch(0.3 0.12 142.5);
-  --warning:                oklch(0.971 0.095 81.5);
-  --warning-foreground:     oklch(0.35 0.12 62);
+  /* ── shadcn semantic tokens — Figma New York / Slate palette ── */
+  /* Figma values: background #F8FAFC, card #FFFFFF, foreground #020617 */
+  --background:             #F8FAFC;   /* slate-50  — Figma fill_F8FAFC */
+  --foreground:             #020617;   /* slate-950 — Figma fill_020617 */
+  --card:                   #FFFFFF;   /* white */
+  --card-foreground:        #020617;
+  --popover:                #FFFFFF;
+  --popover-foreground:     #020617;
 
-  /* ── Charts ── */
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  /* Primary → EduFlow iOS blue (overrides shadcn zinc default) */
+  --primary:                var(--ef-brand);      /* #007AFF */
+  --primary-foreground:     #FFFFFF;
+
+  /* Secondary → slate-100 (Figma fill_F1F5F9) */
+  --secondary:              #F1F5F9;
+  --secondary-foreground:   #0F172A;   /* slate-900 — Figma fill_0F172A */
+
+  /* Muted → slate-100 */
+  --muted:                  #F1F5F9;
+  --muted-foreground:       #64748B;   /* slate-500 — Figma fill_64748B */
+
+  /* Accent → brand light tint */
+  --accent:                 var(--ef-brand-light); /* #EAF3FF */
+  --accent-foreground:      var(--ef-brand);       /* #007AFF */
+
+  /* Destructive → EduFlow red */
+  --destructive:            var(--ef-red);         /* #FF3B30 */
+  --destructive-foreground: #FFFFFF;
+
+  /* Border / input → slate-200 (Figma fill_E2E8F0) */
+  --border:                 #E2E8F0;
+  --input:                  #E2E8F0;
+  --ring:                   var(--ef-brand);       /* focus ring = brand blue */
+
+  /* ── EduFlow status extensions ── */
+  --success:                var(--ef-green-light);  /* #E5F9EC */
+  --success-foreground:     var(--ef-green-dark);   /* #15803D */
+  --warning:                #FFF2D6;
+  --warning-foreground:     #92400E;
+  --info:                   #EFF6FF;
+  --info-foreground:        #1D4ED8;
+
+  /* ── Charts (matches Figma palette) ── */
+  --chart-1:  var(--ef-brand);   /* blue */
+  --chart-2:  var(--ef-green);   /* green */
+  --chart-3:  var(--ef-amber);   /* amber */
+  --chart-4:  var(--ef-purple);  /* purple */
+  --chart-5:  var(--ef-cyan);    /* cyan */
 
   /* ── Sidebar ── */
-  --sidebar:                        oklch(0.985 0 0);
-  --sidebar-foreground:             oklch(0.141 0.005 285.75);
-  --sidebar-primary:                oklch(0.21 0.006 285.75);
-  --sidebar-primary-foreground:     oklch(0.985 0 0);
-  --sidebar-accent:                 oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground:      oklch(0.21 0.006 285.75);
-  --sidebar-border:                 oklch(0.92 0.004 286.32);
-  --sidebar-ring:                   oklch(0.705 0.015 286.067);
+  --sidebar:                      rgba(255, 255, 255, 0.97);
+  --sidebar-foreground:           #020617;
+  --sidebar-primary:              var(--ef-brand);
+  --sidebar-primary-foreground:   #FFFFFF;
+  --sidebar-accent:               var(--ef-brand-light);
+  --sidebar-accent-foreground:    var(--ef-brand);
+  --sidebar-border:               #E2E8F0;
+  --sidebar-ring:                 var(--ef-brand);
 }
 
+/* ─────────────────────────────────────────────────────────────
+   DARK MODE
+   iOS dark-mode palette + shadcn slate dark
+───────────────────────────────────────────────────────────── */
 .dark {
-  --background:             oklch(0.141 0.005 285.75);
-  --foreground:             oklch(0.985 0 0);
-  --card:                   oklch(0.21 0.006 285.75);
-  --card-foreground:        oklch(0.985 0 0);
-  --popover:                oklch(0.21 0.006 285.75);
-  --popover-foreground:     oklch(0.985 0 0);
-  --primary:                oklch(0.985 0 0);
-  --primary-foreground:     oklch(0.21 0.006 285.75);
-  --secondary:              oklch(0.274 0.006 286.033);
-  --secondary-foreground:   oklch(0.985 0 0);
-  --muted:                  oklch(0.274 0.006 286.033);
-  --muted-foreground:       oklch(0.705 0.015 286.067);
-  --accent:                 oklch(0.274 0.006 286.033);
-  --accent-foreground:      oklch(0.985 0 0);
-  --destructive:            oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border:                 oklch(1 0 0 / 10%);
-  --input:                  oklch(1 0 0 / 15%);
-  --ring:                   oklch(0.552 0.016 285.938);
-  --success:                oklch(0.3 0.1 142.5);
-  --success-foreground:     oklch(0.8 0.15 142.5);
-  --warning:                oklch(0.3 0.08 62);
-  --warning-foreground:     oklch(0.9 0.12 81.5);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar:                        oklch(0.21 0.006 285.75);
-  --sidebar-foreground:             oklch(0.985 0 0);
-  --sidebar-primary:                oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground:     oklch(0.985 0 0);
-  --sidebar-accent:                 oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:      oklch(0.985 0 0);
-  --sidebar-border:                 oklch(1 0 0 / 10%);
-  --sidebar-ring:                   oklch(0.552 0.016 285.938);
+  --background:             #020617;   /* slate-950 */
+  --foreground:             #F8FAFC;   /* slate-50  */
+  --card:                   #0F172A;   /* slate-900 */
+  --card-foreground:        #F8FAFC;
+  --popover:                #0F172A;
+  --popover-foreground:     #F8FAFC;
+  --primary:                #0A84FF;   /* iOS dark blue */
+  --primary-foreground:     #FFFFFF;
+  --secondary:              #1E293B;   /* slate-800 */
+  --secondary-foreground:   #F8FAFC;
+  --muted:                  #1E293B;
+  --muted-foreground:       #94A3B8;   /* slate-400 */
+  --accent:                 rgba(10, 132, 255, 0.15);
+  --accent-foreground:      #0A84FF;
+  --destructive:            #FF453A;   /* iOS dark red */
+  --destructive-foreground: #FFFFFF;
+  --border:                 rgba(248, 250, 252, 0.10);
+  --input:                  rgba(248, 250, 252, 0.15);
+  --ring:                   #0A84FF;
+
+  --success:                rgba(52, 199, 89, 0.15);
+  --success-foreground:     #34C759;
+  --warning:                rgba(255, 149, 0, 0.15);
+  --warning-foreground:     #FF9500;
+  --info:                   rgba(10, 132, 255, 0.15);
+  --info-foreground:        #0A84FF;
+
+  --chart-1:  #0A84FF;
+  --chart-2:  #30D158;
+  --chart-3:  #FF9F0A;
+  --chart-4:  #BF5AF2;
+  --chart-5:  #64D2FF;
+
+  --sidebar:                      #0F172A;
+  --sidebar-foreground:           #F8FAFC;
+  --sidebar-primary:              #0A84FF;
+  --sidebar-primary-foreground:   #FFFFFF;
+  --sidebar-accent:               rgba(10, 132, 255, 0.15);
+  --sidebar-accent-foreground:    #0A84FF;
+  --sidebar-border:               rgba(248, 250, 252, 0.10);
+  --sidebar-ring:                 #0A84FF;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   BASE STYLES
+───────────────────────────────────────────────────────────── */
 * {
   border-color: var(--border);
+  box-sizing: border-box;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  /* Figma typography: fontFamily Inter, leading Inter/system stack */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display',
+               'Segoe UI', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Figma: letterSpacing -0.6% on most text styles */
+  letter-spacing: -0.006em;
+  /* Figma: fontFeatureSettings cv11, ss01 for Inter */
   font-feature-settings: 'cv11', 'ss01';
 }
+
+/* ── Scrollbar (subtle, matches sidebar bg) ── */
+::-webkit-scrollbar         { width: 6px; height: 6px; }
+::-webkit-scrollbar-track   { background: transparent; }
+::-webkit-scrollbar-thumb   { background: var(--border); border-radius: var(--radius-pill); }
+::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+
+/* ── Focus ring ── */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ── Page content wrapper ── */
+.page-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;        /* 24px */
+  padding: 1.5rem;    /* 24px */
+}
+
+@media (min-width: 768px) {
+  .page-content {
+    padding: 2rem;    /* 32px */
+  }
+}
+
+/* ── KPI grid ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ── Table base ── */
+.data-table {
+  width: 100%;
+  font-size: 0.875rem; /* 14px — Figma text-sm */
+  border-collapse: collapse;
+}
+
+.data-table thead tr {
+  background-color: var(--muted);
+}
+
+.data-table thead th {
+  text-align: left;
+  font-size: 0.75rem;   /* 12px — Figma text-xs */
+  font-weight: 500;     /* Figma Medium */
+  color: var(--muted-foreground);
+  padding: 0.75rem 1.5rem;
+}
+
+.data-table tbody tr {
+  border-top: 1px solid var(--border);
+  transition: background-color 150ms;
+}
+
+.data-table tbody tr:hover {
+  background-color: color-mix(in srgb, var(--muted) 50%, transparent);
+}
+
+.data-table tbody td {
+  padding: 0.75rem 1.5rem;
+}
+
+/* ── Proxy board dot colors (always paired with text — WCAG 1.4.1) ── */
+.dot-available-same    { background-color: var(--ef-green); }   /* same subject */
+.dot-available-diff    { background-color: var(--ef-amber); }   /* diff subject */
+.dot-capped            { background-color: var(--muted-foreground); }
+.dot-unavailable       { background-color: var(--ef-red); }
