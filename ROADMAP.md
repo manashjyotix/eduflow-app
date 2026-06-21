@@ -1,16 +1,16 @@
 # EduFlow — Product Roadmap
-> **Canonical phase order.** When roadmap phases appear in other files, this file wins.
-> Updated: June 8, 2026
+> **Canonical phase order.** When roadmap phases appear in other files, this file wins.  
+> Updated: June 17, 2026
+
+**Related:** [AGENTS.md](./AGENTS.md) · [VISION.md](./VISION.md) · [AUDIT.md](./AUDIT.md) · [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) · [REBUILD_PLAN.md](./REBUILD_PLAN.md)
 
 ---
 
-## Current Status: Scholaris Prototype ✅
+## Current Status: Next.js App Complete (UI layer) ✅
 
-The Vite + React app now contains **two layers**:
-1. **Design System** — 50+ production-ready components with Vitest test coverage (`src/components/`)
-2. **Scholaris Prototype** — 69 fully designed pages across 6 roles (`src/scholaris/`)
-
-The prototype is a complete high-fidelity mockup ready for backend wiring. The Next.js production app is the **next build target**.
+The Next.js 15 app contains **all 69 pages** across 6 roles, fully ported from the Scholaris prototype.
+See [AUDIT.md](./AUDIT.md) for the detailed gap analysis, outstanding features, and upgrade tasks.
+See [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) for the full page-by-page porting checklist.
 
 ---
 
@@ -132,4 +132,4 @@ The prototype is a complete high-fidelity mockup ready for backend wiring. The N
 
 ---
 
-*See `VISION.md` for complete product blueprint · `Claude.md` for full technical specification · `AGENTS.md` for AI agent resume instructions · `CHANGELOG.md` for what's been built*
+*See [VISION.md](./VISION.md) for complete product blueprint · [AGENTS.md](./AGENTS.md) for AI agent resume instructions · [AUDIT.md](./AUDIT.md) for current task list · [CHANGELOG.md](./CHANGELOG.md) for what's been built*

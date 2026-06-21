@@ -3,8 +3,19 @@ import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    /* Figma: card borderRadius 8px = rounded-lg (base 6px + 2px) */
-  <div ref={ref} className={cn("rounded-lg border bg-card text-card-foreground shadow-sm", className)} {...props} />
+    /* Figma: card borderRadius 8px = rounded-lg (base 6px + 2px).
+       Shadow strategy (issue #9): resting state is flat (no shadow);
+       elevation appears only on hover / focus-within / active. */
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border bg-card text-card-foreground",
+      "shadow-none transition-shadow duration-200 ease-out",
+      "hover:shadow-md focus-within:shadow-md active:shadow-sm",
+      className,
+    )}
+    {...props}
+  />
   )
 )
 Card.displayName = "Card"

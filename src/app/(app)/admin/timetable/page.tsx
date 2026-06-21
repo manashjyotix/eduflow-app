@@ -1,105 +1,92 @@
-import { Calendar, Download } from "lucide-react"
+"use client"
+import { useState } from "react"
+import { Calendar, Printer } from "lucide-react"
 import { PageHeader } from "@/components/shared/page-header"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { TEACHING_PERIODS } from "@/lib/constants"
-import { cn } from "@/lib/utils"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CLASSES } from "@/data/students"
+import { TimetableGrid, type TimetableAssignment, type TimetablePeriod } from "@/components/domain/timetable/TimetableGrid"
 
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+const PERIODS_CONFIG: TimetablePeriod[] = [
+  { id: "P1", time: "9:30–10:10" },
+  { id: "P2", time: "10:10–10:50" },
+  { id: "P3", time: "10:50–11:30" },
+  { id: "P4", time: "11:30–12:10" },
+  { id: "TIFFIN", label: "Tiffin", time: "12:10–12:30", isBreak: true },
+  { id: "P5", time: "12:30–1:10" },
+  { id: "P6", time: "1:10–1:50" },
+  { id: "P7", time: "1:50–2:30" },
+]
 
-// Sample timetable data for Class VIII-A
-const TIMETABLE: Record<string, Record<string, { subject: string; teacher: string }>> = {
-  Monday:    { P1: { subject: "Mathematics",  teacher: "Priya Sharma"  }, P2: { subject: "English",     teacher: "Rajesh Kalita" }, P3: { subject: "Science",    teacher: "Anita Devi"     }, P4: { subject: "Hindi",         teacher: "Rima Das"       }, P5: { subject: "Social",       teacher: "Biju Das"       }, P6: { subject: "EVS",         teacher: "Kamal Nath"    }, P7: { subject: "PE",           teacher: "Himanta Bezbaruah" } },
-  Tuesday:   { P1: { subject: "English",      teacher: "Rajesh Kalita" }, P2: { subject: "Mathematics",  teacher: "Priya Sharma"  }, P3: { subject: "Hindi",      teacher: "Rima Das"       }, P4: { subject: "Science",       teacher: "Anita Devi"     }, P5: { subject: "Assamese",     teacher: "Meena Gogoi"    }, P6: { subject: "Mathematics", teacher: "Priya Sharma"  }, P7: { subject: "Computer",     teacher: "Dipak Baruah"   } },
-  Wednesday: { P1: { subject: "Science",      teacher: "Anita Devi"    }, P2: { subject: "Hindi",        teacher: "Rima Das"      }, P3: { subject: "Mathematics",teacher: "Priya Sharma"   }, P4: { subject: "English",       teacher: "Rajesh Kalita"  }, P5: { subject: "PE",           teacher: "Himanta Bezbaruah" }, P6: { subject: "Art",       teacher: "Sunita Borah"  }, P7: { subject: "Assamese",     teacher: "Meena Gogoi"    } },
-  Thursday:  { P1: { subject: "Hindi",        teacher: "Rima Das"      }, P2: { subject: "Science",      teacher: "Anita Devi"    }, P3: { subject: "English",    teacher: "Rajesh Kalita"  }, P4: { subject: "Mathematics",   teacher: "Priya Sharma"   }, P5: { subject: "Computer",     teacher: "Dipak Baruah"   }, P6: { subject: "Social",      teacher: "Biju Das"      }, P7: { subject: "Hindi",        teacher: "Rima Das"       } },
-  Friday:    { P1: { subject: "Assamese",     teacher: "Meena Gogoi"   }, P2: { subject: "EVS",          teacher: "Kamal Nath"    }, P3: { subject: "PE",         teacher: "Himanta Bezbaruah" }, P4: { subject: "Science",    teacher: "Anita Devi"     }, P5: { subject: "English",      teacher: "Rajesh Kalita"  }, P6: { subject: "Mathematics", teacher: "Priya Sharma"  }, P7: { subject: "Social",       teacher: "Biju Das"       } },
-  Saturday:  { P1: { subject: "Mathematics",  teacher: "Priya Sharma"  }, P2: { subject: "English",     teacher: "Rajesh Kalita" }, P3: { subject: "Assamese",   teacher: "Meena Gogoi"    }, P4: { subject: "Science",       teacher: "Anita Devi"     }, P5: { subject: "Hindi",        teacher: "Rima Das"       }, P6: { subject: "Social",       teacher: "Biju Das"      }, P7: { subject: "PE",           teacher: "Himanta Bezbaruah" } },
+type Cell = { subject: string; teacher: string; color?: string }
+type Timetable = Record<string, Record<string, Cell>>
+
+const TIMETABLE_VIII_A: Timetable = {
+  Mon: { P1: {subject:"Math",    teacher:"Priya"},   P2: {subject:"English", teacher:"Rajesh"},  P3: {subject:"Science", teacher:"Anita"},  P4: {subject:"SSt",     teacher:"Rajesh"}, P5: {subject:"Hindi",   teacher:"Meena"}, P6: {subject:"Physics", teacher:"Sunita"}, P7: {subject:"PE",      teacher:"Himanta"} },
+  Tue: { P1: {subject:"English", teacher:"Rajesh"},  P2: {subject:"Math",    teacher:"Priya"},   P3: {subject:"Hindi",   teacher:"Meena"},  P4: {subject:"Science", teacher:"Anita"},  P5: {subject:"Math",    teacher:"Biju"},  P6: {subject:"English", teacher:"Rajesh"}, P7: {subject:"SSt",     teacher:"Rajesh"} },
+  Wed: { P1: {subject:"Science", teacher:"Anita"},   P2: {subject:"Hindi",   teacher:"Meena"},   P3: {subject:"Math",    teacher:"Priya"},  P4: {subject:"English", teacher:"Rajesh"}, P5: {subject:"Physics", teacher:"Sunita"},P6: {subject:"Math",    teacher:"Biju"},  P7: {subject:"PE",      teacher:"Himanta"} },
+  Thu: { P1: {subject:"Hindi",   teacher:"Meena"},   P2: {subject:"Science", teacher:"Anita"},   P3: {subject:"English", teacher:"Rajesh"}, P4: {subject:"Math",    teacher:"Priya"},  P5: {subject:"SSt",     teacher:"Rajesh"},P6: {subject:"Physics", teacher:"Sunita"},P7: {subject:"Math",    teacher:"Biju"} },
+  Fri: { P1: {subject:"Math",    teacher:"Priya"},   P2: {subject:"Physics", teacher:"Sunita"},  P3: {subject:"Hindi",   teacher:"Meena"},  P4: {subject:"Math",    teacher:"Biju"},   P5: {subject:"English", teacher:"Rajesh"},P6: {subject:"Science", teacher:"Anita"}, P7: {subject:"SSt",     teacher:"Rajesh"} },
+  Sat: { P1: {subject:"PE",      teacher:"Himanta"}, P2: {subject:"Math",    teacher:"Priya"},   P3: {subject:"English", teacher:"Rajesh"}, P4: {subject:"Science", teacher:"Anita"},  P5: {subject:"Hindi",   teacher:"Meena"}, P6: {subject:"Math",    teacher:"Biju"},  P7: {subject:"Physics", teacher:"Sunita"} },
 }
 
-const SUBJECT_COLORS: Record<string, string> = {
-  Mathematics: "bg-primary/10 text-primary",
-  English:     "bg-cyan-100 text-cyan-800",
-  Science:     "bg-green-100 text-green-800",
-  Hindi:       "bg-orange-100 text-orange-800",
-  Assamese:    "bg-purple-100 text-purple-800",
-  Social:      "bg-yellow-100 text-yellow-800",
-  PE:          "bg-rose-100 text-rose-800",
-  Computer:    "bg-indigo-100 text-indigo-800",
-  EVS:         "bg-teal-100 text-teal-800",
-  Art:         "bg-pink-100 text-pink-800",
+/** Convert the day→period map into flat TimetableAssignment[] */
+function buildAssignments(timetable: Timetable): TimetableAssignment[] {
+  const assignments: TimetableAssignment[] = []
+  for (const day of DAYS) {
+    const row = timetable[day] ?? {}
+    for (const [periodId, cell] of Object.entries(row)) {
+      assignments.push({ periodId, day, subject: cell.subject, teacher: cell.teacher })
+    }
+  }
+  return assignments
 }
 
 export default function TimetablePage() {
+  const [selectedClass, setSelectedClass] = useState("VIII-A")
+  const assignments = buildAssignments(TIMETABLE_VIII_A)
+
   return (
-    <div className="flex flex-col gap-6 p-6 md:p-8">
+    <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8">
       <PageHeader
-        icon={<Calendar size={22} />}
+        icon={<Calendar size={20} />}
         title="Timetable"
-        subtitle="Class VIII-A weekly schedule"
+        subtitle="HCEA Weekly Schedule 2025–26"
         actions={
-          <>
-            <Button variant="outline" size="default">
-              <Download className="size-4" />
-              Export PDF
+          <div className="flex gap-2">
+            <Select value={selectedClass} onValueChange={setSelectedClass}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CLASSES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm">
+              <Printer className="size-4" /> Print
             </Button>
-            <Button size="default">Edit Timetable</Button>
-          </>
+            <Button size="sm" variant="outline">Edit Timetable</Button>
+          </div>
         }
       />
 
-      <Card className="overflow-hidden">
+      <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Weekly Grid — Class VIII-A</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            Class {selectedClass} — Weekly Schedule
+          </CardTitle>
         </CardHeader>
         <Separator />
-        <CardContent className="p-0 overflow-x-auto">
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="bg-muted/50">
-                <th className="text-left text-muted-foreground font-medium py-3 px-4 w-28 border-r border-border">Period</th>
-                {DAYS.map(day => (
-                  <th key={day} className="text-center text-muted-foreground font-medium py-3 px-3 min-w-[110px]">{day}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {TEACHING_PERIODS.map((period, i) => (
-                <tr key={period.id} className={cn("border-t border-border", i % 2 === 0 ? "" : "bg-muted/20")}>
-                  <td className="py-3 px-4 border-r border-border">
-                    <p className="font-semibold text-foreground">{period.id}</p>
-                    <p className="text-muted-foreground text-[10px]">{period.time}</p>
-                  </td>
-                  {DAYS.map(day => {
-                    const cell = TIMETABLE[day]?.[period.id]
-                    return (
-                      <td key={day} className="py-2 px-2 text-center">
-                        {cell ? (
-                          <div className={cn("rounded-md px-2 py-1.5", SUBJECT_COLORS[cell.subject] ?? "bg-muted text-muted-foreground")}>
-                            <p className="font-semibold text-[11px]">{cell.subject}</p>
-                            <p className="text-[10px] opacity-75">{cell.teacher.split(" ")[0]}</p>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground/40">—</span>
-                        )}
-                      </td>
-                    )
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
+        <TimetableGrid
+          periods={PERIODS_CONFIG}
+          classes={DAYS}
+          assignments={assignments}
+          readOnly={false}
+        />
       </Card>
-
-      <div className="flex flex-wrap gap-2">
-        <span className="text-xs text-muted-foreground font-medium">Subjects:</span>
-        {Object.entries(SUBJECT_COLORS).map(([subject, cls]) => (
-          <Badge key={subject} className={cn("text-xs border-0", cls)}>{subject}</Badge>
-        ))}
-      </div>
     </div>
   )
 }

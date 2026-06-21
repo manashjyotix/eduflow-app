@@ -1,7 +1,8 @@
 # EduFlow — Design System & Product Vision
 ### Master Reference Document (v2.0)
-> Updated: May 31, 2026 · Canonical reference — this file wins on all business rules.  
-> Use alongside `Claude.md` (full spec), `Design.md` (visual component reference), and `ROADMAP.md` (phase order).
+> Updated: June 17, 2026 · Canonical reference — this file wins on all business rules.
+
+**Related:** [AGENTS.md](./AGENTS.md) · [AUDIT.md](./AUDIT.md) · [ROADMAP.md](./ROADMAP.md) · [REBUILD_PLAN.md](./REBUILD_PLAN.md) · [MIGRATION_PLAN.md](./MIGRATION_PLAN.md)
 
 ---
 

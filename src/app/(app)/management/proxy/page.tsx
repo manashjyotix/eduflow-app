@@ -2,6 +2,7 @@ import { Grid3x3, Zap, CheckCircle, Clock, PercentSquare } from "lucide-react"
 import { PageHeader } from "@/components/shared/page-header"
 import { KpiCard } from "@/components/shared/kpi-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -23,7 +24,7 @@ function getDotClass(teacherId: string, _periodId: string, absentSubject: string
 export default function ManagementProxyPage() {
   const approvedAbsences = MOCK_ABSENCES.filter(a => a.status === "approved")
   return (
-    <div className="flex flex-col gap-6 p-6 md:p-8">
+    <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8">
       <PageHeader
         icon={<Grid3x3 size={22} />}
         title="Proxy Board"
@@ -39,7 +40,7 @@ export default function ManagementProxyPage() {
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard title="Open Gaps"    value={approvedAbsences.length * 2} icon={<Clock className="size-5" />} iconClassName="bg-destructive/10 text-destructive" />
         <KpiCard title="Assigned"     value={3} icon={<CheckCircle className="size-5" />} iconClassName="bg-success/20 text-success-foreground" />
         <KpiCard title="Completed"    value={1} icon={<CheckCircle className="size-5" />} iconClassName="bg-primary/10 text-primary" />
@@ -77,50 +78,52 @@ export default function ManagementProxyPage() {
             </CardHeader>
             <Separator />
             <CardContent className="p-4 overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr>
-                    <th className="text-left text-muted-foreground font-medium pb-2 pr-4 min-w-[140px]">Teacher</th>
+              <Table className="text-xs">
+                <caption className="sr-only">Available substitute teachers by period</caption>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="text-left text-muted-foreground font-medium pb-2 pr-4 min-w-[140px] h-auto">Teacher</TableHead>
                     {TEACHING_PERIODS.map(p => (
-                      <th key={p.id} className="text-center text-muted-foreground font-medium pb-2 px-2 min-w-[52px]">
+                      <TableHead key={p.id} className="text-center text-muted-foreground font-medium pb-2 px-2 min-w-[52px] h-auto">
                         <div>{p.id}</div>
                         <div className="font-normal">{p.time.split(" – ")[0]}</div>
-                      </th>
+                      </TableHead>
                     ))}
-                    <th className="text-right text-muted-foreground font-medium pb-2 pl-4">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
+                    <TableHead className="text-right text-muted-foreground font-medium pb-2 pl-4 h-auto">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {TEACHERS.filter(t => !absentIds.has(t.id) && t.status === "active").slice(0, 5).map(teacher => (
-                    <tr key={teacher.id} className="border-t border-border/50">
-                      <td className="py-2 pr-4">
+                    <TableRow key={teacher.id}>
+                      <TableCell className="py-2 pr-4">
                         <p className="font-medium text-foreground">{teacher.name}</p>
                         <p className="text-muted-foreground text-[10px]">{teacher.subjects[0]}</p>
-                      </td>
+                      </TableCell>
                       {TEACHING_PERIODS.map(p => {
                         const dotClass = absence.periods.includes(p.id)
                           ? getDotClass(teacher.id, p.id, TEACHERS.find(t => t.id === absence.teacherId)?.subjects[0] ?? "")
                           : null
                         return (
-                          <td key={p.id} className="py-2 px-2 text-center">
+                          <TableCell key={p.id} className="py-2 px-2 text-center">
                             {dotClass ? (
                               <span
                                 className={cn("size-2.5 rounded-full inline-block", dotClass)}
+                                aria-hidden="true"
                                 title={dotClass === "bg-success" ? "Available (same subject)" : dotClass === "bg-warning" ? "Available (different subject)" : "At cap"}
                               />
                             ) : (
                               <span className="text-muted-foreground/40">—</span>
                             )}
-                          </td>
+                          </TableCell>
                         )
                       })}
-                      <td className="py-2 pl-4 text-right">
+                      <TableCell className="py-2 pl-4 text-right">
                         <Button size="xs" variant="outline">Assign</Button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         ))}

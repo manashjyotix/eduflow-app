@@ -1,7 +1,8 @@
 # EduFlow — Full Rebuild Plan (shadcn/ui PRO Design System)
-> **Version:** 1.0 · Created: June 11, 2026  
-> **Purpose:** Complete from-scratch architecture plan for the Next.js 15 production app, fully aligned to the shadcn/ui PRO Variables V6 design system.  
-> **Current repo:** Vite prototype (reference only — DO NOT copy code, copy knowledge)
+> **Version:** 1.0 · Created: June 11, 2026 · Updated: June 17, 2026  
+> **Purpose:** Complete from-scratch architecture plan for the Next.js 15 production app, fully aligned to the shadcn/ui PRO Variables V6 design system.
+
+**Related:** [AGENTS.md](./AGENTS.md) · [AUDIT.md](./AUDIT.md) · [VISION.md](./VISION.md) · [ROADMAP.md](./ROADMAP.md) · [MIGRATION_PLAN.md](./MIGRATION_PLAN.md)
 
 ---
 

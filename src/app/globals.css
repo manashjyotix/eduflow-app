@@ -1,6 +1,30 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
+/* Tailwind v4 auto-scans every text file (including CSS comments and markdown
+   docs) for class-name candidates. Root-level prose docs contain example
+   utilities with a literal asterisk (the `var` + `--ef-` wildcard form) which
+   the scanner turns into a real rule and then the CSS parser rejects the `*`.
+
+   Two defenses, both required:
+   1. Never write that wildcard token verbatim anywhere — spell it as
+      `var` + `--ef-` + asterisk only when describing it, never as one run.
+   2. Exclude the docs below so their prose isn't scanned. */
+@source not "./../../DESIGN_AUDIT.md";
+@source not "./../../AUDIT.md";
+@source not "./../../AUDIT_REPORT.md";
+@source not "./../../CHANGELOG.md";
+@source not "./../../Design.md";
+@source not "./../../VISION.md";
+@source not "./../../ROADMAP.md";
+@source not "./../../REBUILD_PLAN.md";
+@source not "./../../MIGRATION_PLAN.md";
+@source not "./../../FIGMA_DESIGN_GUIDE.md";
+@source not "./../../AGENTS.md";
+@source not "./../../PROGRESS.md";
+@source not "./../../KIRO_REBUILD_PROMPT.md";
+@source not "./../../MIGRATION_PLAN.md";
+
 @custom-variant dark (&:is(.dark *));
 
 /* ─────────────────────────────────────────────────────────────
@@ -51,6 +75,30 @@
   --color-sidebar-accent-foreground:      var(--sidebar-accent-foreground);
   --color-sidebar-border:                 var(--sidebar-border);
   --color-sidebar-ring:                   var(--sidebar-ring);
+
+  /* EduFlow brand primitives — exposed so utility classes like
+     `bg-ef-brand-light`, `text-ef-purple`, `border-ef-green` resolve
+     in Tailwind v4. Without these mappings the raw `--ef-*` vars in
+     :root/.dark are not picked up by `@theme inline`, so ~316 class
+     usages across 27 files silently produced no CSS. */
+  --color-ef-brand:         var(--ef-brand);
+  --color-ef-brand-hover:   var(--ef-brand-hover);
+  --color-ef-brand-light:   var(--ef-brand-light);
+  --color-ef-brand-muted:   var(--ef-brand-muted);
+  --color-ef-green:         var(--ef-green);
+  --color-ef-green-light:   var(--ef-green-light);
+  --color-ef-green-dark:    var(--ef-green-dark);
+  --color-ef-amber:         var(--ef-amber);
+  --color-ef-amber-light:   var(--ef-amber-light);
+  --color-ef-amber-dark:    var(--ef-amber-dark);
+  --color-ef-red:           var(--ef-red);
+  --color-ef-red-light:     var(--ef-red-light);
+  --color-ef-red-dark:      var(--ef-red-dark);
+  --color-ef-purple:        var(--ef-purple);
+  --color-ef-purple-light:  var(--ef-purple-light);
+  --color-ef-purple-mid:    var(--ef-purple-mid);
+  --color-ef-cyan:          var(--ef-cyan);
+  --color-ef-cyan-light:    var(--ef-cyan-light);
 
   /* Radius scale — Figma source: 6px base (New York style) */
   --radius-sm:   calc(var(--radius) - 2px);   /* 4px  */
@@ -175,11 +223,11 @@
   --input:                  rgba(248, 250, 252, 0.15);
   --ring:                   #0A84FF;
 
-  --success:                rgba(52, 199, 89, 0.15);
+  --success:                rgba(52, 199, 89, 0.25);
   --success-foreground:     #34C759;
-  --warning:                rgba(255, 149, 0, 0.15);
+  --warning:                rgba(255, 149, 0, 0.25);
   --warning-foreground:     #FF9500;
-  --info:                   rgba(10, 132, 255, 0.15);
+  --info:                   rgba(10, 132, 255, 0.25);
   --info-foreground:        #0A84FF;
 
   --chart-1:  #0A84FF;
@@ -196,6 +244,30 @@
   --sidebar-accent-foreground:    #0A84FF;
   --sidebar-border:               rgba(248, 250, 252, 0.10);
   --sidebar-ring:                 #0A84FF;
+
+  /* ── EduFlow brand primitive dark overrides ──
+     Light "tint" tokens become low-opacity dark fills so icon
+     backgrounds and inline color chips look right on dark cards.
+     Bumped from 0.15 → 0.25 (capped at the 25% max) so filled icons
+     are noticeably more visible on dark surfaces (issue #4).
+  ── */
+  --ef-brand-light:  rgba(10, 132, 255, 0.25);   /* was 0.15 */
+  --ef-brand-muted:  rgba(10, 132, 255, 0.18);   /* was 0.08 */
+
+  --ef-green-light:  rgba(48, 209, 88,  0.25);   /* was 0.15 */
+  --ef-green-dark:   #4ADE80;                     /* readable on dark bg */
+
+  --ef-amber-light:  rgba(255, 159, 10, 0.25);   /* was 0.15 */
+  --ef-amber-dark:   #FB923C;
+
+  --ef-red-light:    rgba(255, 69, 58,  0.25);   /* was 0.15 */
+  --ef-red-dark:     #F87171;
+
+  --ef-purple-light: rgba(65, 71, 213,  0.25);   /* was 0.15 */
+  --ef-purple:       #818CF8;                     /* lighter indigo in dark */
+  --ef-purple-mid:   #A5B4FC;
+
+  --ef-cyan-light:   rgba(100, 210, 255, 0.25);  /* was 0.15 */
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -204,6 +276,32 @@
 * {
   border-color: var(--border);
   box-sizing: border-box;
+}
+
+/* ── Global horizontal-overflow guard ──
+   The app shell makes <main> the vertical scroll container, so the document
+   body itself never scrolls vertically. That means clamping horizontal
+   overflow here is safe (it cannot break sticky headers) and prevents any
+   single rogue element — a wide chart, an unbreakable string, a fixed-width
+   panel — from pushing the whole page past the viewport on phones/tablets.
+   Internal scroll regions (tables, calendars) keep their own overflow-auto. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* ── Fluid root font-size — makes EVERY rem-based font (and therefore all
+   Tailwind text-* utilities) scale smoothly with the viewport. Clamped so
+   text never drops below 15px on phones nor exceeds 16px on large screens.
+   This is the single lever that makes typography responsive app-wide. ── */
+html {
+  font-size: clamp(15px, 0.9rem + 0.25vw, 16px);
+}
+
+@media (min-width: 1536px) {
+  /* Slightly larger base on very wide displays for comfortable reading. */
+  html { font-size: 17px; }
 }
 
 body {
@@ -226,10 +324,33 @@ body {
 ::-webkit-scrollbar-thumb   { background: var(--border); border-radius: var(--radius-pill); }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
 
-/* ── Focus ring ── */
+/* ── Focus ring — non-input elements only ── */
 :focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+
+/* Inputs/textareas use the ring box-shadow approach from the component,
+   suppress the global outline to avoid a double-border on focus */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+/* ── Recharts: suppress focus outline on SVG/rect/path elements ── */
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible,
+.recharts-surface:focus,
+.recharts-surface:focus-visible {
+  outline: none !important;
+}
+
+/* ── Page wrapper — max-width containment for ultra-wide screens ── */
+.page-wrapper {
+  max-width: 1440px;
+  margin-inline: auto;
+  width: 100%;
 }
 
 /* ── Page content wrapper ── */
@@ -237,20 +358,33 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;        /* 24px */
-  padding: 1.5rem;    /* 24px */
+  padding: 1rem;      /* 16px — mobile */
+}
+
+@media (min-width: 640px) {
+  .page-content {
+    padding: 1.5rem;  /* 24px — sm */
+  }
 }
 
 @media (min-width: 768px) {
   .page-content {
-    padding: 2rem;    /* 32px */
+    padding: 2rem;    /* 32px — md+ */
   }
 }
 
-/* ── KPI grid ── */
+/* ── KPI grid — stacks to 1 col on xs, 2 col on sm, 4 col on md ── */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 0.75rem;       /* 12px — mobile */
+}
+
+@media (min-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
 }
 
 @media (min-width: 768px) {
@@ -296,3 +430,77 @@ body {
 .dot-available-diff    { background-color: var(--ef-amber); }   /* diff subject */
 .dot-capped            { background-color: var(--muted-foreground); }
 .dot-unavailable       { background-color: var(--ef-red); }
+
+/* ── Tablet sidebar: narrow to 200px to save space ── */
+/* Kicks in earlier (from md ≥768px up to <1280px) so small laptops/tablets
+   get the compact rail too. Width uses px so it stays exact regardless of the
+   fluid root font-size below. Desktop (≥1280px) and mobile offcanvas keep
+   their defaults. */
+@media (min-width: 768px) and (max-width: 1279px) {
+  [data-slot="sidebar-wrapper"] {
+    --sidebar-width: 200px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Print / "Download PDF" styles
+   Used by the parent Report Card page. The printable region is
+   marked with id="report-print-area"; everything else (sidebar,
+   topbar, tabs, buttons, chatbot) is hidden so the browser's
+   "Save as PDF" produces a clean, responsive A4 document.
+   ───────────────────────────────────────────────────────────── */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  /* Hide all app chrome, then reveal only the report area. */
+  body * {
+    visibility: hidden !important;
+  }
+
+  #report-print-area,
+  #report-print-area * {
+    visibility: visible !important;
+  }
+
+  #report-print-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Let tables flow to full width and avoid clipping on print. */
+  #report-print-area .overflow-x-auto {
+    overflow: visible !important;
+  }
+
+  #report-print-area table {
+    width: 100% !important;
+    table-layout: auto;
+  }
+
+  /* Keep cards, table rows and remarks from splitting across pages. */
+  #report-print-area .card,
+  #report-print-area [data-slot="card"],
+  #report-print-area tr {
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Preserve brand colours / progress bars in the PDF. */
+  #report-print-area * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

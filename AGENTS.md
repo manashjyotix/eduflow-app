@@ -1,8 +1,18 @@
 # EduFlow — School Management App · AI Agent Context File
-> **Read this first in every new session.** Updated: 2026-06-11
+> **Read this first in every new session.** Updated: 2026-06-17
 > **Design System:** shadcn/ui PRO Variables V6.0 (Figma: `BlFqAE1yNoGDD4IFKyqaIV`)
-> **Rebuild Plan:** See `REBUILD_PLAN.md` for the full Next.js 15 production app blueprint.
-> **Master Prompt:** See `KIRO_REBUILD_PROMPT.md` to rebuild the app from scratch with an AI agent.
+
+## Quick Navigation
+| Document | Purpose |
+|---|---|
+| [AGENTS.md](./AGENTS.md) | ← You are here — AI agent context, roles, design system |
+| [VISION.md](./VISION.md) | Complete product blueprint and business rules (wins on conflicts) |
+| [ROADMAP.md](./ROADMAP.md) | Phase-by-phase build order (wins on phase order) |
+| [REBUILD_PLAN.md](./REBUILD_PLAN.md) | Next.js 15 app architecture + shadcn PRO V6 token map |
+| [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) | Page-by-page porting checklist (all 69 pages) |
+| [AUDIT.md](./AUDIT.md) | ★ Frontend audit — gaps, icon map, upgrade features, task list |
+| [KIRO_REBUILD_PROMPT.md](./KIRO_REBUILD_PROMPT.md) | Master AI prompt for rebuilding from scratch |
+| [CHANGELOG.md](./CHANGELOG.md) | Version history |
 
 ---
 
@@ -409,6 +419,9 @@ React context for school-level configuration.
 
 ## 9. Outstanding Work (Pending Tasks)
 
+> **Full task list with priorities:** See [AUDIT.md](./AUDIT.md) for the comprehensive frontend audit.  
+> **Phase order:** See [ROADMAP.md](./ROADMAP.md). **Business rules:** See [VISION.md](./VISION.md).
+
 ### 🔴 Critical
 - [ ] Verify all design tokens in `src/tokens/` match the canonical values in Section 5
 - [ ] Ensure `ProxyBoard.tsx` uses availability dot colors: green (same subject), amber (diff subject), gray (capped), red (unavailable)
@@ -487,11 +500,13 @@ P1 9:30–10:10, P2 10:10–10:50, P3 10:50–11:30, P4 11:30–12:10, Tiffin 12
 ## 12. How to Resume Work
 
 1. **Read this file** (AGENTS.md) — you now know everything
-2. **Read `VISION.md`** for complete product blueprint and business rules
-3. **Read `ROADMAP.md`** for phase-by-phase build order
-4. Run `npm run dev` → http://localhost:5173 to view both the showcase and the Scholaris app
-5. Switch roles using the role dropdown in the Scholaris sidebar footer
-6. Run `npm test` to verify nothing is broken
+2. **Read [AUDIT.md](./AUDIT.md)** — current gaps, icon map, upgrade feature list
+3. **Read [VISION.md](./VISION.md)** for complete product blueprint and business rules
+4. **Read [ROADMAP.md](./ROADMAP.md)** for phase-by-phase build order
+5. Run `npm run dev` → http://localhost:3000 to view the app (Next.js, not Vite)
+6. Switch roles using the role dropdown in the sidebar footer
+7. Run `npm run typecheck` to verify TypeScript health
 
-> **Canonical business rules are in `VISION.md` §5. When in doubt, that file wins.**
-> **Canonical roadmap is in `ROADMAP.md`. Do not refer to other files for phase order.**
+> **Canonical business rules are in [VISION.md](./VISION.md) §5. When in doubt, that file wins.**  
+> **Canonical roadmap is in [ROADMAP.md](./ROADMAP.md). Do not refer to other files for phase order.**  
+> **Canonical task list is in [AUDIT.md](./AUDIT.md). Update it after every session.**

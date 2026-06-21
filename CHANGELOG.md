@@ -21,6 +21,60 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### 2026-06-21 — Design System Compliance Sweep (Batches A–F)
+
+Complete execution of the `DESIGN_AUDIT.md` remediation plan on the Next.js 15
+app. Approximately **898 issues resolved across ~100 files**, bringing the
+entire frontend into compliance with the shadcn/ui PRO Variables V6.0 design
+system (Figma: `BlFqAE1yNoGDD4IFKyqaIV`) and WCAG 2.1 accessibility guidelines.
+
+#### Fixed
+- **Critical token bug (Batch A)** — Tailwind v4 was silently emitting zero CSS
+  for every `bg-ef-*`, `text-ef-*`, and `border-ef-*` utility class (316 uses
+  across 27 files). Fixed by adding `--color-ef-*` mappings to the
+  `@theme inline` block in `src/app/globals.css`. A single 22-line edit
+  restored all 316 usages.
+- **Hardcoded palette colors (Batch B)** — Eliminated all 351 hardcoded
+  Tailwind palette colors (`bg-emerald-500`, `text-amber-600`, etc.) across
+  16 files. `status-badge.tsx` refactored from a 96-color inline table to a
+  data-driven tone map. Every status/role/subject/grade now resolves to a
+  semantic token, making light + dark mode correct automatically.
+- **Component compliance (Batch C)** — Migrated 13 hand-styled `<button>`
+  elements to shadcn `<Button>` (error pages, password eye-toggles, dismiss
+  buttons, link buttons). Added keyboard support (`onKeyDown` + `aria-sort`)
+  to 7 sortable table headers and 1 expandable row across 4 files.
+- **Responsive grids (Batch D)** — Fixed 21 non-responsive grids across 18
+  files. All `grid-cols-3`/`grid-cols-4` now collapse to a single column on
+  phones via `grid-cols-1 min-[480px]:grid-cols-{n}`. Calendar grids wrapped
+  in `overflow-x-auto` containers.
+- **Padding & typography (Batch E)** — Standardized 4 outlier page wrappers
+  to the canonical `p-4 sm:p-6 md:p-8` scale. Replaced all 72 `text-[13px]`
+  usages with Tailwind's standard `text-sm` token across 15 files.
+- **Accessibility (Batch F)** — Final a11y polish: added 2 missing
+  `<caption className="sr-only">` to `super-admin/health` tables,
+  `aria-hidden="true"` to decorative status dot in `admin/holiday-calendar`,
+  and `aria-hidden="true"` to initials avatar in `admin/dashboard`. 47 of 50
+  §6 a11y items were already resolved in prior batches.
+
+#### Accessibility
+- All 8 icon-only `<Button>` elements have descriptive `aria-label`.
+- All 7 sortable table headers are keyboard-navigable (`<button>` wrapper +
+  `onKeyDown` + `aria-sort`).
+- All 35 data tables have `<caption className="sr-only">` for screen readers.
+- All decorative status dots have `aria-hidden="true"` or `role="img"` +
+  `aria-label`.
+- All 13 initials-avatar `<div>` elements have `aria-hidden="true"` (names
+  conveyed via adjacent text).
+
+#### Verification
+- `npm run typecheck` — passes clean
+- `npm run lint` — passes (only pre-existing warnings, zero errors)
+- `npm run build` — succeeds, all 69 pages prerender
+
+---
+
+## [Unreleased]
+
 ### Changed
 - `HolidayCalendarPage` (admin) — refactored `typeColor`/`typeText` split maps into a unified `typeStyle` record; replaced hardcoded `--sch-*` inline style references with shadcn semantic tokens (`text-foreground`, `text-muted-foreground`, `border-border`, `hover:bg-muted/60`); added `Separator` between calendar legend and month navigation; consolidated KPI `extra` prop to a bare SVG donut (removed redundant wrapper div + inline pct label); updated "All Holidays" list to use `Separator` between rows instead of conditional border class; improved dialog form layout with `htmlFor`/`id` label associations and `flex-col gap-1.5` field groups; updated sync dialog "Connect" buttons to `size="xs"` per card-nested button size rule
 - `MgmtNoticePage` (management) — refactored notice cards from raw `<div>` wrappers to `Card`/`CardContent` shadcn components; added colored icon strip with per-notice tint surface; added `Edit2` icon button and `icon-sm` delete button; migrated audience toggles from inline `style={{}}` to Tailwind semantic tokens (`bg-primary`, `text-primary-foreground`, `border-primary`, `hover:bg-muted/60`); added `Separator` in meta row; improved dialog form layout with `htmlFor`/`id` label associations and `flex-col gap-1.5` field groups
