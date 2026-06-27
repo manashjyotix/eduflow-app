@@ -5,6 +5,8 @@
 
 > A comprehensive design reference for the EduFlow platform — a multi-tenant B2B SaaS for Indian schools. Built on iOS Human Interface Guidelines applied to a web SaaS context, expressed through the shadcn/ui PRO V6 two-layer token system.
 
+**Related Documentation:** [README](./README.md) · [AGENTS](./AGENTS.md) · [VISION](./VISION.md) · [ROADMAP](./ROADMAP.md) · [AUDIT](./AUDIT.md) · [CHANGELOG](./CHANGELOG.md)
+
 ---
 
 ## Table of Contents
@@ -1145,6 +1147,52 @@ style={{ fontFamily: ds.mono }}
 | `src/styles/theme.css` | Shadcn/Tailwind CSS variables |
 | `src/styles/globals.css` | Global resets and base styles |
 | `eduflow-design-system.html` | Standalone design system browser preview |
+
+---
+
+# Appendix — Figma File Build Guide
+
+> Merged from the former `FIGMA_DESIGN_GUIDE.md`. **Token source of truth: `src/app/globals.css`** — the values below mirror it so the Figma file and code never drift. Figma community file: `BlFqAE1yNoGDD4IFKyqaIV` (shadcn/ui PRO V6.0).
+
+## The 5-page structure
+
+```
+Figma File: EduFlow
+├─ 1. Foundations   ← variables: color, type, spacing, radius, shadow  (START HERE)
+├─ 2. Components    ← shadcn bricks styled with Foundations variables
+├─ 3. Patterns      ← reusable blocks: PageHeader, KpiCard, DataTable, FilterBar…
+├─ 4. Screens       ← the real pages, assembled from Patterns
+└─ 5. Flows         ← arrows linking screens (proxy / fee / absence flows)
+```
+
+A *screen* is 3–4 *patterns* stacked; a *pattern* is a few *components*; a *component* is *foundations* applied. Build bottom-up.
+
+## Page 1 — Foundations (Variables panel, 4 collections; Color has Light/Dark modes)
+
+**Brand primitives** (Light / Dark): `brand` #007AFF / #0A84FF · `brand/hover` #0062CC · `brand/light` #EAF3FF · `green` #34C759 / #30D158 · `amber` #FF9500 / #FF9F0A · `red` #FF3B30 / #FF453A · `purple` #4147D5 / #818CF8 · `cyan` #2F88FF / #64D2FF (plus `*-light`/`*-dark`/`*-mid` tints).
+
+**Semantic (shadcn — components reference these):** `background`, `foreground`, `card`, `popover`, `primary`→`brand`, `secondary`, `muted`, `accent`→`brand/light`, `destructive`→`red`, `border`, `input`, `ring`→`brand`. Use Figma's "alias another variable" where a row points to a primitive (mirrors `--primary: var(--ef-brand)`).
+
+**Status + charts:** `success`/`warning`/`info` (+ `-foreground`), `chart-1..5` mapped to brand/green/amber/purple/cyan.
+
+**radius:** sm 4 · md 6 (base) · lg 8 · xl 12 · 2xl 16 · pill 9999.
+**spacing:** 1=4 · 2=8 · 3=12 · 4=16 · 6=24 · 8=32.
+**type:** Inter, letter-spacing -0.6%, features `cv11 ss01` (xs 12/500 → 2xl 32/700).
+**effects:** shadow-xs/sm/md/lg per `globals.css`.
+
+## Page 2 — Components
+Build only EduFlow's bricks as Figma components with variants, styled via Page-1 variables (never raw hex): Button (primary/secondary/ghost/destructive/outline × sm/md/lg), Input, Select, Card, Badge/StatusBadge, Avatar, Tabs, Dialog, Toggle, Sidebar item, Table row.
+
+## Page 3 — Patterns
+PageHeader · KpiCard (label + `text-2xl` number + sparkline + delta) · DataTable · FilterBar · EmptyState · ProxyBoard cell (dot + **text label**, never color alone).
+
+ProxyBoard dot legend (must match code): `green` = Available · `amber` = Alt proxy · `muted-foreground` = Maxed out · `red` = Unavailable.
+
+## Page 4 — Screens
+Design pages by role in priority order, starting with the core loop: `Admin Dashboard → Absence Tracker → Proxy Board → Teacher: Accept Proxy`. Container max-width 1440px; page padding 16/24/32 (mobile/sm/md); section gap 24px (matches `.page-content`).
+
+## Page 5 — Flows
+Connector arrows between Page-4 frames showing intent (mark absent → proxy auto-assigns → teacher accepts).
 
 ---
 

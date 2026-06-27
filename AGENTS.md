@@ -1,17 +1,16 @@
 # EduFlow — School Management App · AI Agent Context File
-> **Read this first in every new session.** Updated: 2026-06-17
+> **Read this first in every new session.** Updated: 2026-06-27
 > **Design System:** shadcn/ui PRO Variables V6.0 (Figma: `BlFqAE1yNoGDD4IFKyqaIV`)
 
 ## Quick Navigation
 | Document | Purpose |
 |---|---|
 | [AGENTS.md](./AGENTS.md) | ← You are here — AI agent context, roles, design system |
-| [VISION.md](./VISION.md) | Complete product blueprint and business rules (wins on conflicts) |
-| [ROADMAP.md](./ROADMAP.md) | Phase-by-phase build order (wins on phase order) |
-| [REBUILD_PLAN.md](./REBUILD_PLAN.md) | Next.js 15 app architecture + shadcn PRO V6 token map |
-| [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) | Page-by-page porting checklist (all 69 pages) |
-| [AUDIT.md](./AUDIT.md) | ★ Frontend audit — gaps, icon map, upgrade features, task list |
-| [KIRO_REBUILD_PROMPT.md](./KIRO_REBUILD_PROMPT.md) | Master AI prompt for rebuilding from scratch |
+| [README.md](./README.md) | Quick start, scripts, repository map |
+| [VISION.md](./VISION.md) | Complete product blueprint, business rules (wins on conflicts) + full technical specification (DB schema, APIs, screens) |
+| [ROADMAP.md](./ROADMAP.md) | Phase-by-phase build order (wins on phase order) + architecture & rebuild plan |
+| [AUDIT.md](./AUDIT.md) | ★ Consolidated audit — build state, security, design, gaps, work log |
+| [Design.md](./Design.md) | Visual design system reference (Appendix: Figma file build guide) |
 | [CHANGELOG.md](./CHANGELOG.md) | Version history |
 
 ---
@@ -20,25 +19,21 @@
 
 **EduFlow** is a multi-tenant school proxy class management SaaS app.
 - A school admin/management user marks a teacher absent, the system assigns proxy (substitute) teachers for their periods.
-- This repository contains **two things in one Vite app:**
-  1. **`src/components/`** — the UI design system component library (50+ components, Vitest-tested)
-  2. **`src/scholaris/`** — a full role-aware functional prototype with 69 pages across 6 roles (Scholaris app)
-- Built with: **Vite 5 + React 18 + TypeScript + Tailwind CSS v4 + Radix UI primitives**
-- The production SaaS application (Next.js 15) lives in a separate repository and consumes these components.
+- **This repository is the production Next.js 15 app.** It contains the full role-aware application across 6 roles plus a marketing site, built on a three-tier component system (`components/ui` shadcn primitives → `components/shared` composites → `components/domain` business components).
+- Built with: **Next.js 15 (App Router) + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui PRO V6 + Radix UI + Mongoose/MongoDB + NextAuth v5.**
+- UI currently renders from mock data in `src/data/`; the Mongoose models + API routes are scaffolded and being wired (see [AUDIT.md](./AUDIT.md) Part B).
+
+> **History:** an earlier Vite + React 18 prototype ("Scholaris", `src/scholaris/`) was the design source. It has been fully ported into this Next.js app via [MIGRATION_PLAN.md](./MIGRATION_PLAN.md); the Vite prototype no longer lives in this repo.
 
 **School (demo/lead):** Holy Child English Academy (HCEA), Howly, Barpeta, Assam
 
 ---
 
-## 2. Project Root
+## 2. Run & Test
 
-```
-c:\Users\Manash Jyoti\Documents\Kiro\School Management App\
-```
+Run dev server: `npm run dev` → **http://localhost:3000** (Next.js).
 
-Run dev server: `npm run dev` (Vite default: **http://localhost:5173**)
-
-Run tests: `npm test` (Vitest + Testing Library)
+Other scripts: `npm run build` · `npm start` · `npm run lint` · `npm run typecheck` · `npm test` (Vitest) · `npm run test:e2e` (Playwright) · `npm run seed`.
 
 ---
 
@@ -46,75 +41,40 @@ Run tests: `npm test` (Vitest + Testing Library)
 
 ```
 src/
-  components/         ← Design system UI components (50+)
-    Accordion.tsx / Alert.tsx / AnnouncementBanner.tsx / Avatar.tsx
-    Badge.tsx / Button.tsx / Card.tsx / Chart.tsx / Charts.tsx
-    CheckRadio.tsx / Chip.tsx / ClassCard.tsx / Combobox.tsx
-    CommandPalette.tsx / DatePicker.tsx / Divider.tsx / Drawer.tsx
-    EmptyState.tsx / EventCalendarCard.tsx / ExamScheduleCard.tsx
-    ExportPanel.tsx / FeeReceiptCard.tsx / FileUpload.tsx
-    GradeCard.tsx / Header.tsx / HeatMap.tsx / icons.tsx
-    Input.tsx / LeaveQuotaBar.tsx / LibraryBookCard.tsx
-    LineChart.tsx / Menu.tsx / Modal.tsx / Navigation.tsx
-    NotificationRow.tsx / PricingCard.tsx / Progress.tsx
-    ProxyBoard.tsx        ← Core feature component
-    ResultSummaryCard.tsx / Search.tsx / Select.tsx
-    SettingsRow.tsx / Sidebar.tsx / Skeleton.tsx / Spinner.tsx
-    StaffProfileCard.tsx / StudentCard.tsx / SubjectCard.tsx
-    SuperAdminCard.tsx / SwapRequest.tsx / Toast.tsx / Tooltip.tsx
-    __tests__/           ← Component-level tests
+  app/                       ← Next.js App Router
+    (app)/                   ← authenticated shell (layout.tsx + role guards)
+      admin/        … per-role route segments (page.tsx each)
+      management/   …
+      teacher/      …
+      parent/       …
+      super-admin/  …
+      driver/       …
+    (marketing)/             ← public: landing, features, pricing, login, signup, onboarding
+    api/                     ← route handlers: auth, teachers, absences, proxies,
+                               attendance, fees, notifications, hazard
+    globals.css              ← design tokens (EduFlow brand → shadcn semantic bridge)
+    layout.tsx / page.tsx / not-found.tsx
+  auth.ts                    ← NextAuth v5 config
+  components/
+    ui/                      ← shadcn primitives (32)
+    shared/                  ← composites: page-header, kpi-card, data-table, filter-bar,
+                               status-badge, empty-state, command-palette, eduflow-assistant,
+                               weather-greeting, birthday-card, countdown-timer, …
+    domain/                  ← business components: proxy/, absence/, attendance/, timetable/,
+                               fee/, notification/, sos/, transport/, document/, exam/, hazard/,
+                               student-leave/
+    layout/                  ← app-sidebar, topbar, auth-guard, theme-provider, impersonation-banner
+    parent/                  ← parent-portal-specific components
+  context/                   ← React providers (role, auth, notification, attendance-mode,
+                               class-journal, exam-schedule, report-card, sos, transport, …)
+  data/                      ← mock data (single source of truth until backend is wired)
+  hooks/  lib/  lib/schemas/ ← utilities + zod schemas
+  models/                    ← Mongoose: School, User, Teacher, Absence, Proxy
+  test/                      ← Vitest setup
+  __tests__/                 ← unit tests (proxy-algorithm, schemas, data-table, availability-dot)
 
-  lib/                ← Utility functions (cn.ts, utils.ts)
-  logic/              ← Business logic modules
-    contrast.ts / initials.ts / pagination.ts / palette.ts
-    progress.ts / selection.ts / sort.ts / stepper.ts
-    __tests__/
-  showcase/           ← Visual showcase pages for each component
-  styles/             ← CSS design system (global.css)
-  theme/              ← DarkModeProvider, theme config
-  tokens/             ← Design tokens + __tests__/
-  test/
-    setup.ts          ← Vitest setup (jsdom)
-
-  scholaris/          ← FULL FUNCTIONAL PROTOTYPE (role-aware app)
-    ScholarisApp.tsx  ← Root: role switcher + shadcn sidebar shell
-    components/
-      EduFlowAssistant.tsx   ← AI chatbot FAB (bottom-right, mock responses)
-      MiniSparkline.tsx      ← Inline sparkline charts (line/bar/arc)
-      WeatherClock.tsx       ← Live weather + clock widget (Open-Meteo API, no key needed)
-    context/
-      SchoolSettingsContext.tsx  ← attendanceMode: 'per-period' | 'single-daily'
-    pages/
-      admin/          ← 22 pages (see §6)
-      management/     ← 12 pages (see §6)
-      teacher/        ← 9 pages (see §6)
-      parent/         ← 8 pages (see §6)
-      super-admin/    ← 11 pages (see §6)
-      marketing/      ← 7 pages (see §6)
-    ui/               ← shadcn/ui component wrappers used inside Scholaris
-      avatar.tsx / badge.tsx / button.tsx / card.tsx
-      input.tsx / progress.tsx / separator.tsx / sidebar.tsx
-      tooltip.tsx / index.ts
-    data/             ← Shared mock data (SINGLE SOURCE OF TRUTH — never re-declare inline)
-      teachers.ts     ← TEACHERS[], TEACHER_NAMES[] — 10 HCEA staff
-      periods.ts      ← PERIODS[], PERIOD_LABELS[], PERIOD_IDS[] — P1–P7 schedule
-    lib/              ← Shared Scholaris utilities
-      statusBadges.tsx← teacherStatusBadge / absenceStatusBadge / feeStatusBadge / swapStatusBadge / attColor
-
-index.html            ← Vite entry point
-vite.config.ts        ← Vite + Vitest + Tailwind v4 config
-tailwind.config.ts    ← Tailwind configuration
-package.json          ← Dependencies (React 18, Radix UI, Lucide, CVA, shadcn)
-
-Design.md             ← Full HTML design system reference (~1800 lines)
-VISION.md             ← Complete product blueprint (master reference)
-Claude.md             ← Full technical specification (agency handoff doc)
-PROJECT_BUNDLE.md     ← AI context pack for external LLMs
-README.md             ← Quick start guide
-ROADMAP.md            ← Canonical phase-by-phase build order
-CHANGELOG.md          ← Version history
-REBUILD_PLAN.md       ← ★ NEW: Next.js 15 production app architecture + shadcn PRO V6 token map
-KIRO_REBUILD_PROMPT.md← ★ NEW: Master AI prompt for building the production app from scratch
+next.config.ts · tsconfig.json · vitest.config.ts · playwright.config.ts
+components.json (shadcn) · package.json · scripts/seed.ts
 ```
 
 ---

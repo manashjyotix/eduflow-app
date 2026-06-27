@@ -1,357 +1,194 @@
-# EduFlow — Frontend Audit & Improvement Plan
-> **Generated:** June 17, 2026 · Updated after every sprint  
-> **Scope:** Next.js 15 app at this repository root  
-> **Related files:** [AGENTS.md](./AGENTS.md) · [ROADMAP.md](./ROADMAP.md) · [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) · [REBUILD_PLAN.md](./REBUILD_PLAN.md) · [VISION.md](./VISION.md)
+# EduFlow — Consolidated Audit
+> **Last updated:** 2026-06-27 · Update after every sprint.
+> **Scope:** Full stack — frontend pages, components, design system, backend, security, accessibility.
+> **Codebase:** `eduflow-app` — Next.js 15 · React 19 · TypeScript · Tailwind v4 · shadcn/ui PRO V6 · Mongoose/MongoDB · NextAuth v5.
+
+**Related Documentation:** [README](./README.md) · [AGENTS](./AGENTS.md) · [VISION](./VISION.md) · [ROADMAP](./ROADMAP.md) · [Design](./Design.md) · [CHANGELOG](./CHANGELOG.md)
+
+> **This file consolidates three former documents** that previously overlapped heavily:
+> - the original frontend audit (icon map, component coverage, feature gaps),
+> - the full-stack/security audit (`AUDIT_REPORT.md`),
+> - the design-system/responsive audit + batch tracker (`DESIGN_AUDIT.md` + `PROGRESS.md`).
+>
+> It is organized as: **Part A — Build State & Health**, **Part B — Security & Backend**, **Part C — Frontend & Components**, **Part D — Design System & Responsiveness**, **Part E — Feature Gaps & Upgrade List**, **Part F — Fix Plan & Build Order**, **Part G — Work Log / Batch Tracker**.
 
 ---
 
-## 1. Current Build State
+# Part A — Build State & Health
+
+## A.1 Current Build State
 
 | Category | Status | Notes |
 |---|---|---|
-| All 69 pages (6 roles) | ✅ Complete | All routes render with mock data |
-| shadcn/ui components | ✅ 31 installed | Full list in §3 |
-| Shared component layer | ✅ 13 components | `src/components/shared/` |
-| Design tokens (globals.css) | ✅ Complete | EduFlow brand → shadcn semantic bridge |
-| Dark mode | ✅ Complete | `next-themes` + `.dark` class strategy |
+| All pages (6 roles + marketing) | ✅ Complete | ~79 routes render with mock data |
+| shadcn/ui components | ✅ 32 installed | Full list in C.1 |
+| Shared component layer | ✅ Complete | `src/components/shared/` |
+| Domain component tier | ✅ Present | `src/components/domain/` (proxy, absence, timetable, fee, etc.) |
+| Design tokens (globals.css) | ✅ Complete | EduFlow brand → shadcn semantic bridge + `--color-ef-*` in `@theme inline` |
+| Dark mode | ✅ Complete | `next-themes` + `.dark` strategy |
 | TypeScript | ✅ Green | `npm run typecheck` passes |
-| Lint | ✅ 0 warnings | `npm run lint` clean |
-| Build | ✅ Static | `npm run build` produces static output |
-| Backend / Auth | ❌ Not started | All data is mock; no Payload CMS yet |
-| Real-time | ❌ Not started | No websockets or polling |
-| Middleware (route guards) | ❌ Not started | `middleware.ts` not created |
-| Domain component tier | ❌ Missing | `components/domain/` folder absent |
-| Breadcrumb | ❌ Missing | shadcn `breadcrumb` not installed or wired |
-| Form validation | ❌ Missing | `react-hook-form` + `zod` not installed |
+| Lint | ✅ Clean | `npm run lint` (minor pre-existing warnings only) |
+| Build | ✅ Static | `npm run build` prerenders all pages |
+| Form validation | ✅ Present | `react-hook-form` + `zod` wired in key forms |
+| Backend / Auth | 🟡 Scaffolded | Mongoose models + API routes exist; not all pages wired |
+| Real-time | ❌ Not started | No websockets/SSE |
+| Middleware (route guards) | 🟡 Partial | `auth-guard` component present; central `middleware.ts` to confirm |
 
----
+## A.2 Verified Health Checks
 
-## 2. Sidebar Audit (Fixed in this session)
-
-### 2.1 Duplicate Icons — Before Fix
-| Icon | Used for |
-|---|---|
-| `DollarSign` | Fees **AND** Expenses (admin) |
-| `Activity` | Analytics (super-admin) **AND** Audit Log (admin) **AND** Workload (management) |
-| `ClipboardList` | Absences, Daily Log, Exams, Apply Leave, Parent Exams |
-| `BookOpen` | Attendance **AND** Leave History **AND** Class Journal |
-| `Megaphone` | Announcements **AND** Notifications (teacher) |
-| `RefreshCw` | EduFlow logo **AND** Proxy History **AND** Swap Requests |
-
-### 2.2 Icon Map — After Fix (no icon used twice within any role)
-
-**Admin role:**
-| Item | Icon |
-|---|---|
-| Dashboard | `LayoutDashboard` |
-| Proxy Board | `LayoutGrid` |
-| Teachers | `Users` |
-| Students | `GraduationCap` |
-| Staff | `UserCog` |
-| Roles & Permissions | `ShieldCheck` |
-| Absences | `ClipboardList` |
-| Swap Requests | `ArrowLeftRight` |
-| Attendance | `CheckSquare` |
-| Timetable | `Calendar` |
-| Holiday Calendar | `BookMarked` |
-| Fees | `Banknote` |
-| Expenses | `Wallet` |
-| Analytics | `BarChart3` |
-| Reports | `FileText` |
-| Notices | `ScrollText` |
-| Announcements | `Megaphone` |
-| Audit Log | `History` |
-| Subscription | `CreditCard` |
-| Settings | `Settings` |
-
-**Management role:**
-| Item | Icon |
-|---|---|
-| Dashboard | `LayoutDashboard` |
-| Daily Log | `NotebookPen` |
-| Absence Approval | `ClipboardList` |
-| Proxy Board | `LayoutGrid` |
-| Swap Approvals | `ArrowLeftRight` |
-| Workload | `TrendingUp` |
-| Attendance | `CheckSquare` |
-| Exam Schedule | `GraduationCap` |
-| Timetable | `Calendar` |
-| Proxy Reports | `BarChart3` |
-| Notices | `ScrollText` |
-| My Profile | `User` |
-
-**Teacher role:**
-| Item | Icon |
-|---|---|
-| Dashboard | `LayoutDashboard` |
-| My Timetable | `Calendar` |
-| Apply Leave | `ClipboardList` |
-| Leave History | `History` |
-| Proxy History | `ArrowLeftRight` |
-| Mark Attendance | `CheckSquare` |
-| Attendance History | `ListChecks` |
-| Notices | `ScrollText` |
-| Notifications | `Bell` |
-
-**Parent role:**
-| Item | Icon |
-|---|---|
-| Dashboard | `LayoutDashboard` |
-| Attendance | `CheckSquare` |
-| Class Journal | `BookOpen` |
-| Report Card | `ScrollText` |
-| Exams | `ClipboardCheck` |
-| Fees & Dues | `Receipt` |
-| Apply Leave | `FileText` |
-| Notifications | `Bell` |
-
-**Super Admin role:**
-| Item | Icon |
-|---|---|
-| Platform Overview | `Globe` |
-| Analytics | `BarChart3` |
-| System Health | `PlugZap` |
-| All Schools | `Building2` |
-| School Drilldown | `UserRoundSearch` |
-| Billing Logs | `Receipt` |
-| Affiliates | `HeartHandshake` |
-| Backup & Restore | `Database` |
-| Emergency Console | `TriangleAlert` |
-| Audit Log | `History` |
-| Settings | `Settings` |
-
-### 2.3 User Detail Improvements
-- **Before:** Role labels only (e.g., "Admin", "Teacher")
-- **After:** Full name + role title + email shown in footer
-  - Admin: "Arnab Paul · Principal · Admin"
-  - Management: "Mrinal Ojha · Vice Principal"
-  - Teacher: "Priya Sharma · Mathematics · High"
-  - Parent: "Pankaj Das · Parent of Rohit Das"
-  - Super Admin: "Super Admin · Platform Owner"
-- Role picker now shows full name + subtitle for each role
-- Each role has a distinct avatar color (blue/green/amber/purple/red)
-- "Sign out" button added to role picker dropdown
-- Brand logo replaced `RefreshCw` with a custom SVG mark (grid-lines motif)
-- School subtitle expanded to "HCEA · Howly, Assam"
-
----
-
-## 3. shadcn/ui Component Coverage
-
-### Installed (31 components)
-`accordion` · `alert-dialog` · `alert` · `avatar` · `badge` · `button` · `calendar` ·
-`card` · `chart` · `checkbox` · `collapsible` · `command` · `dialog` · `dropdown-menu` ·
-`input` · `label` · `popover` · `progress` · `radio-group` · `scroll-area` · `select` ·
-`separator` · `sheet` · `sidebar` · `skeleton` · `sonner` · `switch` · `table` · `tabs` ·
-`textarea` · `tooltip`
-
-### Missing from REBUILD_PLAN.md §8 target list
-| Component | Priority | Reason needed |
+| Check | Command | Result |
 |---|---|---|
-| `breadcrumb` | 🔴 High | Auto-nav context; listed in REBUILD_PLAN §2 layout folder |
-| `form` (react-hook-form + zod) | 🔴 High | All forms currently lack validation |
-| `toast` (radix variant) | 🟡 Medium | Sonner installed but some pages use raw divs |
-| `context-menu` | 🟢 Low | Right-click actions in timetable/proxy board |
-| `hover-card` | 🟢 Low | Teacher info tooltip on hover in proxy board |
-| `navigation-menu` | 🟢 Low | Marketing pages top nav |
-| `menubar` | 🟢 Low | Command bar on admin pages |
+| TypeScript | `npx tsc --noEmit` | ✅ clean |
+| ESLint | `npx next lint` | ✅ ~18 minor warnings |
+| Pages | count `page.tsx` | ~79 (app + marketing) |
+| Loading boundaries | count `loading.tsx` | present per role segment |
+| Error boundaries | count `error.tsx` | present per role segment |
+| API routes | `src/app/api/**` | present (auth, teachers, absences, proxies, attendance, fees, notifications, hazard) |
+| Models | `src/models/**` | School, User, Teacher, Absence, Proxy |
 
 ---
 
-## 4. Shared Component Gaps
+# Part B — Security & Backend
 
-### Existing shared components (13)
-`confirm-dialog` · `data-table` · `edu-bar-chart` · `eduflow-assistant` · `empty-state` ·
-`export-menu` · `filter-bar` · `kpi-card` · `mini-sparkline` · `page-header` ·
-`search-input` · `sort-icon` · `status-badge`
+> Source: former `AUDIT_REPORT.md` (2026-06-19). Re-verify items as the backend is wired.
 
-### Missing shared components (needed per REBUILD_PLAN §3)
-| Component | Priority | Description |
-|---|---|---|
-| `WeatherGreeting` | 🔴 High | Ported from Scholaris `WeatherClock.tsx`; greeting banner with live weather |
-| `BreadcrumbAuto` | 🔴 High | Auto-generates breadcrumb from Next.js pathname |
-| `NotificationRow` | 🟠 Medium | Reusable notification item (unread tint, icon, time, action) |
-| `PeriodPicker` | 🟠 Medium | Multi-select P1–P7 period picker for absence/leave forms |
-| `ProxyDot` | 🟠 Medium | Proxy availability dot with accessible text label pairing |
-| `CoverageDonut` | 🟠 Medium | Recharts donut for proxy board coverage widget |
-| `AcademicYearBanner` | 🟡 Low | "Academic Year 2025–26" context strip for relevant pages |
-| `CommandPalette` | 🟡 Low | ⌘K global search using shadcn `command` |
+## B.1 Critical Security Items
 
----
+- **L1 — Stored XSS via chatbot `dangerouslySetInnerHTML`** (`src/components/shared/eduflow-assistant.tsx`). `formatContent` builds HTML by hand and renders via `dangerouslySetInnerHTML`. Latent today (hardcoded content) but exploitable once wired to an LLM/backend. **Fix:** render markdown via a safe parser or React nodes; if HTML is required, sanitize with DOMPurify.
+- **L2 — No authentication / no session.** `(marketing)/login` is a no-op `setTimeout`; the `(app)` layout renders every role's pages to anyone; demo plaintext passwords are committed and shown in UI. **Fix:** NextAuth v5 credentials provider against `User.passwordHash` (bcrypt), httpOnly session cookie, `middleware.ts` route guard.
+- **L3 — No authorization / tenant isolation.** Models carry `schoolId` but no query filters by it; no role checks. **Fix:** every query `.find({ schoolId: session.schoolId })`; central `requireRole()` / `requireSchoolScope()` helpers.
+- **L4/L5 — No input validation / NoSQL injection surface.** **Fix:** validate every API body with zod before Mongoose; `mongoose.set("strictQuery", true)`; never pass raw request objects to queries.
+- **L6 — Secrets & env hygiene.** Generate a real `NEXTAUTH_SECRET`; validate env at boot (e.g. `@t3-oss/env-nextjs`).
+- **L7 — Cookies & headers.** Set `Secure; SameSite=Lax` on cookies; add CSP + `X-Frame-Options: DENY` + `Referrer-Policy` + `Permissions-Policy` in `next.config.ts`.
 
-## 5. Domain Component Tier (Missing)
+## B.2 Backend Build-Out
 
-Per REBUILD_PLAN §3.1, a `components/domain/` tier should exist. Currently all domain
-logic lives inline in page files. This makes pages long and domain code unshared.
-
-### Components to extract
-| File (target) | Source | Pages using it |
-|---|---|---|
-| `domain/proxy/ProxyBoard.tsx` | `/admin/proxy-board/page.tsx` | admin, management |
-| `domain/proxy/CoverageDonut.tsx` | `/admin/proxy-board/page.tsx` | admin, management |
-| `domain/proxy/AssignModal.tsx` | `/admin/proxy-board/page.tsx` | admin |
-| `domain/absence/AbsenceRow.tsx` | `/admin/absences/page.tsx` | admin, management |
-| `domain/absence/PeriodPicker.tsx` | `/teacher/leave/page.tsx` | teacher, admin |
-| `domain/teacher/WorkloadHeatmap.tsx` | `/management/workload/page.tsx` | management |
-| `domain/timetable/TimetableGrid.tsx` | `/admin/timetable/page.tsx` | admin, management, teacher |
-| `domain/fee/FeeReceiptCard.tsx` | `/admin/fees/collection/page.tsx` | admin |
-| `domain/notification/NotificationRow.tsx` | `/teacher/notifications/page.tsx` | teacher, parent, admin |
+- `src/lib/mongodb.ts` cached-connection helper ✅ correct pattern.
+- `src/models/` — well-designed (`schoolId`, enums, indexes, timestamps).
+- Wire pages off `src/data/mock-*.ts` → `fetch`/server components or SWR/React Query.
+- Build: auth routes, core CRUD (teachers/absences/proxies/attendance/fees/notifications), seed script, Razorpay webhook, audit-log writer, trial-expiry + fee-reminder crons.
 
 ---
 
-## 6. Feature Gaps (Frontend Only)
+# Part C — Frontend & Components
 
-These are UX features that are absent from the current Next.js pages but exist in the
-Scholaris prototype or are specified in VISION.md / ROADMAP.md.
+## C.1 shadcn/ui Coverage (32 installed)
 
-### 🔴 Critical Missing Features
+`accordion` · `alert-dialog` · `alert` · `avatar` · `badge` · `breadcrumb` · `button` · `calendar` · `card` · `chart` · `checkbox` · `collapsible` · `command` · `dialog` · `dropdown-menu` · `form` · `input` · `label` · `popover` · `progress` · `radio-group` · `scroll-area` · `select` · `separator` · `sheet` · `sidebar` · `skeleton` · `sonner` · `switch` · `table` · `tabs` · `textarea` · `tooltip`.
 
-| Feature | Affected pages | Description |
-|---|---|---|
-| **Morning Briefing Countdown Timer** | `/management/dashboard` | 5-min period countdown specified in VISION §3.3; currently a static banner |
-| **Proxy Board Auto-assign scoring UI** | `/admin/proxy-board` | Score breakdown dialog exists but algorithm is mocked; no `lib/proxy-algorithm.ts` |
-| **Period Picker component** | `/teacher/leave`, `/admin/absences` | Multi-select P1–P7; currently leave form is basic |
-| **Attendance toggle (per-period vs single-daily)** | `/admin/attendance` | Mode toggle exists in page but no context persistence |
+Optional future installs: `hover-card`, `context-menu`, `navigation-menu`, `menubar`.
 
-### 🟠 High Priority Missing Features
+## C.2 Sidebar Icon Map (unique per role)
 
-| Feature | Affected pages | Description |
-|---|---|---|
-| **Progress Notes input flow** | `/teacher/attendance/mark` | Teacher → class → student → note (understood/struggling/etc.) |
-| **Subject Completion Tracker** | `/parent/report-card`, `/parent/dashboard` | Per-subject syllabus progress bar |
-| **Behavioral Trend Chart** | `/parent/dashboard` | Weekly/monthly student behavior graph |
-| **QR Code Check-in** | `/admin/proxy-board`, new page | Generate, print, scan proxy check-in QR |
-| **Academic Year Rollover** | `/admin/settings` | Archive past year, reset leave balances |
-| **Excel Import** | `/admin/teachers`, `/admin/students` | `.xlsx` bulk import in addition to CSV |
-| **Command Palette (⌘K)** | Global | `cmdk` package installed; not wired up |
+**Admin:** Dashboard `LayoutDashboard` · Proxy Board `LayoutGrid` · Teachers `Users` · Students `GraduationCap` · Staff `UserCog` · Roles `ShieldCheck` · Absences `ClipboardList` · Swaps `ArrowLeftRight` · Attendance `CheckSquare` · Timetable `Calendar` · Holiday `BookMarked` · Fees `Banknote` · Expenses `Wallet` · Analytics `BarChart3` · Reports `FileText` · Notices `ScrollText` · Announcements `Megaphone` · Audit `History` · Subscription `CreditCard` · Settings `Settings`.
 
-### 🟡 Medium Priority Missing Features
+**Management:** Dashboard `LayoutDashboard` · Daily Log `NotebookPen` · Absence Approval `ClipboardList` · Proxy `LayoutGrid` · Swap Approvals `ArrowLeftRight` · Workload `TrendingUp` · Attendance `CheckSquare` · Exams `GraduationCap` · Timetable `Calendar` · Reports `BarChart3` · Notices `ScrollText` · Profile `User`.
 
-| Feature | Affected pages | Description |
-|---|---|---|
-| **Exam Mode toggle** | `/admin/proxy-board` | Disables proxy assignment in exam weeks |
-| **Proxy Rules Engine UI** | `/admin/settings` | Configure per-school proxy algorithm preferences |
-| **Ghost User / Impersonation** | `/super-admin/school` | Super admin view-as-school; currently read-only drilldown |
-| **Affiliate payout queue** | `/super-admin/affiliates` | Payout processing flow |
-| **Document Manager** | New page `/admin/documents` | Upload circulars, handbooks, policies |
-| **Announcement expiry** | `/admin/announcements` | Auto-expire after date; currently manual dismiss only |
-| **Multi-child parent switcher** | `/parent/*` | Parent with 2+ children — child selector in topbar |
-| **Leave balance visual** | `/teacher/dashboard` | Visual quota bar per leave type (casual/sick/earned) |
+**Teacher:** Dashboard `LayoutDashboard` · Timetable `Calendar` · Apply Leave `ClipboardList` · Leave History `History` · Proxy History `ArrowLeftRight` · Mark Attendance `CheckSquare` · Attendance History `ListChecks` · Notices `ScrollText` · Notifications `Bell`.
+
+**Parent:** Dashboard `LayoutDashboard` · Attendance `CheckSquare` · Journal `BookOpen` · Report Card `ScrollText` · Exams `ClipboardCheck` · Fees `Receipt` · Leave `FileText` · Notifications `Bell`.
+
+**Super Admin:** Overview `Globe` · Analytics `BarChart3` · Health `PlugZap` · Schools `Building2` · Drilldown `UserRoundSearch` · Billing `Receipt` · Affiliates `HeartHandshake` · Backup `Database` · Emergency `TriangleAlert` · Audit `History` · Settings `Settings`.
+
+## C.3 Frontend Quality Notes
+
+- **Fat client pages:** several pages are large (`onboarding` ~633 lines, `admin/dashboard` ~530). Move mock reads into server components; keep interactive islands as `'use client'`; extract into `domain/` components.
+- **Accessibility:** color+label pairing on status dots, `aria-label`/`aria-hidden` on avatars and icon-only buttons, `<caption>` on data tables. Most resolved (see Part G); remaining items tracked there.
+- **Performance:** code-split `recharts` for chart-heavy pages; `next/image` for photos; route-segment `loading.tsx`/`error.tsx` (present).
 
 ---
 
-## 7. Page-Level Issues Found
+# Part D — Design System & Responsiveness
 
-### Admin
-- `/admin/fees/page.tsx` — Main fees overview page may be empty/stub; sub-routes exist
-- `/admin/roles/page.tsx` — Roles page exists but lacks permission matrix table
-- `/admin/proxy-board` — `lib/proxy-algorithm.ts` file referenced in REBUILD_PLAN §5 but doesn't exist yet
+> Source: former `DESIGN_AUDIT.md` (2026-06-22). Foundation is strong; remaining work is cleanup, not rebuild.
 
-### Management
-- `/management/dashboard` — Morning briefing countdown timer is static text; needs `useInterval` hook
-- `/management/timetable` — Read-only viewer; no indication of exam week overlay
+## D.1 Token Foundation ✅
 
-### Teacher
-- `/teacher/timetable` — Swap initiation icon exists but no modal; needs `SwapRequestModal`
-- `/teacher/leave` — Period picker is basic checkboxes inline; should use `PeriodPicker` component
+`src/app/globals.css` is Figma-accurate: `--color-ef-*` primitives exposed in `@theme inline` (resolves `bg-ef-*`/`text-ef-*`); radius scale anchored to 6px (4/6/8/12/16px); light + iOS-dark palettes with 0.25-opacity tinted `*-light` fills in dark mode; 5-color chart palette; full `--sidebar-*` set; fluid root `font-size: clamp(15px, 0.9rem + 0.25vw, 16px)`.
 
-### Parent
-- `/parent/dashboard` — Exam countdown is static; should be a live `CountdownTimer` component
-- `/parent/attendance` — Calendar heatmap uses CSS classes; no `react-day-picker` integration
+## D.2 Remaining Cleanup
 
-### Super Admin
-- `/super-admin/emergency` — Emergency controls are UI only; no confirmation guards wired
-- `/super-admin/school` — Impersonation button does nothing; needs router redirect logic
+- **Mobile Sheet width** (`admin/notices`): `w-[440px]` base → `w-full max-w-[440px]`.
+- **~12 wide tables** missing `overflow-x-auto` wrapper (audit/cohorts/billing/health/backup/tenants/etc.).
+- **13 fixed large headings** (`text-3xl/4xl/6xl`) need responsive step (`text-2xl sm:text-3xl leading-tight`).
+- **4px spacing rule:** ~8 files (super-admin worst) use half-step layout spacing (`px-3.5`, `py-2.5`, `gap-3.5`, `p-[3px]`, `[18px]`) → round to 4px multiples. Half-steps on icon rows / dense cells / small dots are acceptable shadcn conventions and are NOT flagged.
+- **Bare `grid-cols-4` TabsList** (`features`) → `grid-cols-2 sm:grid-cols-4`.
+
+## D.3 Already Compliant ✅
+
+Token bridge (316 `ef-*` usages render); `StatusBadge` family data-driven semantic tones (no raw palette); `AvailabilityDot` `aria-hidden` + text label; 0 raw `<table>` (all shadcn `<Table>`); sortable headers keyboard-accessible (`aria-sort` + `onKeyDown`); `lucide-react` only; KPI grid `grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4`; global `overflow-x: hidden` guard; print styles for report card.
 
 ---
 
-## 8. Accessibility Issues
+# Part E — Feature Gaps & Upgrade List
 
-| Issue | Location | WCAG criterion |
-|---|---|---|
-| Proxy board dots shown without text label in some views | `/admin/proxy-board` | 1.4.1 Use of Color |
-| Avatar initials divs lack `aria-label` | Sidebar footer, teacher cards | 1.1.1 Non-text content |
-| `<button>` without accessible names in role picker | `app-sidebar.tsx` (fixed) | 4.1.2 Name, Role, Value |
-| Icon-only buttons missing `sr-only` text | Topbar sort icons | 4.1.2 |
-| Color-only status indicators on fee defaulter rows | `/admin/fees/defaulters` | 1.4.1 |
-| Missing `<caption>` on data tables | Multiple pages | 1.3.1 Info and Relationships |
+## E.1 Critical / High
 
----
+- Morning Briefing countdown timer (`/management/dashboard`) — live `useInterval`, currently static.
+- Proxy auto-assign scoring engine — extract to `src/lib/proxy-algorithm.ts` (subject → availability → cap proximity → fairness); unit-test.
+- Real-time proxy accept/decline (SSE or polling).
+- Period Picker component (multi-select P1–P7) for leave/absence forms.
+- Attendance mode persistence (`per-period` vs `single-daily`) to `School.settings`.
 
-## 9. Performance Observations
+## E.2 Medium / Polish
 
-| Observation | Recommendation |
-|---|---|
-| All mock data imported at build time | Fine for prototype; will need API routes + `loading.tsx` suspense boundaries in production |
-| Charts (`recharts`) loaded on all pages | Add `dynamic(() => import(...), { ssr: false })` for chart-heavy pages |
-| No `loading.tsx` files in any route | Add skeleton loaders per route segment |
-| No `error.tsx` files | Add error boundaries per route segment |
-| Images: only SVGs in `/public` | Add `next/image` for any photos (teacher avatars eventually) |
-| No `next/font` optimization for Inter | Root layout already uses `next/font/google` ✅ |
+- Progress Notes flow (teacher → class → student → note).
+- Subject Completion Tracker + Behavioral Trend chart (parent portal).
+- QR check-in (`qrcode`), Command Palette wiring (`cmdk` ⌘K), `BreadcrumbAuto`, WeatherGreeting banner.
+- Academic Year Rollover wizard; Excel import (`xlsx`); Document Manager; multi-child parent switcher; announcement expiry; affiliate payout queue.
+- Bulk table actions; in-page search wiring; empty states with CTAs; localized `formatINR`/`formatDate`.
 
 ---
 
-## 10. Upgrade Feature List (Prioritized)
+# Part F — Fix Plan & Recommended Build Order
 
-These are net-new features not yet designed, ranked by business value.
-
-### Tier 1 — Ship before beta launch
-- [ ] **`middleware.ts` route guard** — redirect unauthenticated users; enforce role prefixes
-- [ ] **`BreadcrumbAuto` component** — auto-generate from pathname in `Topbar`
-- [ ] **Form validation** — install `react-hook-form` + `zod`; wire to all create/edit forms
-- [ ] **`WeatherGreeting` banner** — port from Scholaris `WeatherClock.tsx` (Open-Meteo, no key needed)
-- [ ] **`CountdownTimer` component** — live period countdown for management dashboard
-- [ ] **`PeriodPicker` component** — reusable multi-select period selector
-
-### Tier 2 — Ship at beta
-- [ ] **`lib/proxy-algorithm.ts`** — extract scoring engine from proxy board page into testable module
-- [ ] **`CommandPalette`** — wire `cmdk` (already installed) to ⌘K global shortcut
-- [ ] **`domain/` component tier** — extract ProxyBoard, AbsenceRow, TimetableGrid from pages
-- [ ] **`loading.tsx` per route** — skeleton states for each major route segment
-- [ ] **`error.tsx` per route** — error boundaries with retry actions
-- [ ] **Excel import modal** — `xlsx` parsing for teacher/student bulk upload
-- [ ] **Progress Notes flow** — teacher attendance mark → student note input
-
-### Tier 3 — Post-beta
-- [ ] **QR Check-in** — `qrcode` library; print-ready PDF output
-- [ ] **Academic Year Rollover wizard** — archive data, reset quotas
-- [ ] **Exam mode toggle** — disable proxy assignment during exam weeks
-- [ ] **Document Manager page** — `/admin/documents` with file categories and role filtering
-- [ ] **Multi-child parent switcher** — child selector dropdown in parent topbar
-- [ ] **Subject Completion Tracker** — progress bars per subject per term
-- [ ] **Behavioral Trend Chart** — weekly behavior graph in parent portal
-- [ ] **Affiliate payout queue** — approve/reject/process payouts in super-admin affiliates
-
----
-
-## 11. Shadcn Components to Install Next
-
-```bash
-# Install in this order (run in eduflow-app root)
-npx shadcn@latest add breadcrumb
-npx shadcn@latest add form
-npx shadcn@latest add hover-card
-npx shadcn@latest add context-menu
-npx shadcn@latest add navigation-menu
 ```
-
-Also install npm packages:
-```bash
-npm install react-hook-form zod @hookform/resolvers
-npm install qrcode @types/qrcode
+Week 1 — Security + Auth spine
+  L1 XSS fix → NextAuth v5 → middleware.ts → env validation → security headers
+  scripts/seed.ts (demo users + HCEA) → /api/auth/* routes
+Week 2 — Core API + data wiring
+  zod schemas → /api/teachers,/absences,/proxies (school-scoped, role-checked)
+  swap pilot pages off mock data (admin dashboard, proxy-board, teachers)
+Week 3 — Proxy engine + realtime
+  lib/proxy-algorithm.ts (tested) → live accept/decline (SSE) → morning briefing timer
+Week 4 — Billing + ops
+  Razorpay checkout + webhook → trial-expiry cron → fee reminder job → audit log writer
+Week 5 — Frontend hardening
+  domain/ extraction → hex→token sweep → form validation polish
+Week 6 — Tests + CI + Tier 3 features
+  Vitest (lib) + Playwright (e2e) → GitHub Actions → QR check-in, command palette
 ```
 
 ---
 
-## 12. Work Log (append after each session)
+# Part G — Work Log / Batch Tracker
 
-- **2026-06-17** — Comprehensive audit performed. Sidebar icon deduplication (22 icons now unique per role). User details enriched in sidebar footer (full name + role title + email + distinct avatar colors per role). Custom EduFlow SVG logo added. Sign-out button added to role picker. `AUDIT.md` created. Cross-links added to all `.md` files. Typecheck green after all changes.
-- **2026-06-21** — **Design System Compliance Sweep (Batches A–F + Phase 1/2).** Complete execution of `DESIGN_AUDIT.md` remediation plan (~898 issues resolved across ~100 files):
-  - **Batch A** — Fixed critical Tailwind v4 token bug: added `--color-ef-*` mappings to `@theme inline` in `globals.css` (316 broken `bg-ef-*`/`text-ef-*` classes now generate valid CSS).
-  - **Batch B** — Eliminated all 351 hardcoded Tailwind palette colors across 16 files (refactored `status-badge.tsx` to data-driven tone table; swapped every `bg-emerald-500`/`text-amber-600`/etc. to semantic tokens).
-  - **Batch C** — Component compliance: migrated 13 hand-styled `<button>`s to shadcn `<Button>`, added keyboard support (`onKeyDown` + `aria-sort`) to 7 sortable table headers and 1 expandable row. Raw `<table>` migration already complete.
-  - **Batch D** — Responsive grid sweep: 21 grids fixed across 18 files (added `grid-cols-1 min-[480px]:` mobile fallbacks; overflow wrappers on calendar grids).
-  - **Batch E** — Padding/typography normalization: 76 changes across 18 files (standardized page padding to `p-4 sm:p-6 md:p-8`; replaced all `text-[13px]` with `text-sm`).
-  - **Batch F** — Accessibility polish: 3 remaining fixes (2 table `<caption>`s in `super-admin/health`, 1 `aria-hidden` dot in `admin/holiday-calendar`, 1 `aria-hidden` avatar in `admin/dashboard`). 47 of 50 §6 items already resolved in prior batches.
-  - All gates green: `npm run typecheck` ✅ · `npm run lint` ✅ (0 errors) · `npm run build` ✅ (69 pages prerender).
-  - Tracking docs updated: `PROGRESS.md`, `DESIGN_AUDIT.md` §0 status column. Created `CHANGELOG.md`.
+> Source: former `PROGRESS.md` + `AUDIT.md` work log. Append after each session.
+
+- **2026-06-17** — Comprehensive audit. Sidebar icon deduplication (unique per role). User details enriched in sidebar footer. Custom EduFlow SVG logo. Sign-out in role picker. Typecheck green.
+- **2026-06-19** — Full-stack/security audit authored (now Part B).
+- **2026-06-21** — **Design System Compliance Sweep (Batches A–F + Phase 1/2).** ~898 issues across ~100 files:
+  - **Batch A** — Tailwind v4 token bug: added `--color-ef-*` to `@theme inline` (316 broken classes fixed with one edit).
+  - **Batch B** — Eliminated 351 hardcoded palette colors across 16 files (`status-badge.tsx` → data-driven tone table).
+  - **Batch C** — Migrated 13 hand-styled buttons → shadcn `<Button>`; keyboard + `aria-sort` on sortable headers. Raw `<table>` migration already complete (37 files use `<Table>`, 0 raw).
+  - **Batch D** — 21 grids fixed across 18 files (mobile `grid-cols-1` fallbacks; calendar overflow wrappers).
+  - **Batch E** — 76 changes across 18 files (page padding → `p-4 sm:p-6 md:p-8`; `text-[13px]` → `text-sm`).
+  - **Batch F** — 3 remaining a11y fixes (2 `<caption>`, 1 `aria-hidden` dot, 1 `aria-hidden` avatar); 47 of 50 already resolved.
+  - Gates green: typecheck ✅ · lint ✅ · build ✅.
+- **2026-06-27** — Documentation consolidation: merged `AUDIT_REPORT.md`, `DESIGN_AUDIT.md`, `PROGRESS.md` into this file; rewired the MD cross-reference graph.
+
+### Cumulative design-sweep impact
+
+| Batch | Issues Fixed | Files |
+|---|---|---|
+| Batch A | 316 | 1 (globals.css) |
+| Batch B | 351 | 16 |
+| Batch C | 31 | 17 |
+| Batch D | 21 | 18 |
+| Batch E | 76 | 18 |
+| Batch F | 3 | 3 |
+| **Total** | **~898** | **~100 unique** |
+
+---
+
+*End of consolidated audit. Phase order + architecture → [ROADMAP.md](./ROADMAP.md) · business rules + technical spec → [VISION.md](./VISION.md) · design tokens → [Design.md](./Design.md) / `src/app/globals.css`.*

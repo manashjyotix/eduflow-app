@@ -3,6 +3,45 @@
 All notable changes to EduFlow are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+**Related Documentation:** [README](./README.md) · [AGENTS](./AGENTS.md) · [VISION](./VISION.md) · [ROADMAP](./ROADMAP.md) · [AUDIT](./AUDIT.md) · [Design](./Design.md)
+
+---
+
+## [2026-06-27] — Documentation Reduction (9 → 7 files)
+
+### Removed (merged into other docs)
+- `REBUILD_PLAN.md` → **ROADMAP.md** "Architecture & Rebuild Plan" section (project structure, 3-tier components, page anatomy, domain priority, proxy algorithm, routing, build sequence, Appendix A master AI rebuild prompt, Appendix B migration record). Duplicated token bridge / Tailwind config omitted in favor of AGENTS §5 + Design.md.
+- `CLAUDE.md` → **VISION.md** "Full Technical Specification" section (period swap workflow, complete PostgreSQL schema, API integrations, notification matrix, screen inventory, business rules, build phases). Legacy design notes (DM Sans / purple primary / 2-hour swap expiry) marked historical and superseded by canonical values.
+
+### Result
+Final documentation set is **7 files**: README, AGENTS, VISION, ROADMAP, AUDIT, Design, CHANGELOG. All navigation tables and "Related Documentation" lines updated.
+
+---
+
+## [2026-06-27] — Documentation Reduction (13 → 9 files)
+
+### Removed (merged into other docs)
+- `KIRO_REBUILD_PROMPT.md` → **REBUILD_PLAN.md Appendix A** (master AI rebuild prompt).
+- `MIGRATION_PLAN.md` → **REBUILD_PLAN.md Appendix B** (porting conventions + completion record).
+- `FIGMA_DESIGN_GUIDE.md` → **Design.md Appendix** (Figma file build guide).
+- `PROJECT_BUNDLE.md` → removed; its proxy auto-assign scoring algorithm preserved in **VISION.md**.
+
+### Result
+Final documentation set is **9 files**: README, AGENTS, VISION, ROADMAP, AUDIT, REBUILD_PLAN, Design, CLAUDE, CHANGELOG. All navigation tables and "Related Documentation" lines updated to remove dangling links.
+
+---
+
+## [2026-06-27] — Documentation Consolidation & Cross-Reference Cleanup
+
+### Removed
+- `AUDIT_REPORT.md`, `DESIGN_AUDIT.md`, `PROGRESS.md` — merged into a single consolidated `AUDIT.md`.
+
+### Changed
+- `AUDIT.md` — rebuilt as one consolidated audit (Parts A–G): build state & health, security & backend, frontend & components, design system & responsiveness, feature gaps & upgrade list, fix plan & build order, and work log / batch tracker.
+- `AGENTS.md` — corrected §1–§3 to the actual **Next.js 15 + React 19 + MongoDB/NextAuth** architecture (removed stale Vite/React 18/Scholaris/`localhost:5173` description); refreshed the Quick Navigation table to the consolidated doc set.
+- `README.md` — removed the duplicated half of the file; fixed stack/dev port (3000); single Key Documentation table covering all docs.
+- All MD files — normalized to a unified **"Related Documentation"** link block; fixed `Claude.md` → `CLAUDE.md` case; removed links to the deleted audit files; connected previously-orphaned docs (`FIGMA_DESIGN_GUIDE.md`, `Design.md`, `CLAUDE.md`, `PROJECT_BUNDLE.md`, `KIRO_REBUILD_PROMPT.md`).
+
 ---
 
 ## [2026-06-11] — shadcn/ui PRO V6 Design System Migration & Rebuild Plan

@@ -2,7 +2,7 @@
 ### Master Reference Document (v2.0)
 > Updated: June 17, 2026 · Canonical reference — this file wins on all business rules.
 
-**Related:** [AGENTS.md](./AGENTS.md) · [AUDIT.md](./AUDIT.md) · [ROADMAP.md](./ROADMAP.md) · [REBUILD_PLAN.md](./REBUILD_PLAN.md) · [MIGRATION_PLAN.md](./MIGRATION_PLAN.md)
+**Related Documentation:** [README](./README.md) · [AGENTS](./AGENTS.md) · [ROADMAP](./ROADMAP.md) · [AUDIT](./AUDIT.md) · [Design](./Design.md) · [CHANGELOG](./CHANGELOG.md)
 
 ---
 
@@ -621,5 +621,115 @@ New admins see a simplified, guided wizard. Advanced features (proxy rules, AI c
 
 ---
 
+## Proxy Auto-Assign Algorithm (canonical)
+
+> Preserved from the former `PROJECT_BUNDLE.md`. Port to `lib/proxy-algorithm.ts`; unit-test it.
+
+```
+Step 1 — FILTER (hard rules, cannot be broken):
+  ✓ Teacher has a FREE period at that exact time slot
+  ✓ Not exceeding 5 periods/day (timetable + proxy combined)
+  ✓ Not at daily / weekly / monthly proxy cap
+  ✓ Not absent themselves
+  ✓ No consecutive proxy block (if school setting is ON)
+
+Step 2 — SCORE (soft ranking):
+  +10  Same primary subject as absent teacher
+  +7   Subject in teacher's secondary subjects
+  +5   Has taught this class/section before (familiarity)
+  +4   Same school section (Primary/Middle/High)
+  +3   Lowest proxy count today (load balancing)
+  +2   Lowest proxy count this week (fairness)
+  -3   Declined a proxy in the last 3 days (reliability penalty)
+  -5   Different school section entirely
+
+Step 3 — SELECT: top 3 shown as suggestions; auto-assign picks #1.
+Step 4 — NOTIFY: management + admin ("Auto-assigned [Teacher] to [Period/Class]"); teacher gets a push with Accept / Decline.
+```
+
+---
+
 *Master Reference v2.0 · May 24, 2026*  
 *Updated from review session comments — 14 changes applied.*
+
+---
+
+# Full Technical Specification
+
+> Merged from the former `CLAUDE.md` (agency handoff spec v2.0). Where this section conflicts with the canonical business rules above, **the rules above win**; conflicting legacy notes are marked *(historical)*.
+
+## Period Swap System
+
+| Type | Description |
+|---|---|
+| Single period swap | Teacher A's Period 3 ↔ Teacher B's Period 3 (same day) |
+| Half-day swap | All morning or afternoon periods for the day |
+| Full-day swap | Teacher A's entire day covered by Teacher B |
+| Free period offer | Teacher volunteers a free period to a shared pool |
+
+**Workflow:** Teacher A taps a period → app lists eligible teachers (free at that slot, under daily cap, eligible section) → A selects B + note → B gets notified, Accepts/Declines → if accepted, Management/Admin approve → on approval, timetable + proxy board update instantly and both teachers + audit log are notified. Management/Admin-initiated swaps skip peer notification (trusted) and go straight to the timetable update.
+
+**Swap rules:** a request expires when the requested period ends or is running (status → `expired`, requester notified); max 3 pending outgoing requests per teacher; logged in `swap_requests`; approved swaps count toward the monthly proxy tally (configurable).
+
+## Database Schema (PostgreSQL / Payload collections)
+
+All tables include `school_id uuid NOT NULL` for multi-tenant isolation; RLS enforced at the DB layer. Core tables:
+
+- **schools** — name, board (`CBSE|SEBA|ICSE|State`), subscription_status (`trial|active|grace|suspended`), trial_ends_at, razorpay_subscription_id, plan (`1m|3m|6m|12m|free`), plan_expires_at, health_score, referral_code, referred_by.
+- **classes** — class_name, class_numeral, section_name, school_section (`Pre-Primary|Primary|Middle School|High School`), sort_order.
+- **subjects** — name.
+- **teachers** — name, photo_url, email, phone, subjects[], school_sections[], class_ids[], is_active, max_proxies_per_month (default 5), leave_casual/sick/earned.
+- **timetable** — teacher_id, class_id, day_of_week (1=Mon…6=Sat), period_number (1–7), subject; UNIQUE(school_id, class_id, day_of_week, period_number).
+- **school_periods** — period_number, label, start_time, end_time, is_break, sort_order.
+- **school_calendar** — date, type (`holiday|exam|halfday|event`), label; UNIQUE(school_id, date).
+- **absences** — teacher_id, date, periods[] (null = full day), reason, reason_category (`sick|personal|family|training|official|other`), source (`app|manual`), status (`pending|approved|rejected`), rejection_reason, reported_by, approved_by.
+- **proxy_assignments** — absence_id, proxy_teacher_id, class_id, period_number, date, status (`assigned|accepted|declined|completed`), decline_reason, assigned_by, notified_at, is_swap.
+- **swap_requests** — requester_id, target_id, period_number, date, swap_type (`single|half_day|full_day|free_offer`), note, status (`pending|accepted|declined|approved|rejected|expired`), expires_at.
+- **leave_balances** — teacher_id, year, casual_used, sick_used, earned_used; UNIQUE(school_id, teacher_id, year).
+- **subscriptions** — razorpay_subscription_id, plan, status (`created|active|halted|cancelled`), current_start/end.
+- **affiliates / affiliate_payouts** — referral_code, tier (`bronze|silver|gold`), total_referrals, total_earned; payouts: amount, method (`upi|bank`), status (`pending|approved|paid|rejected`).
+- **coupons / coupon_uses** — code, type (`percentage|flat`), value, plan_lock, school_lock, max_uses, used_count, is_active, expires_at.
+- **notifications** — recipient_id, type, channel (`in_app|sms|whatsapp|email`), message, is_read, status (`sent|delivered|failed|bounced`).
+- **notification_settings** — event_type, in_app/sms/whatsapp/email toggles, roles[]; UNIQUE(school_id, event_type).
+- **notification_api_keys** — channel, provider (`msg91|twilio|wati|sendgrid`), api_key_enc (AES-256), sender_id, is_active.
+- **documents** — name, file_url, file_type, uploaded_by, visible_to[].
+- **announcements** — title, body, author_id, visible_to[], is_pinned, expires_at.
+- **support_tickets** — reporter_id, title, description, category, priority, status (`open|in_progress|resolved|closed`).
+- **audit_logs** — actor_id, actor_role, action, entity_type, entity_id, metadata (jsonb), channel, ip_address; **append-only**.
+- **users** — school_id (null for super_admin), teacher_id, role (`super_admin|admin|management|teacher`), name, email, avatar_url, dark_mode, language (`en|as|hi`).
+
+## API Integrations
+
+- **Razorpay (billing):** Subscriptions API; webhook `POST /api/webhooks/razorpay` (verify signature → update `subscriptions` + `schools.subscription_status`). Events: `subscription.activated` → active, `subscription.charged` → extend expiry, `subscription.halted` → grace, `subscription.cancelled` → suspended after grace.
+- **MSG91 / WATI / SendGrid:** school-configured channels (school adds its own API key); pre-approved templates for WhatsApp.
+- **Resend (platform):** EduFlow's own key for welcome / trial-ending / billing / password-reset emails (schools can't see it).
+- **Realtime:** proxy board subscribes to `proxy_assignments` changes; absence board to `absences`; notifications pushed on insert; swap inbox on `swap_requests` changes.
+
+## Notification Types
+
+`proxy_assigned`, `proxy_reminder` (10 min before), `proxy_accepted`, `proxy_declined`, `absence_submitted`, `absence_approved`, `absence_rejected`, `unassigned_alert` (30 min before), `swap_request_received`, `swap_request_accepted`, `swap_request_declined`, `swap_approved`, `swap_rejected`, `subscription_expiring` (7 days), `trial_ending` (3 days), `subscription_suspended`, `subscription_activated`. Defaults: in-app always on; SMS/WhatsApp off (admin enables per event); email off for ops, on for billing.
+
+## Screen Inventory (route map)
+
+- **Super admin:** dashboard, schools (+ `[id]` drilldown/impersonation), affiliates, coupons, tickets, feature flags, announcements, changelog, audit, public `/status`.
+- **Admin:** dashboard, teachers (+ profile), classes, timetable, absences, proxy-board, calendar, reports, import, audit, notifications (+ delivery log), announcements, documents, settings, billing, help, profile.
+- **Management:** dashboard (morning briefing), absences, proxy-board (real-time), schedule, swap-requests, teachers, reports, audit (read-only), notifications, help, profile.
+- **Teacher:** dashboard, schedule, absences/new + history (+ leave balance), proxy history, swaps (inbox/new), notifications (+ preferences), help, profile.
+- **Auth:** login (role-aware, social OAuth), signup (trial start), forgot-password, onboarding (5-step wizard).
+
+## Business Rules (canonical)
+
+1. Every query includes `school_id` (RLS as second line of defence). 2. Teacher daily cap = 5 periods (timetable + proxy), enforced in builder + proxy engine + swap approval. 3. Proxy card "Edit" hidden after `period.end_time`. 4. Per-month proxy cap (default 5); gray badge at/near cap; assignment blocked at cap. 5. Proxy needs absence `approved` (manual absences auto-approve). 6. Holiday → proxy board disabled. 7. Exam mode → assignment disabled unless admin overrides; supervision still assignable. 8. Suspended school → all routes redirect to `/billing` except `/help`. 9. Audit log written on every create/update/delete/status-change (non-negotiable). 10. Super admin read-only during impersonation, fully logged (actor + IP + start/end).
+
+## Build Phases (cross-check with the phase roadmap above)
+
+- **Phase 1 (foundation):** real collections, full schema + RLS, auth + social OAuth, multi-tenancy, realtime, Razorpay billing + status gates, 5-step onboarding.
+- **Phase 2 (core):** class manager, expanded teacher profile, notification hub (channel + API-key mgmt), swap system, Excel import, leave balances, academic-year rollover.
+- **Phase 3 (growth/ops):** affiliate program, bug/ticket system, feature flags, announcement board, document manager, proxy rules engine, end-of-day summary + print daily sheet.
+- **Phase 4 (polish/scale):** PWA, full dark mode, multi-language (en/as/hi), help center, QR proxy check-in, AI churn prediction, public status page.
+
+> *(historical)* The original agency spec proposed DM Sans + a purple primary and a fixed 2-hour swap expiry. These are superseded by the canonical design system (Inter + `#007AFF` iOS-blue primary, shadcn PRO V6 tokens) and the swap-expiry rule above (expires when the period ends). Use the canonical values.
+
+---
+
+*Master Reference v2.0 + full technical spec (CLAUDE.md merged 2026-06-27).*
