@@ -38,25 +38,6 @@ export const MOCK_NOTICES: Notice[] = [
   },
 ]
 
-export interface SwapRequest {
-  id: string
-  requesterId: string
-  requesterName: string
-  targetId: string
-  targetName: string
-  periodId: string
-  class: string
-  subject: string
-  date: string
-  reason: string
-  status: "pending" | "accepted" | "rejected" | "approved"
-}
-
-export const MOCK_SWAPS: SwapRequest[] = [
-  { id: "sw1", requesterId: "t1", requesterName: "Priya Sharma",  targetId: "t4", targetName: "Biju Das",     periodId: "P3", class: "VIII-A", subject: "Mathematics", date: "2026-06-15", reason: "Doctor appointment", status: "pending"  },
-  { id: "sw2", requesterId: "t7", requesterName: "Sunita Borah",  targetId: "t2", targetName: "Rajesh Kalita",periodId: "P5", class: "X-A",    subject: "Physics",     date: "2026-06-16", reason: "Family function",   status: "accepted" },
-  { id: "sw3", requesterId: "t5", requesterName: "Meena Gogoi",   targetId: "t1", targetName: "Priya Sharma", periodId: "P2", class: "VI-B",   subject: "Assamese",    date: "2026-06-17", reason: "Training program",  status: "approved" },
-]
 
 export const ATTENDANCE_MONTHLY = [
   { month: "Jan", percent: 91 }, { month: "Feb", percent: 88 }, { month: "Mar", percent: 94 },
