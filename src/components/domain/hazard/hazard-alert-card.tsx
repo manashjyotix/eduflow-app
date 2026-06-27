@@ -37,11 +37,10 @@ export function HazardAlertCard({ alert, onAcknowledge, className }: HazardAlert
   return (
     <Card
       className={cn(
-        "overflow-hidden border-l-4 transition-shadow hover:shadow-card",
+        "overflow-hidden transition-shadow hover:shadow-card",
         !live && "opacity-75",
         className
       )}
-      style={{ borderLeftColor: accent }}
     >
       <CardContent className="p-4">
         <div className="flex items-start gap-3">

@@ -81,7 +81,7 @@ export function AbsenceRow({ absence, onApprove, onReject }: AbsenceRowProps) {
 
       {/* Status + actions */}
       <div className="flex items-center gap-2 flex-shrink-0">
-        <AbsenceBadge status={absence.status} />
+        {absence.status !== "pending" && <AbsenceBadge status={absence.status} />}
         {absence.status === "pending" && (
           <>
             <Button size="xs" onClick={() => onApprove(absence.id)}>

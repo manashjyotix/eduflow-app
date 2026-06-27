@@ -13,6 +13,8 @@ interface CountdownTimerProps {
   className?: string
   /** Compact variant for inline use inside cards. */
   compact?: boolean
+  /** Hide the leading icon badge (e.g. when the parent provides its own icon). */
+  hideIcon?: boolean
 }
 
 function parseTimeToToday(timeStr: string): Date {
@@ -36,6 +38,7 @@ export function CountdownTimer({
   label = "Next period in",
   className,
   compact = false,
+  hideIcon = false,
 }: CountdownTimerProps) {
   const [now, setNow] = useState(() => new Date())
 
@@ -81,9 +84,11 @@ export function CountdownTimer({
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
-        <Clock className="size-5" />
-      </div>
+      {!hideIcon && (
+        <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
+          <Clock className="size-5" />
+        </div>
+      )}
       <div className="min-w-0">
         <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
           {label}{upcoming ? ` · ${upcoming.id}` : ""}

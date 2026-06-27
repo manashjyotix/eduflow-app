@@ -48,12 +48,6 @@ function timeAgo(timestamp: string): string {
   })
 }
 
-const SEVERITY_BORDER: Record<string, string> = {
-  critical: "border-l-[var(--ef-red)]",
-  high: "border-l-[var(--ef-amber)]",
-  medium: "border-l-[var(--ef-amber-light)]",
-}
-
 const SEVERITY_BADGE_CLASS: Record<string, string> = {
   critical:
     "bg-[var(--ef-red)]/15 text-[var(--ef-red-dark)] border-[var(--ef-red)]/30",
@@ -94,8 +88,7 @@ export function SOSIncidentCard({ incident, className }: SOSIncidentCardProps) {
   return (
     <Card
       className={cn(
-        "overflow-hidden border-l-4",
-        SEVERITY_BORDER[incident.severity],
+        "overflow-hidden",
         className
       )}
     >

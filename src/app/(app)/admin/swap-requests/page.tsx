@@ -188,6 +188,16 @@ export default function SwapRequestsPage() {
         </CardContent>
       </Card>
 
+      {/* Management cross-link */}
+      <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-sm">
+        <ArrowLeftRight className="size-5 text-primary shrink-0" />
+        <div className="flex-1 min-w-0">
+          <span className="font-semibold text-foreground">Management handles final swap approvals</span>
+          <span className="text-muted-foreground ml-2 text-xs">Agreed swaps forwarded by teachers land on the Management Swap Approvals board for sign-off.</span>
+        </div>
+        <a href="/management/swaps" className="text-xs font-semibold text-primary hover:underline whitespace-nowrap">View Mgmt Board →</a>
+      </div>
+
       {/* Filter Bar */}
       <Card>
         <CardContent className="p-4">

@@ -1,6 +1,9 @@
-import { ScrollText, Download, UserX, Grid3X3, ArrowLeftRight, IndianRupee, ShieldAlert, CheckCircle2, AlertTriangle } from "lucide-react"
+"use client"
+
+import { ScrollText, Download, UserX, Grid3X3, ArrowLeftRight, IndianRupee, ShieldAlert, CheckCircle2, AlertTriangle, TrendingUp, Circle } from "lucide-react"
 import { PageHeader } from "@/components/shared/page-header"
 import { TaskList, type TaskItem } from "@/components/shared/task-list"
+import { KpiCard } from "@/components/shared/kpi-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -50,21 +53,41 @@ const EVENT_COLORS: Record<LogEvent["type"], string> = {
   alert: "bg-warning/10 text-warning-foreground border-warning/20",
 }
 
-const SUMMARY_ITEMS = [
-  { label: "Teachers Absent",     value: "3",          icon: UserX,        color: "text-destructive" },
-  { label: "Proxies Assigned",    value: "5 / 7",      icon: Grid3X3,      color: "text-primary" },
-  { label: "Swap Requests",       value: "1",          icon: ArrowLeftRight,color: "text-[var(--ef-purple)]" },
-  { label: "Fee Collected",       value: "₹42,500",    icon: IndianRupee,  color: "text-[var(--ef-green-dark)]" },
-  { label: "Incidents",           value: "0",          icon: ShieldAlert,  color: "text-muted-foreground" },
-]
+// ─── Derived activity state (auto-checks EOD checklist) ───────────────────────
+// In a real app these would come from server state; here we derive from LOG_EVENTS.
+const absenceEvents    = LOG_EVENTS.filter(e => e.type === "absence")
+const pendingAbsences  = absenceEvents.filter(e => e.detail?.toLowerCase().includes("pending")).length
+const allAbsencesReviewed = pendingAbsences === 0
+
+const proxyEvents      = LOG_EVENTS.filter(e => e.type === "proxy")
+const proxiesPending   = proxyEvents.filter(e => e.detail?.toLowerCase().includes("pending")).length
+const allPeriodsCovered = proxiesPending === 0
+
+const swapEvents       = LOG_EVENTS.filter(e => e.type === "swap")
+const swapsPending     = swapEvents.filter(e => e.detail?.toLowerCase().includes("awaiting")).length
+const swapsActioned    = swapsPending === 0
+
+const feeEvents        = LOG_EVENTS.filter(e => e.type === "fee")
+const feesReconciled   = feeEvents.length > 0
+
+const logFinalized     = LOG_EVENTS.some(e => e.message.toLowerCase().includes("daily log finalized"))
 
 const EOD_CHECKLIST: TaskItem[] = [
-  { id: "c1", label: "All absences reviewed and approved", hint: "3 teachers absent today" },
-  { id: "c2", label: "Every open period has proxy coverage", hint: "Target: 100% coverage" },
-  { id: "c3", label: "Pending swap requests actioned", hint: "1 swap awaiting approval", done: true },
-  { id: "c4", label: "Fee collections reconciled for the day", hint: "Match receipts with ledger" },
-  { id: "c5", label: "Daily log exported and filed", hint: "PDF saved to records" },
+  { id: "c1", label: "All absences reviewed and approved",   hint: `${absenceEvents.length} teacher${absenceEvents.length !== 1 ? "s" : ""} absent today`,              done: allAbsencesReviewed },
+  { id: "c2", label: "Every open period has proxy coverage", hint: "Target: 100% coverage",                                                                               done: allPeriodsCovered },
+  { id: "c3", label: "Pending swap requests actioned",       hint: `${swapEvents.length} swap${swapEvents.length !== 1 ? "s" : ""} logged today`,                        done: swapsActioned },
+  { id: "c4", label: "Fee collections reconciled for the day", hint: `${feeEvents.length} fee transaction${feeEvents.length !== 1 ? "s" : ""} recorded`,                 done: feesReconciled },
+  { id: "c5", label: "Daily log exported and filed",         hint: "PDF saved to records",                                                                                done: logFinalized },
 ]
+
+// Coverage data
+const TOTAL_PERIODS   = 7
+const COVERED_COUNT   = 5
+const OPEN_GAPS       = TOTAL_PERIODS - COVERED_COUNT
+const COVERAGE_PCT    = Math.round((COVERED_COUNT / TOTAL_PERIODS) * 100)
+const DECLINED_COUNT  = 0
+const SAME_SUBJECT    = 3   // green proxies
+const DIFF_SUBJECT    = 2   // amber proxies
 
 export default function DailyLogPage() {
   return (
@@ -80,81 +103,155 @@ export default function DailyLogPage() {
         }
       />
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {SUMMARY_ITEMS.map((item) => {
-          const Icon = item.icon
-          return (
-            <Card key={item.label}>
-              <CardContent className="p-4 flex items-start gap-3">
-                <div className="rounded-lg p-2 bg-muted flex-shrink-0">
-                  <Icon size={16} className={item.color} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground leading-tight">{item.label}</p>
-                  <p className={`text-xl font-bold ${item.color}`}>{item.value}</p>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+      {/* KPI Summary Cards — global KpiCard style */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <KpiCard
+          title="Teachers Absent"
+          value="3"
+          subtitle="+1 vs yesterday"
+          icon={<UserX className="size-5" />}
+          tone="red"
+          sparkline={{ variant: "bar", data: [1, 2, 1, 3, 2, 2, 3], color: "var(--ef-red)" }}
+        />
+        <KpiCard
+          title="Proxies Assigned"
+          value="5 / 7"
+          subtitle="71% fill rate"
+          icon={<Grid3X3 className="size-5" />}
+          tone="brand"
+          sparkline={{ variant: "bar", data: [4, 5, 6, 5, 7, 6, 5], color: "var(--ef-green)" }}
+        />
+        <KpiCard
+          title="Swap Requests"
+          value="1"
+          subtitle="Agreed · Awaiting approval"
+          icon={<ArrowLeftRight className="size-5" />}
+          tone="purple"
+          sparkline={{ variant: "bar", data: [0, 1, 2, 1, 0, 1, 1], color: "var(--ef-purple)" }}
+        />
+        <KpiCard
+          title="Fee Collected"
+          value="₹42,500"
+          subtitle="3 transactions today"
+          icon={<IndianRupee className="size-5" />}
+          tone="green"
+          sparkline={{ variant: "bar", data: [18000, 32000, 25000, 42000, 38000, 30000, 42500], color: "var(--ef-green)" }}
+        />
       </div>
 
-      {/* Overall Status Card */}
-      <Card className="border-l-4 border-l-[var(--ef-green)]">
-        <CardContent className="p-4 flex items-center gap-4">
-          <div className="size-10 rounded-full bg-[var(--ef-green-light)] flex items-center justify-center flex-shrink-0">
-            <CheckCircle2 size={20} className="text-[var(--ef-green-dark)]" />
-          </div>
-          <div>
-            <p className="font-semibold text-foreground">Day Status: <span className="text-[var(--ef-green-dark)]">Good</span></p>
-            <p className="text-sm text-muted-foreground">
-              71% proxy coverage · 0 incidents · ₹42,500 fee collected · All systems operational
-            </p>
-          </div>
-          <Badge variant="success" className="ml-auto flex-shrink-0">Good Day</Badge>
-        </CardContent>
-      </Card>
-
-      {/* End-of-day operations checklist */}
+      {/* Day Status + Checklist + Coverage Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TaskList
-          title="End-of-Day Checklist"
-          subtitle="Confirm all daily operations are closed before finalizing."
-          tasks={EOD_CHECKLIST}
-        />
 
-        <Card>
+        {/* Left column: Day Status + Checklist stacked */}
+        <div className="flex flex-col gap-6">
+          {/* Overall Day Status */}
+          <Card>
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="size-10 rounded-full bg-[var(--ef-green-light)] flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 size={20} className="text-[var(--ef-green-dark)]" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">
+                  Day Status: <span className="text-[var(--ef-green-dark)]">Good</span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  71% proxy coverage · 0 incidents · ₹42,500 fee collected · All systems operational
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <TaskList
+            title="End-of-Day Checklist"
+            subtitle="Activities already completed are auto-checked. Confirm remaining items before closing."
+            tasks={EOD_CHECKLIST}
+          />
+        </div>
+
+        {/* Right column: Coverage Summary */}
+        <Card className="flex flex-col">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <CheckCircle2 className="size-4 text-success-foreground" /> Coverage Summary
+              <TrendingUp className="size-4 text-primary" /> Coverage Summary
             </CardTitle>
           </CardHeader>
           <Separator />
-          <CardContent className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Proxy coverage</span>
-              <span className="text-sm font-bold text-primary">5 / 7 (71%)</span>
-            </div>
-            <Progress value={71} className="h-2 [&>div]:bg-primary" />
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="rounded-lg border border-border p-3">
-                <p className="text-xs text-muted-foreground">Open gaps</p>
-                <p className="text-lg font-bold text-destructive">2</p>
+          <CardContent className="p-4 flex flex-col gap-4 flex-1">
+
+            {/* Main progress */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm font-medium text-foreground">Proxy fill rate</span>
+                <span className="text-sm font-bold text-primary tabular-nums">{COVERED_COUNT} / {TOTAL_PERIODS} ({COVERAGE_PCT}%)</span>
               </div>
-              <div className="rounded-lg border border-border p-3">
-                <p className="text-xs text-muted-foreground">Declined</p>
-                <p className="text-lg font-bold text-warning-foreground">0</p>
+              <Progress
+                value={COVERAGE_PCT}
+                className={`h-2.5 rounded-full ${COVERAGE_PCT >= 80 ? "[&>div]:bg-[var(--ef-green)]" : COVERAGE_PCT >= 50 ? "[&>div]:bg-primary" : "[&>div]:bg-destructive"}`}
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {COVERAGE_PCT >= 85 ? "Excellent coverage — well above target." : COVERAGE_PCT >= 70 ? "Acceptable coverage — 2 gaps need follow-up." : "Below target — immediate action needed."}
+              </p>
+            </div>
+
+            {/* Stat grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-border p-3 flex flex-col gap-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-full bg-[var(--ef-green)] inline-block" />
+                  <p className="text-xs text-muted-foreground">Same Subject</p>
+                </div>
+                <p className="text-2xl font-bold text-[var(--ef-green-dark)]">{SAME_SUBJECT}</p>
+                <p className="text-[10px] text-muted-foreground">Best-match proxies</p>
+              </div>
+              <div className="rounded-xl border border-border p-3 flex flex-col gap-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-full bg-[var(--ef-amber)] inline-block" />
+                  <p className="text-xs text-muted-foreground">Alt Subject</p>
+                </div>
+                <p className="text-2xl font-bold text-[var(--ef-amber-dark)]">{DIFF_SUBJECT}</p>
+                <p className="text-[10px] text-muted-foreground">Cross-subject coverage</p>
+              </div>
+              <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 flex flex-col gap-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-full bg-destructive inline-block" />
+                  <p className="text-xs text-muted-foreground">Open Gaps</p>
+                </div>
+                <p className="text-2xl font-bold text-destructive">{OPEN_GAPS}</p>
+                <p className="text-[10px] text-muted-foreground">Periods uncovered</p>
+              </div>
+              <div className="rounded-xl border border-border p-3 flex flex-col gap-1">
+                <div className="flex items-center gap-1.5">
+                  <Circle className="size-2.5 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Declined</p>
+                </div>
+                <p className="text-2xl font-bold text-muted-foreground">{DECLINED_COUNT}</p>
+                <p className="text-[10px] text-muted-foreground">Proxy refusals</p>
               </div>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              Finalize the checklist on the left before closing the daily log.
-            </p>
+
+            {/* Legend */}
+            <div className="rounded-xl bg-muted/40 border border-border p-3">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Proxy dot legend</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                {[
+                  { dot: "bg-[var(--ef-green)]",    label: "Same subject (best match)" },
+                  { dot: "bg-[var(--ef-amber)]",    label: "Alt subject (available)" },
+                  { dot: "bg-muted-foreground",     label: "Capped (daily/weekly limit)" },
+                  { dot: "bg-destructive",           label: "Unavailable / declined" },
+                ].map(({ dot, label }) => (
+                  <div key={label} className="flex items-center gap-1.5">
+                    <span className={`size-2 rounded-full inline-block flex-shrink-0 ${dot}`} />
+                    <span className="text-[10px] text-muted-foreground">{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </CardContent>
         </Card>
       </div>
 
-      {/* Timeline */}
+      {/* Activity Timeline */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold">Activity Timeline — June 15, 2026</CardTitle>

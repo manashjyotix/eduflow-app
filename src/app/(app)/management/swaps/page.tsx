@@ -23,7 +23,8 @@ const WEEKLY_PENDING_SWAPS: number[]  = [1, 2, 1, 3, 1, 2]
 const WEEKLY_APPROVED_SWAPS: number[] = [2, 2, 2, 2, 3, 1]
 const WEEKLY_REJECTED_SWAPS: number[] = [0, 1, 1, 1, 1, 1]
 
-type SwapStatus = "pending" | "approved" | "rejected" | "expired"
+// management_pending = forwarded by teacher (agreed by both) awaiting management final sign-off
+type SwapStatus = "pending" | "management_pending" | "approved" | "rejected" | "expired"
 
 interface SwapRequest {
   id: string; date: string
@@ -32,21 +33,26 @@ interface SwapRequest {
   reason: string; submittedAt: string; expiresIn: string | null
   bothConfirmed: boolean; status: SwapStatus
   resolvedAt?: string; rejectionNote?: string; resolvedBy?: string
+  /** true = forwarded from teacher portal after both agreed */
+  fromTeacherPortal?: boolean
 }
 
 const INITIAL_SWAPS: SwapRequest[] = [
   { id: "SW-001", date: "5 Jun 2026", teacherA: "Priya Sharma", subjectA: "Mathematics", periodA: "P2", classA: "VIII-A", timeA: "10:10–10:50", teacherB: "Rajesh Kalita", subjectB: "Science", periodB: "P3", classB: "VIII-A", timeB: "10:50–11:30", reason: "External training session conflicts with P2 for Priya", submittedAt: "8:30 AM, 5 Jun 2026", expiresIn: "2h 15m", bothConfirmed: true, status: "pending" },
   { id: "SW-002", date: "5 Jun 2026", teacherA: "Sunita Borah", subjectA: "Chemistry", periodA: "P4", classA: "X-A", timeA: "11:30–12:10", teacherB: "Meena Gogoi", subjectB: "Geography", periodB: "P6", classB: "IX-A", timeB: "1:10–1:50", reason: "Sunita has lab prep; Meena free in P4", submittedAt: "7:55 AM, 5 Jun 2026", expiresIn: "4h 50m", bothConfirmed: false, status: "pending" },
+  // Forwarded from teacher portal (both agreed):
+  { id: "SW-005b", date: "10 Jun 2026", teacherA: "Priya Sharma", subjectA: "Mathematics", periodA: "P1", classA: "X-A", timeA: "9:30–10:10", teacherB: "Meena Gogoi", subjectB: "Geography", periodB: "P3", classB: "IX-B", timeB: "10:50–11:30", reason: "Parent-teacher briefing session in the morning — both teachers agreed", submittedAt: "6:00 PM, 9 Jun 2026", expiresIn: null, bothConfirmed: true, status: "management_pending", fromTeacherPortal: true },
   { id: "SW-003", date: "4 Jun 2026", teacherA: "Biju Das", subjectA: "History", periodA: "P5", classA: "VII-B", timeA: "12:30–1:10", teacherB: "Himanta Bezbaruah", subjectB: "Computer", periodB: "P7", classB: "VII-A", timeB: "1:50–2:30", reason: "Both teachers mutually agreed to swap for convenience", submittedAt: "9:10 AM, 4 Jun 2026", expiresIn: null, bothConfirmed: true, status: "approved", resolvedAt: "10:00 AM, 4 Jun 2026", resolvedBy: "Management Office" },
   { id: "SW-004", date: "4 Jun 2026", teacherA: "Anita Devi", subjectA: "English", periodA: "P1", classA: "VI-B", timeA: "9:30–10:10", teacherB: "Dipak Baruah", subjectB: "Assamese", periodB: "P2", classB: "VI-A", timeB: "10:10–10:50", reason: "Anita needs to attend staff meeting during P1", submittedAt: "8:00 AM, 4 Jun 2026", expiresIn: null, bothConfirmed: true, status: "rejected", resolvedAt: "8:45 AM, 4 Jun 2026", resolvedBy: "Management Office", rejectionNote: "Dipak already assigned as proxy for Class IX-B in P2. Conflict detected." },
   { id: "SW-005", date: "3 Jun 2026", teacherA: "Rima Das", subjectA: "Biology", periodA: "P3", classA: "X-B", timeA: "10:50–11:30", teacherB: "Kamal Nath", subjectB: "Physics", periodB: "P6", classB: "IX-B", timeB: "1:10–1:50", reason: "Personal appointment during P3", submittedAt: "6:30 PM, 2 Jun 2026", expiresIn: null, bothConfirmed: false, status: "expired", resolvedAt: "6 hours after submission" },
 ]
 
-const STATUS_CFG: Record<SwapStatus, { badge: "success" | "destructive" | "warning" | "secondary"; label: string; leftBorder: string }> = {
-  pending:  { badge: "warning",     label: "Pending",  leftBorder: "border-l-ef-amber" },
-  approved: { badge: "success",     label: "Approved", leftBorder: "border-l-ef-green" },
-  rejected: { badge: "destructive", label: "Rejected", leftBorder: "border-l-ef-red" },
-  expired:  { badge: "secondary",   label: "Expired",  leftBorder: "border-l-border" },
+const STATUS_CFG: Record<SwapStatus, { badge: "success" | "destructive" | "warning" | "secondary" | "outline"; label: string; leftBorder: string }> = {
+  pending:            { badge: "warning",     label: "Pending",           leftBorder: "border-l-ef-amber"  },
+  management_pending: { badge: "outline",     label: "Mgmt Review",       leftBorder: "border-l-purple-400"},
+  approved:           { badge: "success",     label: "Approved",          leftBorder: "border-l-ef-green"  },
+  rejected:           { badge: "destructive", label: "Rejected",          leftBorder: "border-l-ef-red"    },
+  expired:            { badge: "secondary",   label: "Expired",           leftBorder: "border-l-border"    },
 }
 
 function Initial({ name, className = "" }: { name: string; className?: string }) {
@@ -103,6 +109,7 @@ export default function SwapApprovalsPage() {
   const counts = {
     all: allSwaps.length,
     pending: allSwaps.filter(s => s.status === "pending").length,
+    management_pending: allSwaps.filter(s => s.status === "management_pending").length,
     approved: allSwaps.filter(s => s.status === "approved").length,
     rejected: allSwaps.filter(s => s.status === "rejected").length,
     expired: allSwaps.filter(s => s.status === "expired").length,
@@ -110,7 +117,7 @@ export default function SwapApprovalsPage() {
 
   const activeSwap = allSwaps.find(s => s.id === approveId || s.id === rejectId)
   const detailSwap = allSwaps.find(s => s.id === detailId)
-  const pendingCount = counts.pending
+  const pendingCount = counts.pending + counts.management_pending
 
   function nowLabel() {
     return new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) + ", Today"
@@ -128,11 +135,12 @@ export default function SwapApprovalsPage() {
   }
 
   const TAB_ITEMS = [
-    { key: "all", label: "All", count: counts.all, active: "bg-primary text-white border-primary" },
-    { key: "pending", label: "Pending", count: counts.pending, active: "bg-ef-amber text-white border-ef-amber" },
-    { key: "approved", label: "Approved", count: counts.approved, active: "bg-ef-green text-white border-ef-green" },
-    { key: "rejected", label: "Rejected", count: counts.rejected, active: "bg-ef-red text-white border-ef-red" },
-    { key: "expired", label: "Expired", count: counts.expired, active: "bg-muted-foreground text-white border-muted-foreground" },
+    { key: "all",                label: "All",          count: counts.all,                active: "bg-primary text-white border-primary" },
+    { key: "pending",            label: "Pending",      count: counts.pending,            active: "bg-ef-amber text-white border-ef-amber" },
+    { key: "management_pending", label: "Mgmt Review",  count: counts.management_pending, active: "bg-purple-600 text-white border-purple-600" },
+    { key: "approved",           label: "Approved",     count: counts.approved,           active: "bg-ef-green text-white border-ef-green" },
+    { key: "rejected",           label: "Rejected",     count: counts.rejected,           active: "bg-ef-red text-white border-ef-red" },
+    { key: "expired",            label: "Expired",      count: counts.expired,            active: "bg-muted-foreground text-white border-muted-foreground" },
   ]
 
   const hasFilters = statusFilter !== "all" || teacherFilter !== "all" || dateFilter !== "all" || Boolean(searchQuery)
@@ -218,11 +226,17 @@ export default function SwapApprovalsPage() {
         <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4">
           <AlertTriangle className="size-5 text-ef-amber flex-shrink-0 mt-0.5" />
           <div>
-            <div className="font-semibold text-sm">{pendingCount} swap request{pendingCount > 1 ? "s" : ""} need your approval</div>
-            <div className="text-xs text-muted-foreground mt-0.5">Requests without both teacher confirmations are flagged. Unconfirmed requests expire in 6 hours.</div>
+            <div className="font-semibold text-sm">{pendingCount} swap request{pendingCount > 1 ? "s" : ""} need your attention</div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              {counts.management_pending > 0 && `${counts.management_pending} forwarded by teachers (both agreed) · `}
+              {counts.pending > 0 && `${counts.pending} peer-initiated awaiting confirmation · `}
+              Unconfirmed requests expire in 6 hours.
+            </div>
           </div>
         </div>
       )}
+
+
 
       {/* Filter bar */}
       <Card>
@@ -240,6 +254,7 @@ export default function SwapApprovalsPage() {
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="management_pending">Mgmt Review</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
               <SelectItem value="expired">Expired</SelectItem>
@@ -291,13 +306,13 @@ export default function SwapApprovalsPage() {
           <div className="text-sm text-muted-foreground/70 mt-1">Try adjusting the filters above</div>
         </CardContent></Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
           {filtered.map(swap => {
             const status = swap.status
             const isPending = status === "pending"
             const cfg = STATUS_CFG[status]
             return (
-              <div key={swap.id} className={`rounded-[14px] border border-l-[3px] border-border ${cfg.leftBorder} bg-card overflow-hidden flex flex-col ${status === "expired" ? "opacity-70" : ""}`}>
+              <div key={swap.id} className={`rounded-[14px] border border-border bg-card overflow-hidden flex flex-col ${status === "expired" ? "opacity-70" : ""}`}>
                 {/* header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border gap-2 min-h-[48px]">
                   <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
@@ -305,8 +320,9 @@ export default function SwapApprovalsPage() {
                     <span className="text-xs font-bold">{swap.id}</span>
                     <Badge variant={cfg.badge}>● {cfg.label}</Badge>
                     {isPending && !swap.bothConfirmed && <Badge variant="warning">Unconfirmed</Badge>}
+                    {swap.fromTeacherPortal && <Badge variant="outline" className="text-purple-600 border-purple-300 text-[10px]">From Teacher</Badge>}
                   </div>
-                  {isPending && swap.expiresIn ? (
+                  {(isPending || status === "management_pending") && swap.expiresIn ? (
                     <span className="flex items-center gap-1 text-[11px] text-ef-amber-dark bg-ef-amber-light px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0"><Clock className="size-2.5" />{swap.expiresIn}</span>
                   ) : <span className="text-[11px] text-muted-foreground whitespace-nowrap flex-shrink-0">{swap.date}</span>}
                 </div>
@@ -371,9 +387,14 @@ export default function SwapApprovalsPage() {
 
                 {/* footer */}
                 <div className="flex items-center justify-between px-4 py-2 border-t border-border bg-muted/40 gap-2 flex-wrap">
-                  {isPending ? (
+                  {(isPending || status === "management_pending") ? (
                     <>
-                      <Button variant="ghost" size="sm" onClick={() => setDetailId(swap.id)}><Eye className="size-3" /> View</Button>
+                      <div className="flex items-center gap-1.5">
+                        <Button variant="ghost" size="sm" onClick={() => setDetailId(swap.id)}><Eye className="size-3" /> View</Button>
+                        {status === "management_pending" && (
+                          <span className="text-[11px] text-purple-600 font-medium">Both teachers agreed</span>
+                        )}
+                      </div>
                       <div className="flex gap-1.5">
                         <Button variant="destructive" size="sm" onClick={() => { setRejectId(swap.id); setApproveId(null); setRejectNote("") }}><XCircle className="size-3" /> Reject</Button>
                         <Button size="sm" className="bg-ef-green text-white hover:bg-ef-green/90" onClick={() => { setApproveId(swap.id); setRejectId(null) }}><CheckCircle2 className="size-3" /> Approve</Button>

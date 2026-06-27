@@ -120,3 +120,109 @@ export function coveragePercent(assigned: number, total: number): number {
   if (total <= 0) return 0
   return Math.round((assigned / total) * 1000) / 10
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Click-to-assign candidate ranking (richer scoring for the Proxy Board UI)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type MatchKind = "same-subject" | "diff-subject" | "capped" | "unavailable"
+
+export interface ProxyCandidate {
+  teacher: Teacher
+  score: number
+  matchKind: MatchKind
+  sharedSubjects: string[]
+  dailyUsed: number
+  dailyRemaining: number
+  weeklyUsed: number
+  monthlyUsed: number
+  reasons: string[]
+}
+
+export interface RankInput {
+  absentTeacher: Teacher
+  periodId: string
+  candidates: Teacher[]
+  currentAssignments: ProxyAssignment[]
+  /** Ids of teachers who are themselves absent today (cannot be proxies). */
+  absentTeacherIds: Set<string>
+}
+
+/**
+ * Ranks every candidate teacher for ONE specific period and returns them sorted
+ * best-first. This powers the click-a-period → suggest-substitutes flow.
+ *
+ * Richer than scoreTeacher():
+ *   • Subject overlap   → up to +50 (any shared subject, +8 bonus per extra match)
+ *   • Section match     → +12 (knows the age group / syllabus level)
+ *   • Daily cap headroom→ up to +20
+ *   • Weekly fairness   → up to +10  (less loaded this week ranks higher)
+ *   • Monthly fairness  → up to +8
+ * Hard blocks (matchKind set, kept at end of list):
+ *   • inactive / on_leave / themselves absent → "unavailable"
+ *   • already covering this exact period       → "unavailable"
+ *   • at daily cap                             → "capped"
+ */
+export function rankProxyCandidates(input: RankInput): ProxyCandidate[] {
+  const { absentTeacher, periodId, candidates, currentAssignments, absentTeacherIds } = input
+
+  const ranked = candidates.map<ProxyCandidate>((teacher) => {
+    const reasons: string[] = []
+    const mine = currentAssignments.filter((a) => a.proxyTeacherId === teacher.id)
+    const dailyUsed = mine.length
+    const weeklyUsed = dailyUsed // mock: single-day dataset
+    const monthlyUsed = dailyUsed
+    const dailyRemaining = Math.max(0, teacher.dailyProxyCap - dailyUsed)
+    const sharedSubjects = teacher.subjects.filter((s) => absentTeacher.subjects.includes(s))
+
+    const base: Omit<ProxyCandidate, "score" | "matchKind"> = {
+      teacher, sharedSubjects, dailyUsed, dailyRemaining, weeklyUsed, monthlyUsed, reasons,
+    }
+
+    // ── Hard blocks ──
+    if (teacher.status !== "active" || absentTeacherIds.has(teacher.id)) {
+      reasons.push(absentTeacherIds.has(teacher.id) ? "Absent today" : "Not active")
+      return { ...base, score: 0, matchKind: "unavailable" }
+    }
+    if (mine.some((a) => a.periodId === periodId)) {
+      reasons.push("Already covering this period")
+      return { ...base, score: 0, matchKind: "unavailable" }
+    }
+    if (dailyUsed >= teacher.dailyProxyCap) {
+      reasons.push(`At daily cap (${teacher.dailyProxyCap})`)
+      return { ...base, score: 5, matchKind: "capped" }
+    }
+
+    // ── Soft scoring ──
+    let score = 0
+    if (sharedSubjects.length > 0) {
+      score += 50 + Math.min((sharedSubjects.length - 1) * 8, 16)
+      reasons.push(`Teaches ${sharedSubjects.join(", ")}`)
+    } else {
+      reasons.push("Different subject")
+    }
+    if (teacher.section === absentTeacher.section) {
+      score += 12
+      reasons.push(`Same section (${teacher.section})`)
+    }
+    score += Math.min(dailyRemaining * 10, 20)
+    if (dailyRemaining > 0) reasons.push(`${dailyRemaining} slot${dailyRemaining !== 1 ? "s" : ""} left today`)
+
+    if (teacher.weeklyProxyCap > 0) {
+      score += 10 * Math.max(0, 1 - weeklyUsed / teacher.weeklyProxyCap)
+    }
+    if (teacher.monthlyProxyCap > 0) {
+      score += 8 * Math.max(0, 1 - monthlyUsed / teacher.monthlyProxyCap)
+    }
+
+    const matchKind: MatchKind = sharedSubjects.length > 0 ? "same-subject" : "diff-subject"
+    return { ...base, score: Math.round(Math.min(100, score)), matchKind }
+  })
+
+  // Sort: available first (by score desc), then capped, then unavailable.
+  const rank: Record<MatchKind, number> = { "same-subject": 0, "diff-subject": 0, capped: 1, unavailable: 2 }
+  return ranked.sort((a, b) => {
+    if (rank[a.matchKind] !== rank[b.matchKind]) return rank[a.matchKind] - rank[b.matchKind]
+    return b.score - a.score
+  })
+}

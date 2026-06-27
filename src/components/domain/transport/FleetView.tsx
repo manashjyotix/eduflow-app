@@ -33,7 +33,7 @@ export function FleetView() {
         <KpiCard title="Idle" value={fleet.idle} subtitle="not started" icon={<Clock size={18} />} iconClassName="bg-warning/10 text-warning-foreground" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {VEHICLES.map(veh => {
           const trip = tripForVehicle(veh.id)
           const route = getRoute(veh.routeId)

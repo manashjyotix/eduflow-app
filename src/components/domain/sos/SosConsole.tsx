@@ -179,12 +179,11 @@ export function SosConsole({ subtitle }: SosConsoleProps) {
                 <div key={i.id} className="flex flex-col gap-2">
                   <SOSIncidentCard incident={i} />
                   <div className="flex items-center gap-2 flex-wrap px-1">
-                    <a
-                      href={`tel:${i.reportedByPhone}`}
-                      className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-muted/50"
-                    >
-                      <Phone className="size-3" /> Call reporter
-                    </a>
+                    <Button asChild size="sm" variant="outline">
+                      <a href={`tel:${i.reportedByPhone}`}>
+                        <Phone className="size-3.5" /> Call reporter
+                      </a>
+                    </Button>
                     {i.status !== "resolved" && (
                       <>
                         <Button size="sm" variant="outline" onClick={() => openRespond(i)}>

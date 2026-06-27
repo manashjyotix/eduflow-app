@@ -155,11 +155,11 @@ export function NoticeBoardView({ role, subtitle }: NoticeBoardViewProps) {
       {/* Search + tabs */}
       <Tabs value={tab} onValueChange={setTab}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList>
-            <TabsTrigger value="all">All ({notices.length})</TabsTrigger>
-            <TabsTrigger value="pinned">Pinned</TabsTrigger>
-            <TabsTrigger value="high">High Priority</TabsTrigger>
-            <TabsTrigger value="expired">Expired</TabsTrigger>
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="all" className="flex-1 sm:flex-none">All ({notices.length})</TabsTrigger>
+            <TabsTrigger value="pinned" className="flex-1 sm:flex-none">Pinned</TabsTrigger>
+            <TabsTrigger value="high" className="flex-1 sm:flex-none">High Priority</TabsTrigger>
+            <TabsTrigger value="expired" className="flex-1 sm:flex-none">Expired</TabsTrigger>
           </TabsList>
 
           <div className="relative w-full sm:max-w-xs">

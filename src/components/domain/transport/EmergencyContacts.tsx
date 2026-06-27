@@ -13,7 +13,10 @@
  */
 
 import { useMemo, useState } from "react"
-import { Phone, Droplet, GraduationCap, Cake, ShieldAlert, Users } from "lucide-react"
+import {
+  Phone, Droplet, GraduationCap, Cake, ShieldAlert, Users,
+  CheckCircle2, MapPin, Bus, CircleDashed,
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -39,18 +42,72 @@ function CallButton({ phone, label }: { phone?: string; label: string }) {
   )
 }
 
+/** Live drop / pickup state for a student on a transport route. */
+export type PickupTone = "picked-up" | "reached" | "enroute" | "idle"
+
+export interface PickupStatus {
+  tone: PickupTone
+  label: string
+  /** Optional second line, e.g. "by Mother at 15:05" or the stop name. */
+  detail?: string
+}
+
+const PICKUP_META: Record<
+  PickupTone,
+  { Icon: React.ElementType; className: string }
+> = {
+  "picked-up": {
+    Icon: CheckCircle2,
+    className: "border-[var(--ef-green)]/40 bg-[var(--ef-green-light)] text-[var(--ef-green-dark)]",
+  },
+  reached: {
+    Icon: MapPin,
+    className: "border-[var(--ef-amber)]/40 bg-[var(--ef-amber-light)] text-[var(--ef-amber-dark)]",
+  },
+  enroute: {
+    Icon: Bus,
+    className: "border-primary/40 bg-[var(--info)] text-[var(--info-foreground)]",
+  },
+  idle: {
+    Icon: CircleDashed,
+    className: "text-muted-foreground",
+  },
+}
+
+function PickupBadge({ status }: { status?: PickupStatus }) {
+  if (!status) return <span className="text-xs text-muted-foreground">—</span>
+  const { Icon, className } = PICKUP_META[status.tone]
+  return (
+    <div className="flex flex-col gap-0.5">
+      <Badge variant="outline" className={`w-fit gap-1 text-[11px] ${className}`}>
+        <Icon className="size-3" /> {status.label}
+      </Badge>
+      {status.detail && (
+        <span className="text-[11px] text-muted-foreground">{status.detail}</span>
+      )}
+    </div>
+  )
+}
+
 export interface EmergencyContactsProps {
   students: Student[]
   title?: string
   subtitle?: string
   /** Optional per-row context line, e.g. the bus stop the child gets off at. */
   metaByStudentId?: Record<string, string>
+  /**
+   * Optional live drop/pickup status per student. When provided, a "Pickup"
+   * column is shown reflecting whether the child reached their stop and was
+   * received by a parent.
+   */
+  statusByStudentId?: Record<string, PickupStatus>
 }
 
 export function EmergencyContacts({
-  students, title = "Emergency Contacts", subtitle, metaByStudentId,
+  students, title = "Emergency Contacts", subtitle, metaByStudentId, statusByStudentId,
 }: EmergencyContactsProps) {
   const [q, setQ] = useState("")
+  const showStatus = !!statusByStudentId
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase()
@@ -95,6 +152,7 @@ export function EmergencyContacts({
                   <th className="px-3 py-2.5 font-medium">Parent</th>
                   <th className="px-3 py-2.5 font-medium">Phone</th>
                   <th className="px-3 py-2.5 font-medium">Emergency</th>
+                  {showStatus && <th className="px-3 py-2.5 font-medium">Pickup</th>}
                 </tr>
               </thead>
               <tbody>
@@ -127,6 +185,9 @@ export function EmergencyContacts({
                       <td className="px-3 py-3 whitespace-nowrap text-muted-foreground">{s.parentName}</td>
                       <td className="px-3 py-3"><CallButton phone={s.parentPhone} label={`${s.parentName} (parent)`} /></td>
                       <td className="px-3 py-3"><CallButton phone={s.emergencyPhone} label={`${s.name} emergency contact`} /></td>
+                      {showStatus && (
+                        <td className="px-3 py-3"><PickupBadge status={statusByStudentId?.[s.id]} /></td>
+                      )}
                     </tr>
                   )
                 })}

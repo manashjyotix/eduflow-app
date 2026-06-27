@@ -114,6 +114,7 @@ export function StudentLeaveInbox({ subtitle }: StudentLeaveInboxProps) {
           subtitle={`${pending} awaiting review`}
           icon={<Inbox className="size-5" />}
           tone="brand"
+          sparkline={{ variant: "bar", data: [3, 5, 4, 6, 5, 7, requests.length], color: "var(--ef-brand)" }}
         />
         <KpiCard
           title="Pending"
@@ -121,6 +122,7 @@ export function StudentLeaveInbox({ subtitle }: StudentLeaveInboxProps) {
           subtitle={pending === 0 ? "All clear" : "Need a decision"}
           icon={<Clock className="size-5" />}
           tone="amber"
+          sparkline={{ variant: "bar", data: [4, 2, 3, 4, 1, 3, pending], color: "var(--ef-amber)" }}
         />
         <KpiCard
           title="Approved"
@@ -128,6 +130,7 @@ export function StudentLeaveInbox({ subtitle }: StudentLeaveInboxProps) {
           subtitle={`${approved} granted`}
           icon={<CheckCircle className="size-5" />}
           tone="green"
+          sparkline={{ variant: "bar", data: [1, 2, 3, 2, 4, 3, approved], color: "var(--ef-green)" }}
         />
         <KpiCard
           title="Rejected"
@@ -135,6 +138,7 @@ export function StudentLeaveInbox({ subtitle }: StudentLeaveInboxProps) {
           subtitle={rejected === 0 ? "No rejections" : `${rejected} declined`}
           icon={<XCircle className="size-5" />}
           tone="red"
+          sparkline={{ variant: "bar", data: [1, 0, 1, 2, 0, 1, rejected], color: "var(--ef-red)" }}
         />
       </div>
 

@@ -127,10 +127,10 @@ export default function AttendanceSummaryPage() {
                       <SortableHead field="name" label="Teacher" sortField={teacherSort.sortField} sortDir={teacherSort.sortDir} onSort={teacherSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
                       <SortableHead field="subjects" label="Subject" sortField={teacherSort.sortField} sortDir={teacherSort.sortDir} onSort={teacherSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
                       <SortableHead field="section" label="Section" sortField={teacherSort.sortField} sortDir={teacherSort.sortDir} onSort={teacherSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
-                      <SortableHead field="thisMonthPct" label="This Month %" align="right" sortField={teacherSort.sortField} sortDir={teacherSort.sortDir} onSort={teacherSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
-                      <SortableHead field="daysPresent" label="Present" align="right" sortField={teacherSort.sortField} sortDir={teacherSort.sortDir} onSort={teacherSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
-                      <SortableHead field="daysAbsent" label="Absent" align="right" sortField={teacherSort.sortField} sortDir={teacherSort.sortDir} onSort={teacherSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
-                      <SortableHead field="leaveBalance" label="Leave Balance" align="right" sortField={teacherSort.sortField} sortDir={teacherSort.sortDir} onSort={teacherSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
+                      <SortableHead field="thisMonthPct" label="This Month %" sortField={teacherSort.sortField} sortDir={teacherSort.sortDir} onSort={teacherSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
+                      <SortableHead field="daysPresent" label="Present" sortField={teacherSort.sortField} sortDir={teacherSort.sortDir} onSort={teacherSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
+                      <SortableHead field="daysAbsent" label="Absent" sortField={teacherSort.sortField} sortDir={teacherSort.sortDir} onSort={teacherSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
+                      <SortableHead field="leaveBalance" label="Leave Balance" sortField={teacherSort.sortField} sortDir={teacherSort.sortDir} onSort={teacherSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
                       <SortableHead field="status" label="Status" sortField={teacherSort.sortField} sortDir={teacherSort.sortDir} onSort={teacherSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
                     </TableRow>
                   </TableHeader>
@@ -140,12 +140,12 @@ export default function AttendanceSummaryPage() {
                         <TableCell className="px-4 py-3 font-semibold">{t.name}</TableCell>
                         <TableCell className="px-4 py-3 text-muted-foreground text-xs">{t.subjects}</TableCell>
                         <TableCell className="px-4 py-3 text-muted-foreground text-xs">{t.section}</TableCell>
-                        <TableCell className={`px-4 py-3 text-right font-bold ${pctColor(t.thisMonthPct)}`}>
+                        <TableCell className={`px-4 py-3 font-bold ${pctColor(t.thisMonthPct)}`}>
                           {t.thisMonthPct}%
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-right text-[var(--ef-green-dark)] font-medium">{t.daysPresent}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-destructive font-medium">{t.daysAbsent}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-muted-foreground">{t.leaveBalance} days</TableCell>
+                        <TableCell className="px-4 py-3 text-[var(--ef-green-dark)] font-medium">{t.daysPresent}</TableCell>
+                        <TableCell className="px-4 py-3 text-destructive font-medium">{t.daysAbsent}</TableCell>
+                        <TableCell className="px-4 py-3 text-muted-foreground">{t.leaveBalance} days</TableCell>
                         <TableCell className="px-4 py-3">
                           <Badge variant={statusVariant(t.status)} className="text-xs capitalize">
                             {t.status.replace("_", " ")}
@@ -174,20 +174,20 @@ export default function AttendanceSummaryPage() {
                   <TableHeader>
                     <TableRow className="bg-muted/40 hover:bg-transparent">
                       <SortableHead field="cls" label="Class" sortField={classSort.sortField} sortDir={classSort.sortDir} onSort={classSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
-                      <SortableHead field="total" label="Total Students" align="right" sortField={classSort.sortField} sortDir={classSort.sortDir} onSort={classSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
-                      <SortableHead field="present" label="Present Today" align="right" sortField={classSort.sortField} sortDir={classSort.sortDir} onSort={classSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
-                      <SortableHead field="absent" label="Absent Today" align="right" sortField={classSort.sortField} sortDir={classSort.sortDir} onSort={classSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
-                      <SortableHead field="pct" label="Attendance %" align="right" sortField={classSort.sortField} sortDir={classSort.sortDir} onSort={classSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
+                      <SortableHead field="total" label="Total Students" sortField={classSort.sortField} sortDir={classSort.sortDir} onSort={classSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
+                      <SortableHead field="present" label="Present Today" sortField={classSort.sortField} sortDir={classSort.sortDir} onSort={classSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
+                      <SortableHead field="absent" label="Absent Today" sortField={classSort.sortField} sortDir={classSort.sortDir} onSort={classSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
+                      <SortableHead field="pct" label="Attendance %" sortField={classSort.sortField} sortDir={classSort.sortDir} onSort={classSort.toggleSort} className="px-4 py-2.5 text-xs font-semibold text-muted-foreground" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {classSort.sorted.map((row, i) => (
                       <TableRow key={row.cls} className={`${i % 2 ? "bg-muted/10" : ""}`}>
                         <TableCell className="px-4 py-3 font-semibold">{row.cls}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-muted-foreground">{row.total}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-[var(--ef-green-dark)] font-medium">{row.present}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-destructive font-medium">{row.absent}</TableCell>
-                        <TableCell className={`px-4 py-3 text-right font-bold ${pctColor(row.pct)}`}>
+                        <TableCell className="px-4 py-3 text-muted-foreground">{row.total}</TableCell>
+                        <TableCell className="px-4 py-3 text-[var(--ef-green-dark)] font-medium">{row.present}</TableCell>
+                        <TableCell className="px-4 py-3 text-destructive font-medium">{row.absent}</TableCell>
+                        <TableCell className={`px-4 py-3 font-bold ${pctColor(row.pct)}`}>
                           {row.pct.toFixed(1)}%
                         </TableCell>
                       </TableRow>
@@ -195,10 +195,10 @@ export default function AttendanceSummaryPage() {
                     {/* Summary row */}
                     <TableRow className="bg-muted/30 font-semibold hover:bg-muted/30">
                       <TableCell className="px-4 py-3">All Classes</TableCell>
-                      <TableCell className="px-4 py-3 text-right">{CLASS_ATTENDANCE.reduce((s, r) => s + r.total, 0)}</TableCell>
-                      <TableCell className="px-4 py-3 text-right text-[var(--ef-green-dark)]">{CLASS_ATTENDANCE.reduce((s, r) => s + r.present, 0)}</TableCell>
-                      <TableCell className="px-4 py-3 text-right text-destructive">{CLASS_ATTENDANCE.reduce((s, r) => s + r.absent, 0)}</TableCell>
-                      <TableCell className={`px-4 py-3 text-right ${pctColor(
+                      <TableCell className="px-4 py-3">{CLASS_ATTENDANCE.reduce((s, r) => s + r.total, 0)}</TableCell>
+                      <TableCell className="px-4 py-3 text-[var(--ef-green-dark)]">{CLASS_ATTENDANCE.reduce((s, r) => s + r.present, 0)}</TableCell>
+                      <TableCell className="px-4 py-3 text-destructive">{CLASS_ATTENDANCE.reduce((s, r) => s + r.absent, 0)}</TableCell>
+                      <TableCell className={`px-4 py-3 ${pctColor(
                         (CLASS_ATTENDANCE.reduce((s, r) => s + r.present, 0) / CLASS_ATTENDANCE.reduce((s, r) => s + r.total, 0)) * 100
                       )}`}>
                         {((CLASS_ATTENDANCE.reduce((s, r) => s + r.present, 0) / CLASS_ATTENDANCE.reduce((s, r) => s + r.total, 0)) * 100).toFixed(1)}%

@@ -4,12 +4,12 @@ import { useState } from "react"
 import dynamic from "next/dynamic"
 
 // ── Dynamic recharts imports (SSR-safe, code-split) ───────────────────────────
-const LineChart = dynamic(
-  () => import("recharts").then((m) => ({ default: m.LineChart })),
+const AreaChart = dynamic(
+  () => import("recharts").then((m) => ({ default: m.AreaChart })),
   { ssr: false }
 )
-const Line = dynamic(
-  () => import("recharts").then((m) => ({ default: m.Line })),
+const Area = dynamic(
+  () => import("recharts").then((m) => ({ default: m.Area })),
   { ssr: false }
 )
 const XAxis = dynamic(
@@ -30,6 +30,10 @@ const Tooltip = dynamic(
 )
 const ResponsiveContainer = dynamic(
   () => import("recharts").then((m) => ({ default: m.ResponsiveContainer })),
+  { ssr: false }
+)
+const ReferenceLine = dynamic(
+  () => import("recharts").then((m) => ({ default: m.ReferenceLine })),
   { ssr: false }
 )
 import { FileBarChart2, TrendingUp, Activity, Users, AlertOctagon } from "lucide-react"
@@ -165,36 +169,97 @@ export default function ProxyCoverageReportPage() {
           </CardContent>
         </Card>
 
-        {/* Line Chart */}
+        {/* Area Chart — Coverage % Trend */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold">Coverage % Trend (Last 6 Weeks)</CardTitle>
           </CardHeader>
           <Separator />
           <CardContent className="pt-4">
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={COVERAGE_TREND}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="week" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis domain={[60, 100]} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} unit="%" />
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    fontSize: 12,
-                  }}
-                  formatter={(v: any) => [`${v}%`, "Coverage"]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="coverage"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--primary))", r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {/* Chart — no XAxis inside Recharts, rendered as HTML row below */}
+            <div className="w-full" style={{ height: 200 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={COVERAGE_TREND} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="coverageGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#007AFF" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="#007AFF" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="week" hide />
+                  <YAxis
+                    domain={[0, 100]}
+                    ticks={[0, 20, 40, 60, 80, 100]}
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    tickFormatter={(v) => `${v}%`}
+                    axisLine={false}
+                    tickLine={false}
+                    width={40}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: 12,
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.10)",
+                    }}
+                    labelStyle={{ fontWeight: 600, color: "hsl(var(--foreground))", marginBottom: 4 }}
+                    formatter={(v: unknown) => [`${v}%`, "Coverage"]}
+                    cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1, strokeDasharray: "4 2" }}
+                  />
+                  <ReferenceLine
+                    y={80}
+                    stroke="#007AFF"
+                    strokeDasharray="5 3"
+                    strokeWidth={1.5}
+                    strokeOpacity={0.45}
+                    label={{
+                      value: "80% target",
+                      position: "insideTopRight",
+                      fontSize: 10,
+                      fill: "#007AFF",
+                      fillOpacity: 0.65,
+                      dy: -6,
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="coverage"
+                    stroke="#007AFF"
+                    strokeWidth={2.5}
+                    fill="url(#coverageGradient)"
+                    dot={{ fill: "#007AFF", r: 4, strokeWidth: 0 }}
+                    activeDot={{ fill: "#007AFF", r: 6, strokeWidth: 2, stroke: "hsl(var(--card))" }}
+                    isAnimationActive={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Custom X-axis labels — sits between chart bottom (0%) and legend */}
+            <div className="flex pl-[40px] pr-[16px] py-2">
+              {COVERAGE_TREND.map((d) => (
+                <div key={d.week} className="flex-1 text-center text-[11px] text-muted-foreground leading-none">
+                  {d.week}
+                </div>
+              ))}
+            </div>
+
+            {/* Inline legend */}
+            <div className="flex items-center gap-5 pt-1">
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="size-2.5 rounded-sm inline-block" style={{ background: "#007AFF" }} />
+                Coverage %
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <svg width="18" height="2" viewBox="0 0 18 2" aria-hidden="true">
+                  <line x1="0" y1="1" x2="18" y2="1" stroke="#007AFF" strokeOpacity={0.5} strokeWidth="1.5" strokeDasharray="5 3" />
+                </svg>
+                80% target
+              </span>
+            </div>
           </CardContent>
         </Card>
       </div>

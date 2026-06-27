@@ -4,12 +4,12 @@ import Link from "next/link"
 import {
   AlertTriangle, CheckCircle2, Clock, Users, TrendingUp, Zap,
   UserX, Calendar, ArrowRight, Bell, RefreshCw, Printer,
-  Edit2, Eye, Search as SearchIcon,
+  Edit2, Eye, Activity, Search as SearchIcon,
 } from "lucide-react"
 import { PageHeader } from "@/components/shared/page-header"
 import { KpiCard } from "@/components/shared/kpi-card"
 import { BirthdayCard } from "@/components/shared/birthday-card"
-import { MiniSparkline } from "@/components/shared/mini-sparkline"
+import { EduBarChart } from "@/components/shared/edu-bar-chart"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -73,8 +73,6 @@ const ABSENT_TEACHERS: {
   { name: "Rima Das",     id: "T009", subject: "Art",     sections: "VI-B, VII-B",   type: "Part-time", periods: "P1, P5, P6, P7", reason: "Family Emergency", status: "pending",  coverage: 25,  cap: "1/2" },
 ]
 
-const maxCoverage = 100
-
 function initials(name: string) {
   return name.split(" ").map(n => n[0]).join("")
 }
@@ -133,13 +131,13 @@ export default function ManagementDashboardPage() {
       {/* Period Countdown Banner */}
       <div className="flex items-center gap-4 p-4 rounded-2xl border-2 border-destructive bg-ef-red-light">
         <div className="relative flex items-center justify-center shrink-0">
-          <span className="absolute size-8 rounded-full bg-destructive opacity-25 animate-ping" />
-          <span className="relative flex items-center justify-center size-7 rounded-full bg-destructive">
-            <Clock className="size-3.5 text-white" />
+          <span className="absolute size-10 rounded-full bg-destructive opacity-20 animate-ping" />
+          <span className="relative flex items-center justify-center size-10 rounded-full bg-destructive/10 text-destructive">
+            <Activity className="size-5" />
           </span>
         </div>
         <div className="flex-1 min-w-0">
-          <CountdownTimer label="Next period in" className="[&_p:first-child]:text-destructive [&_p.text-2xl]:text-destructive" />
+          <CountdownTimer label="Next period in" hideIcon className="[&_p:first-child]:text-destructive [&_p.text-2xl]:text-destructive" />
           <div className="text-xs text-ef-red-dark/80 mt-1">2 gaps still uncovered — assign proxies now</div>
         </div>
         <Button variant="destructive" size="sm" className="shrink-0"><Zap className="size-4" /> Auto-Assign All</Button>
@@ -154,77 +152,108 @@ export default function ManagementDashboardPage() {
       </div>
 
       {/* Coverage Trend Chart */}
-      <Card>
-        <CardHeader className="flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <TrendingUp className="size-4 text-primary" /> 7-Day Coverage Trend
-          </CardTitle>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="inline-block size-3 rounded bg-primary" /> Today</span>
-            <span className="flex items-center gap-1"><span className="inline-block size-3 rounded bg-ef-brand-light border border-primary/40" /> Previous days</span>
+      <Card className="overflow-hidden">
+        <CardHeader className="flex-row items-center justify-between pb-4 border-b border-border">
+          <div>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <TrendingUp className="size-4 text-primary" /> 7-Day Coverage Trend
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Proxy fill rate across the week</p>
+          </div>
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded bg-primary" /> Today</span>
+            <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded" style={{ background: "color-mix(in srgb, var(--ef-brand) 45%, white)" }} /> Past days</span>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-end gap-1.5 h-24 w-full pt-2">
-            {COVERAGE_TREND.map(d => {
-              const h = Math.round((d.coverage / maxCoverage) * 100)
-              const isToday = d.day === "Today"
-              return (
-                <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
-                  <div
-                    className={isToday ? "w-full rounded-t-md bg-primary" : "w-full rounded-t-md bg-ef-brand-light border border-primary/40"}
-                    style={{ height: `${h}%`, minHeight: 4 }}
-                    title={`${d.day}: ${d.coverage}% coverage`}
-                  />
-                  <span className="text-[9px] font-semibold text-muted-foreground truncate w-full text-center">{d.day}</span>
-                </div>
-              )
-            })}
-          </div>
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
-            <div className="flex gap-6">
-              {[
-                { label: "Weekly Avg", value: "68%", className: "text-primary" },
-                { label: "Best Day",   value: "75%", className: "text-ef-green" },
-                { label: "Worst Day",  value: "58%", className: "text-destructive" },
-              ].map(stat => (
-                <div key={stat.label} className="text-center">
-                  <div className={`text-lg font-black ${stat.className}`}>{stat.value}</div>
-                  <div className="text-[10px] text-muted-foreground font-semibold">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-            <MiniSparkline variant="line" data={MGMT_SPARKS.coverage} width={120} height={40} />
+        <CardContent className="pt-5 pb-4">
+          {/* Chart */}
+          <EduBarChart
+            data={COVERAGE_TREND}
+            xKey="day"
+            height={180}
+            domain={[0, 100]}
+            showLabels
+            yFormatter={v => `${v}%`}
+            tooltipFormatter={v => `${v}% coverage`}
+            series={[{ dataKey: "coverage", name: "Coverage", color: "var(--primary)" }]}
+            barColors={COVERAGE_TREND.map(d => d.day === "Today" ? "var(--primary)" : "color-mix(in srgb, var(--ef-brand) 45%, white)")}
+          />
+
+          {/* Stats footer */}
+          <div className="flex items-center gap-1 flex-wrap mt-4 pt-4 border-t border-border">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mr-1">Coverage:</span>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span className="inline-block size-2 rounded-full bg-primary" />
+              Weekly avg <span className="font-semibold text-foreground">68%</span>
+            </span>
+            <span className="text-muted-foreground/40 text-xs mx-0.5">·</span>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span className="inline-block size-2 rounded-full bg-[var(--ef-green)]" />
+              Best day <span className="font-semibold text-foreground">75%</span>
+            </span>
+            <span className="text-muted-foreground/40 text-xs mx-0.5">·</span>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span className="inline-block size-2 rounded-full bg-destructive" />
+              Worst day <span className="font-semibold text-foreground">58%</span>
+            </span>
           </div>
         </CardContent>
       </Card>
 
       {/* Uncovered + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2 text-destructive">
-              <AlertTriangle className="size-4" /> Uncovered Periods
-            </CardTitle>
-            <Badge variant="destructive">● 2 open</Badge>
+        <Card className="overflow-hidden border-destructive/30 flex flex-col">
+          <CardHeader className="flex-row items-center justify-between pb-3 border-b border-destructive/20 bg-gradient-to-r from-ef-red-light to-transparent">
+            <div className="flex items-center gap-2.5">
+              <div className="size-9 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
+                <AlertTriangle className="size-4.5" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold text-destructive leading-tight">Uncovered Periods</CardTitle>
+                <p className="text-[11px] text-destructive/70 mt-0.5">Needs a proxy assignment now</p>
+              </div>
+            </div>
+            <Badge variant="destructive" className="gap-1.5">
+              <span className="size-1.5 rounded-full bg-white animate-pulse inline-block" />
+              {UNCOVERED_PERIODS.length} open
+            </Badge>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-3 flex-1 flex flex-col gap-2.5">
             {UNCOVERED_PERIODS.map((p, i) => (
-              <div key={i} className="flex items-center gap-3 p-4 border-b border-border last:border-b-0 bg-ef-red-light">
-                <div className="size-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0 bg-destructive">{p.period}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm">{p.class} · {p.subject}</div>
-                  <div className="text-xs text-muted-foreground font-mono">{p.time}</div>
-                  <div className="text-xs text-destructive mt-0.5">Absent: {p.absent}</div>
+              <div
+                key={i}
+                className="group relative flex items-center gap-3.5 rounded-xl border border-border bg-card p-3 transition-all hover:border-destructive/40 hover:shadow-sm"
+              >
+                {/* Period pill */}
+                <div className="size-12 rounded-xl flex flex-col items-center justify-center shrink-0 bg-ef-red-light text-destructive">
+                  <span className="text-sm font-black leading-none">{p.period}</span>
+                  <span className="text-[9px] opacity-85 leading-none mt-0.5 font-mono">{p.time.split("–")[0]}</span>
                 </div>
-                <Button size="xs" className="shrink-0"><Zap className="size-3" /> Assign</Button>
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-sm">{p.class}</span>
+                    <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium">{p.subject}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="font-mono text-[11px] text-muted-foreground">{p.time}</span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-ef-red-light px-1.5 py-0.5 text-[10px] font-medium text-destructive">
+                      <UserX className="size-2.5" /> {p.absent}
+                    </span>
+                  </div>
+                </div>
+                <Button size="sm" className="shrink-0 gap-1">
+                  <Zap className="size-3.5" /> Assign
+                </Button>
               </div>
             ))}
-            <div className="p-4 flex items-center justify-between border-t border-border">
-              <span className="text-xs text-muted-foreground">2 gaps need immediate attention</span>
-              <Button size="sm"><Zap className="size-3" /> Auto-Assign All</Button>
-            </div>
           </CardContent>
+          <div className="px-4 py-3 flex items-center justify-between bg-muted/30 border-t border-border mt-auto">
+            <span className="text-xs text-muted-foreground">{UNCOVERED_PERIODS.length} gaps need immediate attention</span>
+            <Button size="sm">
+              <Zap className="size-3.5" /> Auto-Assign All
+            </Button>
+          </div>
         </Card>
 
         <div className="flex flex-col gap-6">
@@ -239,18 +268,52 @@ export default function ManagementDashboardPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3"><CardTitle className="text-base font-semibold flex items-center gap-2"><Clock className="size-4 text-primary" /> Pending Items</CardTitle></CardHeader>
+          {/* Pending Items */}
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-3 border-b border-border">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Clock className="size-4 text-primary" /> Pending Items
+              </CardTitle>
+            </CardHeader>
             <CardContent className="p-0">
               {[
-                { label: "Absence Approvals", count: PENDING_ABSENCES, href: "/management/absences", icon: UserX,     iconClass: "bg-ef-red-light text-ef-red",     variant: "destructive" as const },
-                { label: "Swap Requests",     count: PENDING_SWAPS,    href: "/management/swaps",    icon: RefreshCw, iconClass: "bg-ef-amber-light text-ef-amber", variant: "warning" as const },
+                {
+                  label: "Absence Approvals",
+                  count: PENDING_ABSENCES,
+                  href: "/management/absences",
+                  icon: UserX,
+                  bg: "bg-ef-red-light",
+                  iconClass: "text-destructive",
+                  badgeVariant: "destructive" as const,
+                  desc: "Teacher request pending review",
+                },
+                {
+                  label: "Swap Requests",
+                  count: PENDING_SWAPS,
+                  href: "/management/swaps",
+                  icon: RefreshCw,
+                  bg: "bg-ef-amber-light",
+                  iconClass: "text-[var(--ef-amber)]",
+                  badgeVariant: "warning" as const,
+                  desc: "Peer swap awaiting approval",
+                },
               ].map((item, i) => (
-                <Link key={i} href={item.href} className="flex items-center gap-3 p-4 border-b border-border last:border-b-0 hover:bg-muted/30">
-                  <div className={`size-8 rounded-lg flex items-center justify-center shrink-0 ${item.iconClass}`}><item.icon className="size-3.5" /></div>
-                  <span className="flex-1 text-sm font-medium">{item.label}</span>
-                  <Badge variant={item.variant}>● {item.count} pending</Badge>
-                  <ArrowRight className="size-3.5 text-muted-foreground/70" />
+                <Link
+                  key={i}
+                  href={item.href}
+                  className="flex items-center gap-3 px-4 py-3.5 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors group"
+                >
+                  <div className={`size-9 rounded-xl flex items-center justify-center shrink-0 ${item.bg}`}>
+                    <item.icon className={`size-4 ${item.iconClass}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm leading-tight">{item.label}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">{item.desc}</div>
+                  </div>
+                  <Badge variant={item.badgeVariant} className="shrink-0 tabular-nums">
+                    {item.count}
+                  </Badge>
+                  <ArrowRight className="size-3.5 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors" />
                 </Link>
               ))}
             </CardContent>
@@ -301,40 +364,61 @@ export default function ManagementDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex-row items-center justify-between pb-3">
+        <Card className="overflow-hidden flex flex-col">
+          <CardHeader className="flex-row items-center justify-between pb-3 border-b border-border">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Zap className="size-4 text-ef-purple" /> AI Proxy Suggestions
             </CardTitle>
             <Badge className="bg-ef-purple text-white hover:bg-ef-purple/80">Smart</Badge>
           </CardHeader>
-          <CardContent className="p-0">
-            {AI_SUGGESTIONS.map((s, i) => (
-              <div key={i} className={`flex items-center gap-3 p-4 border-b border-border last:border-b-0 ${i === 0 ? "bg-ef-purple-light" : ""}`}>
-                <div className="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0" aria-hidden="true">{s.teacher.charAt(0)}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm">{s.teacher}</div>
-                  <div className="text-xs text-muted-foreground">{s.period} · {s.reason}</div>
+
+          {/* Suggestions list — blank when empty */}
+          <CardContent className="p-0 flex-1">
+            {AI_SUGGESTIONS.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 px-4 text-center text-muted-foreground">
+                {/* intentionally blank per spec */}
+              </div>
+            ) : (
+              AI_SUGGESTIONS.map((s, i) => (
+                <div key={i} className={`flex items-center gap-3 px-4 py-3.5 border-b border-border last:border-b-0 transition-colors ${i === 0 ? "bg-ef-purple-light" : "hover:bg-muted/20"}`}>
+                  <div className="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">{s.teacher.charAt(0)}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm">{s.teacher}</div>
+                    <div className="text-xs text-muted-foreground">{s.period} · {s.reason}</div>
+                  </div>
+                  <div className="text-right shrink-0 min-w-[40px]">
+                    <div className={`text-xl font-black ${i === 0 ? "text-ef-purple" : "text-foreground"}`}>{s.score}</div>
+                    <div className="text-[10px] text-muted-foreground">score</div>
+                  </div>
+                  {i === 0 && <Button size="sm" className="shrink-0 ml-1">Confirm</Button>}
                 </div>
-                <div className="text-right shrink-0">
-                  <div className={`text-xl font-black ${i === 0 ? "text-ef-purple" : "text-foreground"}`}>{s.score}</div>
-                  <div className="text-[10px] text-muted-foreground">score</div>
-                </div>
-                {i === 0 && <Button size="sm" className="shrink-0">Confirm</Button>}
-              </div>
-            ))}
-            <div className="p-4 border-t border-border">
-              <div className="flex items-center gap-4 flex-wrap">
-                <span className="text-xs font-semibold text-muted-foreground">Score basis:</span>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground"><span className="inline-block size-2 rounded-full bg-ef-green" aria-hidden="true" /> Same subject +10</span>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground"><span className="inline-block size-2 rounded-full bg-primary" aria-hidden="true" /> Free period +3</span>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground"><span className="inline-block size-2 rounded-full bg-ef-amber" aria-hidden="true" /> Lowest load +3</span>
-              </div>
-              <div className="flex justify-end mt-2">
-                <Button variant="ghost" size="sm" asChild><Link href="/management/proxy">View proxy board <ArrowRight className="size-3" /></Link></Button>
-              </div>
-            </div>
+              ))
+            )}
           </CardContent>
+
+          {/* Score basis footer — always visible */}
+          <div className="px-4 py-3 border-t border-border bg-muted/20 mt-auto">
+            <div className="flex items-center gap-1 flex-wrap mb-2">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mr-1">Score basis:</span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="inline-block size-2 rounded-full bg-[var(--ef-green)]" />
+                Same subject <span className="font-semibold text-foreground">+10</span>
+              </span>
+              <span className="text-muted-foreground/40 text-xs mx-0.5">·</span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="inline-block size-2 rounded-full bg-primary" />
+                Free period <span className="font-semibold text-foreground">+3</span>
+              </span>
+              <span className="text-muted-foreground/40 text-xs mx-0.5">·</span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="inline-block size-2 rounded-full bg-[var(--ef-amber)]" />
+                Lowest load <span className="font-semibold text-foreground">+3</span>
+              </span>
+            </div>
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs w-full justify-end" asChild>
+              <Link href="/management/proxy">View proxy board <ArrowRight className="size-3 ml-1" /></Link>
+            </Button>
+          </div>
         </Card>
       </div>
 

@@ -4,7 +4,7 @@ import {
   Banknote, BookOpen, Bell, ShieldCheck, CreditCard, LayoutGrid,
   TrendingUp, UserCog, ChevronDown, Database, TriangleAlert, User,
   FileText, Megaphone, CheckSquare, Receipt, Wallet, NotebookPen,
-  ScrollText, Globe, Building2,
+  ScrollText, Globe, Building2, RefreshCw,
   PlugZap, History, ListChecks, HeartHandshake, BookMarked,
   ClipboardCheck, UserRoundSearch, ShieldAlert, Siren, Bus,
 } from "lucide-react"
@@ -162,9 +162,10 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
     {
       label: "Leave & Proxy",
       items: [
-        { label: "Apply Leave",    href: "/teacher/leave",         icon: ClipboardList },
-        { label: "Leave History",  href: "/teacher/leave-history", icon: History },
-        { label: "Proxy History",  href: "/teacher/proxy-history", icon: ArrowLeftRight },
+        { label: "Apply Leave",    href: "/teacher/leave",          icon: ClipboardList },
+        { label: "Leave History",  href: "/teacher/leave-history",  icon: History },
+        { label: "Proxy History",  href: "/teacher/proxy-history",  icon: ArrowLeftRight },
+        { label: "Swap Requests",  href: "/teacher/swap-requests",  icon: RefreshCw },
       ],
     },
     {

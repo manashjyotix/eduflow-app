@@ -60,6 +60,8 @@ export interface EduBarChartProps {
   scrollable?: boolean
   /** Minimum px width reserved per category when scrollable — defaults to 64 */
   minCategoryWidth?: number
+  /** Optional per-datum bar colours (index-aligned with `data`). Falls back to the series colour. */
+  barColors?: (string | undefined)[]
   className?: string
 }
 
@@ -130,6 +132,7 @@ export function EduBarChart({
   domain,
   scrollable = false,
   minCategoryWidth = 64,
+  barColors,
   className,
 }: EduBarChartProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
@@ -213,7 +216,7 @@ export function EduBarChart({
           )}
           {data.map((_, i) => {
             const isSelected = activeIndex === i
-            const baseColor = s.color ?? "var(--primary)"
+            const baseColor = barColors?.[i] ?? s.color ?? "var(--primary)"
             return (
               <Cell
                 key={i}
