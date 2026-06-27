@@ -14,6 +14,7 @@ export const DEMO_CREDENTIALS: Record<string, { role: Role; password: string }> 
   "mgmt@hcea.edu":               { role: "management",  password: "mgmt123" },
   "priya@hcea.edu":              { role: "teacher",     password: "teacher123" },
   "parent@hcea.edu":             { role: "parent",      password: "parent123" },
+  "driver@hcea.edu":             { role: "driver",      password: "driver123" },
 }
 
 const STORAGE_ROLE   = "eduflow-role"

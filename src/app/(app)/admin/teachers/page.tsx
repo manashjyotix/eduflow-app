@@ -181,7 +181,7 @@ export default function TeachersPage() {
           {filtered.map(teacher => {
             const statusConf = STATUS_COLORS[teacher.status]
             return (
-              <Card key={teacher.id} className="hover:shadow-md transition-shadow">
+              <Card key={teacher.id}>
                 <CardContent className="p-5">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-3">

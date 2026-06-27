@@ -99,7 +99,7 @@ export default function SuperAuditLogPage() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard title="Total Actions (30d)" value={logs.length} subtitle="All platform events" icon={<Activity className="size-5" />} sparkline={{ variant: "bar", data: [12, 18, 15, 22, 19, 24] }} />
         <KpiCard title="Super Admin Actions" value={superAdminActions} subtitle="Privileged actions" icon={<Shield className="size-5" />} iconClassName="bg-ef-purple-light text-ef-purple" sparkline={{ variant: "bar", data: [1, 2, 1, 1, 2, 3], color: "var(--ef-purple)" }} />
         <KpiCard title="Schools Affected" value={uniqueSchools.length} subtitle="Unique tenants" icon={<Building2 className="size-5" />} iconClassName="bg-ef-green-light text-ef-green" sparkline={{ variant: "line", data: [4, 5, 5, 6, 6, 6], color: "var(--ef-green)" }} />
@@ -141,6 +141,7 @@ export default function SuperAuditLogPage() {
           <Badge variant="secondary">{filtered.length} of {logs.length} events</Badge>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table className="text-sm">
             <caption className="sr-only">Audit events log</caption>
             <TableHeader>
@@ -187,6 +188,7 @@ export default function SuperAuditLogPage() {
               })}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -194,6 +196,7 @@ export default function SuperAuditLogPage() {
       <Card>
         <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base font-semibold"><Eye className="size-4 text-ef-amber" /> Impersonation Sessions</CardTitle></CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table className="text-sm">
             <caption className="sr-only">Impersonation sessions</caption>
             <TableHeader>
@@ -217,6 +220,7 @@ export default function SuperAuditLogPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

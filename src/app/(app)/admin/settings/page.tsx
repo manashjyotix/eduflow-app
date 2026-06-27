@@ -16,6 +16,7 @@ import {
   Loader2,
   AlertTriangle,
   PartyPopper,
+  ClipboardCheck,
 } from "lucide-react"
 
 import { PageHeader } from "@/components/shared/page-header"
@@ -41,6 +42,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { cn } from "@/lib/utils"
+import { useAttendanceMode, type AttendanceMode } from "@/context/attendance-mode-context"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -478,6 +480,20 @@ function RolloverWizard({ open, onOpenChange }: RolloverWizardProps) {
 
 export default function AdminSettingsPage() {
   const [wizardOpen, setWizardOpen] = useState(false)
+  const { attendanceMode, setAttendanceMode } = useAttendanceMode()
+
+  const ATTENDANCE_MODES: { value: AttendanceMode; label: string; description: string }[] = [
+    {
+      value: "per-period",
+      label: "Per-Period",
+      description: "Teachers mark attendance separately for each class period. A period selector appears on the mark attendance page.",
+    },
+    {
+      value: "single-daily",
+      label: "Single Daily",
+      description: "One attendance roll call per day per class. The period selector is hidden on the mark attendance page.",
+    },
+  ]
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8">
@@ -486,6 +502,67 @@ export default function AdminSettingsPage() {
         title="Settings"
         subtitle="Manage school-level configuration and administrative tools"
       />
+
+      {/* ── Attendance Mode Section ── */}
+      <Card>
+        <CardHeader className="pb-3 flex-row items-start gap-4">
+          <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <ClipboardCheck className="size-4 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Attendance Mode</CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              Choose how teachers record daily student attendance
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <Separator />
+        <CardContent className="pt-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {ATTENDANCE_MODES.map((mode) => {
+              const active = attendanceMode === mode.value
+              return (
+                <button
+                  key={mode.value}
+                  type="button"
+                  onClick={() => setAttendanceMode(mode.value)}
+                  className={cn(
+                    "flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition-all",
+                    active
+                      ? "border-primary bg-primary/5"
+                      : "border-border bg-muted/30 hover:border-primary/40"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold">{mode.label}</span>
+                    <div
+                      className={cn(
+                        "size-4 rounded-full border-2 transition-colors flex-shrink-0",
+                        active
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground bg-transparent"
+                      )}
+                    >
+                      {active && (
+                        <div className="size-full rounded-full flex items-center justify-center">
+                          <div className="size-1.5 rounded-full bg-white" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {mode.description}
+                  </p>
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Current mode: <strong>{attendanceMode === "per-period" ? "Per-Period" : "Single Daily"}</strong>.
+            Changes take effect immediately for all teachers.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* ── Year Rollover Section ── */}
       <Card>

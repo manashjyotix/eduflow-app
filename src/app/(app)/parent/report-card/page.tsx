@@ -155,14 +155,16 @@ export default function ReportCardPage() {
       <Tabs defaultValue="overall" className="flex flex-col gap-4">
         {/* Tab bar + schedule toggle */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
-          <TabsList className="flex h-auto flex-wrap justify-start gap-1">
-            <TabsTrigger value="overall">Overall</TabsTrigger>
-            {SCHOOL_EXAMS.map((exam) => (
-              <TabsTrigger key={exam.id} value={exam.id}>
-                {exam.shortLabel}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <TabsList className="w-max sm:w-auto">
+              <TabsTrigger value="overall" className="flex-none">Overall</TabsTrigger>
+              {SCHOOL_EXAMS.map((exam) => (
+                <TabsTrigger key={exam.id} value={exam.id} className="flex-none">
+                  {exam.shortLabel}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           <div className="flex items-center gap-2">
             <Switch id="show-schedule" checked={showSchedule} onCheckedChange={setShowSchedule} />
@@ -232,7 +234,7 @@ export default function ReportCardPage() {
               <Card className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
                 <Award className="size-10 text-primary mb-3" />
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Overall Grade</p>
-                <p className="text-6xl font-black text-primary mt-1">B+</p>
+                <p className="text-5xl sm:text-6xl font-black text-primary mt-1">B+</p>
                 <p className="text-sm font-semibold text-foreground mt-2">{total.percentage}%</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Rank {total.rank} of {total.totalStudents}</p>
                 <Badge variant="success" className="mt-3">Passed</Badge>
@@ -419,7 +421,7 @@ function ExamResult({
         <Card className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
           <Award className="size-10 text-primary mb-3" />
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest text-center">{exam.name} Grade</p>
-          <p className="text-6xl font-black text-primary mt-1">{overallGrade}</p>
+                  <p className="text-5xl sm:text-6xl font-black text-primary mt-1">{overallGrade}</p>
           <p className="text-sm font-semibold text-foreground mt-2">{totals.percentage}%</p>
           <p className="text-xs text-muted-foreground mt-0.5">Rank {exam.rank} of {exam.totalStudents}</p>
           <Badge variant={passed ? "success" : "destructive"} className="mt-3">{passed ? "Passed" : "Needs Improvement"}</Badge>

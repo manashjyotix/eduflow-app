@@ -114,6 +114,12 @@ export default function ParentFeesPage() {
     return [...byMonth.values()]
   }, [])
 
+  // Upcoming due amounts (unpaid heads, chronological) for the Next Due Date sparkline
+  const dueSchedule = useMemo(
+    () => FEE_HEADS.filter(f => f.due > 0).map(f => f.due),
+    [],
+  )
+
   function handleDownload(receipt: FeeReceipt) {
     toast("Opening receipt…", { description: `${receipt.receiptNo} · ${receipt.studentName}` })
     setTimeout(() => window.print(), 400)
@@ -133,7 +139,7 @@ export default function ParentFeesPage() {
         }
       />
 
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KpiCard
           title="Total Paid"
           value={`₹${totalPaid.toLocaleString("en-IN")}`}
@@ -156,6 +162,7 @@ export default function ParentFeesPage() {
           subtitle="Exam Fee · ₹500"
           tone="amber"
           icon={<DollarSign className="size-5" />}
+          sparkline={{ variant: "line", data: dueSchedule }}
         />
       </div>
 

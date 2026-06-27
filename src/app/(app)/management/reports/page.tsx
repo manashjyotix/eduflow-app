@@ -41,6 +41,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { useTableSort, SortableHead } from "@/components/shared/sortable-table"
+import { ToggleTabs } from "@/components/shared/toggle-tabs"
 
 const PROXY_BY_DAY = [
   { day: "Mon", proxies: 8, covered: 7 },
@@ -71,7 +72,7 @@ const TEACHER_PROXY_STATS = [
 ]
 
 export default function ProxyCoverageReportPage() {
-  const [viewMode, setViewMode] = useState(2) // 0=Daily, 1=Weekly, 2=Monthly
+  const [viewMode, setViewMode] = useState<"Daily" | "Weekly" | "Monthly">("Monthly")
 
   const { sorted: sortedStats, sortField, sortDir, toggleSort } = useTableSort<
     (typeof TEACHER_PROXY_STATS)[number],
@@ -90,22 +91,16 @@ export default function ProxyCoverageReportPage() {
         title="Proxy Coverage Report"
         subtitle="Coverage analytics and trends — June 2026"
         actions={
-          <div className="inline-flex bg-muted rounded-[10px] p-[3px] gap-0.5">
-            {(["Daily", "Weekly", "Monthly"] as const).map((label, idx) => (
-              <button
-                key={label}
-                onClick={() => setViewMode(idx)}
-                className={`px-3 h-7 rounded-lg text-xs transition-colors ${viewMode === idx ? "bg-card text-primary font-bold shadow-sm" : "text-muted-foreground font-medium"}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <ToggleTabs
+            options={["Daily", "Weekly", "Monthly"] as const}
+            value={viewMode}
+            onChange={setViewMode}
+          />
         }
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Coverage Rate"
           value="78%"

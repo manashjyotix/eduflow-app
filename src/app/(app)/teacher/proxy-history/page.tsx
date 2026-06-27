@@ -2,19 +2,21 @@
 import { useState } from "react"
 import {
   Calendar, Filter, Clock, CheckCircle2, XCircle,
-  AlertCircle, Award, BarChart2, Activity,
+  AlertCircle, Award, BarChart2, Activity, ClipboardList, Search,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { PageHeader } from "@/components/shared/page-header"
 import { KpiCard } from "@/components/shared/kpi-card"
 import { MiniSparkline } from "@/components/shared/mini-sparkline"
 import { EduBarChart } from "@/components/shared/edu-bar-chart"
+import { SearchInput } from "@/components/shared/search-input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table"
 import { useTableSort, SortableHead } from "@/components/shared/sortable-table"
+import { ToggleTabs } from "@/components/shared/toggle-tabs"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type ProxyStatus = "Completed" | "Accepted" | "Declined" | "Expired"
@@ -87,7 +89,7 @@ function SubjectDonut({ data }: { data: typeof SUBJECT_DIST }) {
   const circ = 2 * Math.PI * r
   let offset = 0
   return (
-    <div className="flex items-center gap-3.5">
+    <div className="flex items-center gap-4">
       <div className="relative size-[60px] flex-shrink-0">
         <svg width={60} height={60} viewBox="0 0 60 60">
           {data.map(d => {
@@ -124,13 +126,21 @@ function SubjectDonut({ data }: { data: typeof SUBJECT_DIST }) {
 export default function ProxyHistoryPage() {
   const [selectedMonth, setSelectedMonth] = useState("June 2026")
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [viewMode, setViewMode] = useState(2) // 0=Daily, 1=Weekly, 2=Monthly
+  const [query, setQuery] = useState("")
+  const [viewMode, setViewMode] = useState<"Daily" | "Weekly" | "Monthly">("Monthly")
 
   const filtered = PROXY_HISTORY.filter(r => {
     const monthMatch = selectedMonth === "June 2026" ? r.date.includes("Jun") :
                        selectedMonth === "May 2026"  ? r.date.includes("May") : true
     const statusMatch = statusFilter === "all" || r.status === statusFilter
-    return monthMatch && statusMatch
+    const q = query.trim().toLowerCase()
+    const queryMatch = !q ||
+      r.absentTeacher.toLowerCase().includes(q) ||
+      r.subject.toLowerCase().includes(q) ||
+      r.class.toLowerCase().includes(q) ||
+      r.period.toLowerCase().includes(q) ||
+      r.date.toLowerCase().includes(q)
+    return monthMatch && statusMatch && queryMatch
   })
 
   const thisMonth = PROXY_HISTORY.filter(r => r.date.includes("Jun"))
@@ -139,7 +149,7 @@ export default function ProxyHistoryPage() {
   const total = PROXY_HISTORY.filter(r => r.status === "Completed")
   const totalMinutes = total.length * 40
 
-  const { sorted, sortField, sortDir, toggleSort } = useTableSort<ProxyRecord, (typeof PROXY_COLUMNS)[number]["field"]>(filtered, {
+  const { sorted, sortField, sortDir, toggleSort } = useTableSort(filtered, {
     date:          r => new Date(r.date).getTime(),
     period:        r => r.period,
     class:         r => r.class,
@@ -158,17 +168,11 @@ export default function ProxyHistoryPage() {
         subtitle="Your substitution record at HCEA · Priya Sharma"
         actions={
           <div className="flex items-center gap-2">
-            <div className="inline-flex bg-muted rounded-[10px] p-[3px] gap-0.5">
-              {(["Daily", "Weekly", "Monthly"] as const).map((label, idx) => (
-                <button
-                  key={label}
-                  onClick={() => setViewMode(idx)}
-                  className={`px-3 h-7 rounded-lg text-xs transition-colors ${viewMode === idx ? "bg-card text-primary font-bold shadow-sm" : "text-muted-foreground font-medium"}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <ToggleTabs
+              options={["Daily", "Weekly", "Monthly"] as const}
+              value={viewMode}
+              onChange={setViewMode}
+            />
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="min-w-[160px]">
                 <span className="flex items-center gap-2">
@@ -185,7 +189,7 @@ export default function ProxyHistoryPage() {
       />
 
       {/* ── KPI Strip ── */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         <KpiCard
           title="This Month"
           value={thisMonth.length}
@@ -230,80 +234,127 @@ export default function ProxyHistoryPage() {
       </div>
 
       {/* ── Charts Row ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Monthly Trend — redesigned with EduBarChart */}
-        <Card>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 xl:min-h-[300px]">
+        {/* Monthly Trend — fluid EduBarChart */}
+        <Card className="flex flex-col">
           <CardHeader className="flex-row items-center justify-between pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <BarChart2 size={15} className="text-primary" /> Proxy Duties — June
+              <BarChart2 size={15} className="text-primary" /> Proxy Duties — 2026
             </CardTitle>
-            <Badge variant="default">Jan–Jun 2026</Badge>
+            <Badge variant="default">Jan–Jun</Badge>
           </CardHeader>
           <div className="border-t border-border" />
-          <CardContent className="pt-4">
-            <EduBarChart
-              data={MONTHLY_TREND_DATA}
-              series={[{ dataKey: "proxies", name: "Proxy Duties", color: "var(--ef-brand)" }]}
-              xKey="month"
-              height={130}
-              showYAxis={false}
-              tooltipFormatter={(v) => `${v} duties`}
-            />
-            <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-              <span>This month</span>
-              <span className="font-extrabold text-foreground text-sm">{MONTHLY_TREND[MONTHLY_TREND.length - 1]} duties</span>
+          <CardContent className="p-4 flex-1 flex flex-col">
+            <div className="flex-1 min-h-[260px]">
+              <EduBarChart
+                data={MONTHLY_TREND_DATA}
+                series={[{ dataKey: "proxies", name: "Proxy Duties", color: "var(--ef-brand)" }]}
+                xKey="month"
+                fluid
+                scrollable
+                showLabels
+                showYAxis={false}
+                tooltipFormatter={(v) => `${v} duties`}
+              />
             </div>
           </CardContent>
         </Card>
 
-        {/* Subject Distribution */}
-        <Card>
+        {/* Subject Distribution — horizontal bars */}
+        <Card className="flex flex-col">
           <CardHeader className="flex-row items-center justify-between pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Activity size={15} className="text-ef-purple" /> Subject Distribution
             </CardTitle>
             <Badge className="bg-ef-purple text-white hover:bg-ef-purple/80">All time</Badge>
           </CardHeader>
-          <CardContent>
-            <SubjectDonut data={SUBJECT_DIST} />
-            <div className="mt-3.5 text-[11px] text-muted-foreground">
-              Most covered: <strong className="text-primary">English (3)</strong>
+          <div className="border-t border-border" />
+          <CardContent className="p-4 flex-1 flex flex-col justify-between">
+            <div className="flex flex-col gap-3">
+              {SUBJECT_DIST.map(d => {
+                const total = SUBJECT_DIST.reduce((s, x) => s + x.count, 0)
+                const pct = Math.round((d.count / total) * 100)
+                return (
+                  <div key={d.subject}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="size-2 rounded-sm flex-shrink-0" style={{ background: d.color }} />
+                        <span className="text-xs font-medium text-foreground">{d.subject}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">{pct}%</span>
+                        <span className="text-xs font-bold w-4 text-right" style={{ color: d.color }}>{d.count}</span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%`, background: d.color }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+              <span>Total duties</span>
+              <span className="font-extrabold text-foreground text-sm">{SUBJECT_DIST.reduce((s, d) => s + d.count, 0)}</span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Monthly Cap */}
-        <Card>
+        {/* Monthly Cap — slot tracker */}
+        <Card className="flex flex-col">
           <CardHeader className="flex-row items-center justify-between pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Clock size={15} className="text-ef-amber" /> Monthly Cap — Jun 2026
             </CardTitle>
             <Badge variant="warning">3 / 8 used</Badge>
           </CardHeader>
-          <CardContent>
-            {/* Arc showing cap usage */}
-            <div className="flex items-center gap-4 mb-3.5">
-              <MiniSparkline variant="arc" value={(3 / 8) * 100} color="var(--ef-amber)" height={72} width={72} />
+          <div className="border-t border-border" />
+          <CardContent className="p-4 flex-1 flex flex-col justify-between">
+            {/* Arc + stat */}
+            <div className="flex-1 flex items-center justify-center gap-5 py-2">
+              <MiniSparkline variant="arc" value={(3 / 8) * 100} color="var(--ef-amber)" height={120} width={120} strokeWidth={9} />
               <div>
-                <div className="text-[28px] font-extrabold text-foreground tracking-tight leading-none">3</div>
-                <div className="text-xs text-muted-foreground mt-1">of 8 cap used</div>
-                <div className="text-xs text-ef-green-dark font-semibold mt-0.5">5 remaining</div>
+                <div className="text-5xl font-extrabold text-foreground tracking-tight leading-none">3</div>
+                <div className="text-sm text-muted-foreground mt-1.5">of 8 cap used</div>
+                <div className="text-sm text-ef-green-dark font-semibold mt-1">5 remaining</div>
               </div>
             </div>
-            <Progress value={(3 / 8) * 100} className="h-3 [&>div]:bg-ef-amber" />
-            <div className="flex gap-3.5 mt-3">
-              {[
-                { label: "Completed", count: 2, color: "var(--ef-green)" },
-                { label: "Pending",   count: 1, color: "var(--ef-brand)" },
-                { label: "Remaining", count: 5, color: "var(--muted-foreground)" },
-              ].map(i => (
-                <div key={i.label} className="flex items-center gap-1.5">
-                  <div className="size-2 rounded-full" style={{ background: i.color }} />
-                  <span className="text-[11px] text-muted-foreground">
-                    {i.label}: <strong className="text-foreground">{i.count}</strong>
-                  </span>
-                </div>
-              ))}
+            {/* Slot tracker grid */}
+            <div className="mt-4">
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">Slot usage</p>
+              <div className="grid grid-cols-8 gap-1">
+                {Array.from({ length: 8 }, (_, i) => {
+                  const isCompleted = i < 2
+                  const isPending  = i === 2
+                  return (
+                    <div
+                      key={i}
+                      title={isCompleted ? "Completed" : isPending ? "Pending" : "Available"}
+                      className={`h-5 rounded-sm text-[9px] font-bold flex items-center justify-center
+                        ${isCompleted ? "bg-ef-green text-white"
+                          : isPending ? "bg-ef-amber text-white"
+                          : "bg-muted text-muted-foreground"}`}
+                    >
+                      {i + 1}
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="flex gap-3 mt-2.5">
+                {[
+                  { label: "Completed", count: 2, color: "var(--ef-green)" },
+                  { label: "Pending",   count: 1, color: "var(--ef-amber)" },
+                  { label: "Free",      count: 5, color: "var(--muted-foreground)" },
+                ].map(item => (
+                  <div key={item.label} className="flex items-center gap-1">
+                    <div className="size-1.5 rounded-full" style={{ background: item.color }} />
+                    <span className="text-[10px] text-muted-foreground">{item.label} <strong className="text-foreground">{item.count}</strong></span>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -311,29 +362,36 @@ export default function ProxyHistoryPage() {
 
       {/* ── Substitution Records Table ── */}
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <CardTitle className="text-base font-semibold">Substitution Records</CardTitle>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="min-w-[140px]">
-                  <span className="flex items-center gap-2">
-                    <Filter size={13} />
-                    <SelectValue placeholder="All Status" />
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Accepted">Accepted</SelectItem>
-                  <SelectItem value="Declined">Declined</SelectItem>
-                  <SelectItem value="Expired">Expired</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <CardHeader className="flex-row items-center justify-between gap-4 pb-3 flex-wrap">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <ClipboardList size={16} className="text-primary" /> Substitution Records
+          </CardTitle>
+          <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
+            <SearchInput
+              placeholder="Search records..."
+              className="h-9 flex-1 sm:w-48 sm:flex-none"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-9 flex-1 sm:w-48 sm:flex-none">
+                <span className="flex items-center gap-2">
+                  <Filter size={13} />
+                  <SelectValue placeholder="All Status" />
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+                <SelectItem value="Accepted">Accepted</SelectItem>
+                <SelectItem value="Declined">Declined</SelectItem>
+                <SelectItem value="Expired">Expired</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table className="text-sm">
             <caption className="sr-only">Proxy duty history</caption>
             <TableHeader>
@@ -346,7 +404,7 @@ export default function ProxyHistoryPage() {
                     sortField={sortField}
                     sortDir={sortDir}
                     onSort={toggleSort}
-                    className="text-xs"
+                    className="px-4 py-3 text-xs font-semibold text-muted-foreground"
                   />
                 ))}
               </TableRow>
@@ -354,40 +412,40 @@ export default function ProxyHistoryPage() {
             <TableBody>
               {sorted.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                     No proxy records found for this filter.
                   </TableCell>
                 </TableRow>
               ) : (
-                sorted.map(r => {
+                sorted.map((r, i) => {
                   const conf = STATUS_CONFIG[r.status]
                   const Icon = conf.icon
                   return (
-                    <TableRow key={r.id}>
-                      <TableCell>
-                        <div className="text-sm font-medium text-foreground">{r.date}</div>
+                    <TableRow key={r.id} className={`hover:bg-muted/20 ${i % 2 ? "bg-muted/10" : ""}`}>
+                      <TableCell className="px-4 py-3">
+                        <div className="text-xs font-medium text-foreground whitespace-nowrap">{r.date}</div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-4 py-3">
                         <div className="size-8 rounded-lg bg-ef-brand-light text-primary inline-flex items-center justify-center text-xs font-bold">{r.period}</div>
                       </TableCell>
-                      <TableCell>
-                        <span className="font-semibold text-foreground">{r.class}</span>
+                      <TableCell className="px-4 py-3">
+                        <span className="text-xs font-semibold text-foreground">{r.class}</span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div className="size-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold flex-shrink-0" aria-hidden="true">{r.absentTeacher.charAt(0)}</div>
-                          <span className="text-sm text-foreground">{r.absentTeacher}</span>
+                          <span className="text-xs text-foreground">{r.absentTeacher}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{r.subject}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground font-mono">
+                      <TableCell className="px-4 py-3 text-xs text-muted-foreground">{r.subject}</TableCell>
+                      <TableCell className="px-4 py-3 text-xs text-muted-foreground font-mono">
                         {r.duration !== "—" ? (
                           <span className="flex items-center gap-1">
                             <Clock size={11} className="text-ef-green" /> {r.duration}
                           </span>
                         ) : "—"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-4 py-3">
                         <Badge variant={conf.variant}>
                           <Icon size={10} />
                           {r.status}
@@ -399,6 +457,7 @@ export default function ProxyHistoryPage() {
               )}
             </TableBody>
           </Table>
+          </div>
           <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/40 text-xs text-muted-foreground">
             <span>Showing {filtered.length} of {PROXY_HISTORY.length} records</span>
             <span className="flex items-center gap-1.5">

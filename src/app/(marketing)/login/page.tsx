@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import {
   Zap, Eye, EyeOff, Chrome, ArrowRight, Shield,
-  Users, LayoutDashboard, GraduationCap, Baby
+  Users, LayoutDashboard, GraduationCap, Baby, Bus
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -68,6 +68,16 @@ const DEMO_ROLES = [
     bg: "bg-[var(--ef-purple-light)]",
     border: "border-[var(--ef-purple-light)]",
     desc: "Morning briefing",
+  },
+  {
+    label: "Driver",
+    icon: Bus,
+    email: "driver@hcea.edu",
+    password: "driver123",
+    roleAccent: "text-[var(--ef-cyan)]",
+    bg: "bg-[var(--ef-cyan-light)]",
+    border: "border-[var(--ef-cyan-light)]",
+    desc: "Bus trip console",
   },
 ] as const
 
@@ -144,7 +154,7 @@ function LoginForm() {
           <p className="text-sm text-muted-foreground mt-1">Sign in to your school&apos;s dashboard</p>
         </div>
 
-        <Card className="shadow-lg border">
+        <Card className="border">
           <CardContent className="p-6">
             {/* Auth-level error (wrong credentials, etc.) */}
             {authError && (
@@ -283,7 +293,7 @@ function LoginForm() {
                 onClick={() => quickLogin(role)}
                 disabled={loading}
                 className={cn(
-                  "p-3 rounded-xl border hover:shadow-sm transition-all text-left group disabled:opacity-50",
+                  "p-3 rounded-xl border hover:shadow-card transition-all text-left group disabled:opacity-50",
                   role.border, role.bg
                 )}
               >

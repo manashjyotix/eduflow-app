@@ -3,14 +3,15 @@
 import { useState } from "react"
 import {
   User, Mail, Phone, Globe, CalendarDays, Shield, Bell,
-  Lock, Activity, Key, Pencil, Save, X, CheckCircle, Building2,
+  Lock, Activity, Key, Save, CheckCircle, Building2,
   Eye, EyeOff, LogOut, Download, ChevronRight, AlertTriangle,
   Database, PlugZap, BarChart3, Settings, Zap, HeartHandshake,
   Users, BookOpen, Clock, RefreshCw, MessageSquare, Palette,
-  ToggleLeft, TrendingUp,
+  ToggleLeft, TrendingUp, Cake, IdCard, MapPin, Briefcase, RotateCcw,
 } from "lucide-react"
 import Link from "next/link"
 import { AvatarUpload } from "@/components/shared/avatar-upload"
+import { ScrollX }      from "@/components/shared/scroll-x"
 import { PageHeader } from "@/components/shared/page-header"
 import { KpiCard }    from "@/components/shared/kpi-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,6 +23,8 @@ import { Label }      from "@/components/ui/label"
 import { Switch }     from "@/components/ui/switch"
 import { Progress }   from "@/components/ui/progress"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useBirthdayWish } from "@/context/birthday-wish-context"
 import { cn }         from "@/lib/utils"
 
 const TABS = [
@@ -87,14 +90,42 @@ function ToggleRow({label,sub,checked,onChange}:{label:string;sub:string;checked
   return (
     <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
       <div className="min-w-0 flex-1 pr-4"><p className="text-sm font-medium">{label}</p><p className="text-xs text-muted-foreground">{sub}</p></div>
-      <Switch checked={checked} onCheckedChange={onChange}/>
+      <Switch checked={checked} onCheckedChange={onChange} className="flex-shrink-0"/>
+    </div>
+  )
+}
+
+/** Editable text field with optional leading icon (borderless shadow). */
+function Field({
+  label, value, onChange, icon, type = "text",
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  icon?: React.ReactNode
+  type?: string
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <div className="relative">
+        {icon && (
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">{icon}</span>
+        )}
+        <Input
+          type={type}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className={cn("h-9 text-sm shadow-none", icon && "pl-8")}
+        />
+      </div>
     </div>
   )
 }
 
 export default function SuperAdminProfilePage() {
+  const { enabled: birthdayEnabled, toggle: toggleBirthday } = useBirthdayWish()
   const [tab,          setTab]         = useState<Tab>("profile")
-  const [editing,      setEditing]     = useState(false)
   const [showPw,       setShowPw]      = useState(false)
   const [showCurPw,    setShowCurPw]   = useState(false)
   const [showNewPw,    setShowNewPw]   = useState(false)
@@ -102,12 +133,14 @@ export default function SuperAdminProfilePage() {
   const [attMode,      setAttMode]     = useState<"per-period"|"single-daily">("per-period")
   const [maintConfirm, setMaintConfirm]= useState(false)
 
-  const [profile, setProfile] = useState({
+  const INITIAL_PROFILE = {
     name:"Super Admin", title:"Platform Owner", email:"superadmin@proxymanager.app",
     phone:"+91 99999 00000", location:"Bengaluru, Karnataka",
     company:"EduFlow Scholaris", joined:"January 2024",
     timezone:"Asia/Kolkata (IST UTC+5:30)",
-  })
+  }
+  const [profile, setProfile] = useState(INITIAL_PROFILE)
+  const [dirty, setDirty] = useState(false)
   const [featureStates, setFeatureStates] = useState<Record<string,boolean>>(
     Object.fromEntries(FEATURES.map(f=>[f.name,f.enabled]))
   )
@@ -120,8 +153,9 @@ export default function SuperAdminProfilePage() {
     twoFactor:true, ipAllowlist:false, auditAllExports:true, sessionAlerts:true,
   })
 
-  const p = (k:keyof typeof profile)=>(v:string)=>setProfile(prev=>({...prev,[k]:v}))
-  function save() { setSaved(true); setEditing(false); setTimeout(()=>setSaved(false),3000) }
+  const p = (k:keyof typeof profile)=>(v:string)=>{ setProfile(prev=>({...prev,[k]:v})); setDirty(true) }
+  function save() { setSaved(true); setDirty(false); setTimeout(()=>setSaved(false),3000) }
+  function reset() { setProfile(INITIAL_PROFILE); setDirty(false) }
 
   function toggleFeature(name:string) {
     if(name==="Maintenance Mode" && !maintConfirm) { setMaintConfirm(true); return }
@@ -132,23 +166,20 @@ export default function SuperAdminProfilePage() {
   const flagsOnCount = FEATURES.filter(f=>featureStates[f.name]).length
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       <div className="flex items-start justify-between gap-4 flex-wrap px-4 pt-6 sm:px-6 md:px-8">
         <PageHeader icon={<User size={22}/>} title="Profile & Platform Settings"
           subtitle="Super Admin account · Platform owner"
           actions={<Badge variant="destructive" className="text-[10px]">Super Admin Only</Badge>}/>
-        <div className="flex items-center gap-2 flex-shrink-0 pb-2">
-          {saved && <span className="flex items-center gap-1.5 text-sm text-success-foreground font-medium"><CheckCircle className="size-4"/> Saved</span>}
-          {tab==="profile" && (editing
-            ? <><Button variant="outline" size="sm" onClick={()=>setEditing(false)}><X className="size-4"/> Cancel</Button>
-                <Button size="sm" onClick={save}><Save className="size-4"/> Save</Button></>
-            : <Button variant="outline" size="sm" onClick={()=>setEditing(true)}><Pencil className="size-4"/> Edit</Button>)}
-          {tab==="platform" && <Button size="sm"><Save className="size-4"/> Save All</Button>}
-        </div>
+        {saved && (
+          <span className="flex items-center gap-1.5 text-sm text-success-foreground font-medium flex-shrink-0 pb-2">
+            <CheckCircle className="size-4"/> Changes saved
+          </span>
+        )}
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-4 sm:px-6 md:px-8 pt-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 px-4 sm:px-6 md:px-8 pt-6">
         <KpiCard title="Active Tenants"   value="12"    subtitle="All schools live"     icon={<Building2 className="size-5"/>}/>
         <KpiCard title="Monthly Revenue"  value="₹1.32L" subtitle="MRR June 2026"      icon={<TrendingUp className="size-5"/>} iconClassName="bg-success/15 text-success-foreground"/>
         <KpiCard title="Feature Flags On" value={`${flagsOnCount}/${FEATURES.length}`}  subtitle="Platform features" icon={<ToggleLeft className="size-5"/>} iconClassName="bg-primary/10 text-primary"/>
@@ -165,60 +196,107 @@ export default function SuperAdminProfilePage() {
       )}
 
       {/* Tab nav */}
-      <div className="px-4 sm:px-6 md:px-8 mt-6 border-b border-border overflow-x-auto">
-        <nav className="flex gap-1 min-w-max">
-          {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)}
-              className={cn("flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
-                tab===t.id?"border-primary text-primary":"border-transparent text-muted-foreground hover:text-foreground hover:border-border")}>
-              <t.icon className="size-3.5"/>{t.label}
-            </button>
-          ))}
-        </nav>
+      <div className="px-4 sm:px-6 md:px-8 mt-6">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+          <ScrollX>
+            <TabsList className="w-max">
+              {TABS.map(t => (
+                <TabsTrigger key={t.id} value={t.id} className="gap-1.5">
+                  <t.icon className="size-3.5"/>{t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </ScrollX>
+        </Tabs>
       </div>
 
-      <div className="flex-1 px-4 sm:px-6 md:px-8 py-6 overflow-y-auto">
+      <div className="px-4 sm:px-6 md:px-8 py-6">
 
         {/* PROFILE */}
         {tab==="profile" && (
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-            <Card className={cn("xl:col-span-1", editing && "ring-2 ring-primary/30 shadow-md")}>
-              <CardContent className="pt-6 flex flex-col items-center text-center gap-3">
-                <AvatarUpload initials="SA" color="bg-destructive" editing={editing} />
-                {editing && (
-                  <p className="text-[11px] text-muted-foreground -mt-1">Click or drag to upload a photo</p>
-                )}
-                {editing ? <Input value={profile.name} onChange={e=>p("name")(e.target.value)} className="text-center font-semibold max-w-[180px]"/>
-                  : <h2 className="font-bold text-lg">{profile.name}</h2>}
+            {/* ── Summary card (modern) ── */}
+            <Card className="xl:col-span-1 h-fit overflow-hidden pt-0 gap-0">
+              <div className="h-24 bg-gradient-to-br from-destructive to-[var(--ef-purple)] relative">
+                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_30%,white,transparent_60%)]" aria-hidden="true" />
+              </div>
+              <CardContent className="px-6 pb-6 flex flex-col items-center text-center gap-3">
+                <div className="-mt-14">
+                  <AvatarUpload initials="SA" color="bg-destructive" editing />
+                </div>
+                <p className="text-[11px] text-muted-foreground -mt-1">Tap the camera icon to upload a photo</p>
+                <div className="space-y-0.5">
+                  <h2 className="font-bold text-lg leading-tight">{profile.name}</h2>
+                  <p className="text-xs text-muted-foreground">{profile.email}</p>
+                </div>
                 <div className="flex flex-wrap gap-1.5 justify-center">
                   <Badge className="bg-destructive hover:bg-destructive text-white">Super Admin</Badge>
                   <Badge variant="outline">{profile.title}</Badge>
                 </div>
+
+                {/* Quick stat row */}
+                <div className="grid grid-cols-2 gap-2 w-full pt-1">
+                  <div className="rounded-lg border border-border bg-muted/40 px-3 py-2">
+                    <p className="text-base font-bold leading-none">12</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">Tenants</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-muted/40 px-3 py-2">
+                    <p className="text-base font-bold leading-none">{flagsOnCount}/{FEATURES.length}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">Flags On</p>
+                  </div>
+                </div>
+
                 <Separator className="w-full"/>
-                <div className="w-full space-y-2 text-left text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2"><Mail className="size-3.5 text-primary flex-shrink-0"/><span className="truncate">{profile.email}</span></div>
+                <div className="w-full space-y-2.5 text-left text-xs text-muted-foreground">
                   <div className="flex items-center gap-2"><Phone className="size-3.5 text-primary flex-shrink-0"/><span>{profile.phone}</span></div>
+                  <div className="flex items-start gap-2"><MapPin className="size-3.5 text-primary flex-shrink-0 mt-0.5"/><span>{profile.location}</span></div>
                   <div className="flex items-center gap-2"><Globe className="size-3.5 text-primary flex-shrink-0"/><span>{profile.company}</span></div>
-                  <div className="flex items-center gap-2"><Building2 className="size-3.5 text-primary flex-shrink-0"/><span>{profile.location}</span></div>
+                  <div className="flex items-center gap-2"><Clock className="size-3.5 text-primary flex-shrink-0"/><span>{profile.timezone}</span></div>
                   <div className="flex items-center gap-2"><CalendarDays className="size-3.5 text-primary flex-shrink-0"/><span>Joined {profile.joined}</span></div>
                 </div>
                 <Separator className="w-full"/>
-                <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive"><LogOut className="size-3.5"/> Sign Out</Button>
+                <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive" asChild>
+                  <Link href="/login"><LogOut className="size-3.5"/> Sign Out</Link>
+                </Button>
               </CardContent>
             </Card>
             <div className="xl:col-span-3 flex flex-col gap-6">
               <Card>
-                <CardHeader className="pb-3 flex-row items-center gap-2"><User className="size-4 text-muted-foreground"/><CardTitle className="text-base">Account Details</CardTitle></CardHeader>
+                <CardHeader className="pb-3 flex-row items-center gap-2">
+                  <User className="size-4 text-muted-foreground"/>
+                  <CardTitle className="text-base">Account Details</CardTitle>
+                  {dirty && <Badge variant="secondary" className="ml-auto text-[10px]">Unsaved changes</Badge>}
+                </CardHeader>
                 <Separator/>
-                <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {([["Display Name","name"],["Job Title","title"],["Email","email"],["Phone","phone"],["Location","location"],["Timezone","timezone"]] as [string,keyof typeof profile][]).map(([label,key])=>(
-                    <div key={key} className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">{label}</Label>
-                      {editing ? <Input value={profile[key]} onChange={e=>p(key)(e.target.value)} className="h-8 text-sm"/>
-                        : <p className="text-sm font-medium">{profile[key]}</p>}
+                <CardContent className="pt-5 space-y-6">
+                  <section className="space-y-3">
+                    <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <IdCard className="size-3.5"/> Account Information
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <Field label="Display Name" value={profile.name}     onChange={p("name")}     icon={<User className="size-3.5"/>} />
+                      <Field label="Job Title"    value={profile.title}    onChange={p("title")}    icon={<Briefcase className="size-3.5"/>} />
+                      <Field label="Email"        value={profile.email}    onChange={p("email")}    icon={<Mail className="size-3.5"/>} type="email" />
+                      <Field label="Phone"        value={profile.phone}    onChange={p("phone")}    icon={<Phone className="size-3.5"/>} type="tel" />
+                      <Field label="Location"     value={profile.location} onChange={p("location")} icon={<MapPin className="size-3.5"/>} />
+                      <Field label="Timezone"     value={profile.timezone} onChange={p("timezone")} icon={<Clock className="size-3.5"/>} />
                     </div>
-                  ))}
+                  </section>
                 </CardContent>
+                <Separator/>
+                <div className="flex items-center justify-end gap-2 px-5 py-4">
+                  {saved && (
+                    <span className="flex items-center gap-1.5 text-sm text-success-foreground font-medium mr-auto">
+                      <CheckCircle className="size-4"/> Saved
+                    </span>
+                  )}
+                  <Button variant="outline" size="sm" onClick={reset} disabled={!dirty}>
+                    <RotateCcw className="size-4"/> Reset
+                  </Button>
+                  <Button size="sm" onClick={save} disabled={!dirty}>
+                    <Save className="size-4"/> Update Profile
+                  </Button>
+                </div>
               </Card>
               {/* API status + Storage */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -288,7 +366,7 @@ export default function SuperAdminProfilePage() {
                   <p className="text-xs text-muted-foreground">Platform default for new schools.</p>
                   <div className="grid grid-cols-2 gap-3">
                     {(["per-period","single-daily"] as const).map(mode=>(
-                      <button key={mode} onClick={()=>setAttMode(mode)} className={cn("px-3.5 py-3 rounded-lg border-[1.5px] text-left transition-colors",attMode===mode?"border-primary bg-ef-brand-light":"border-border bg-card")}>
+                      <button key={mode} onClick={()=>setAttMode(mode)} className={cn("px-4 py-3 rounded-lg border-[1.5px] text-left transition-colors",attMode===mode?"border-primary bg-ef-brand-light":"border-border bg-card")}>
                         <div className={cn("text-sm font-bold",attMode===mode?"text-primary":"")}>{mode==="per-period"?"Per Period":"Single Daily"}</div>
                         <div className="text-[11px] text-muted-foreground/70 mt-0.5">{mode==="per-period"?"Mark per each period":"Mark once daily"}</div>
                       </button>
@@ -370,6 +448,20 @@ export default function SuperAdminProfilePage() {
                 <div><Label>Marketing Site</Label><Input className="mt-1.5" defaultValue="https://eduflowscholaris.com"/></div>
               </CardContent>
             </Card>
+            {/* Birthday Wishes */}
+            <Card>
+              <CardHeader className="pb-3 flex-row items-center gap-2"><Cake className="size-4 text-primary"/><CardTitle className="text-base">Birthday Wishes</CardTitle></CardHeader>
+              <Separator/>
+              <CardContent className="pt-4 flex items-center gap-4">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">Birthday wish card</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Show the branded birthday banner on every role&rsquo;s dashboard (admin, management, teacher, parent, super admin) on a user&rsquo;s birthday. Turn off to hide it platform-wide.
+                  </p>
+                </div>
+                <Switch checked={birthdayEnabled} onCheckedChange={toggleBirthday} className="ml-auto flex-shrink-0"/>
+              </CardContent>
+            </Card>
             {/* Feature Flags */}
             <Card>
               <CardHeader className="pb-3 flex-row items-center gap-2"><ToggleLeft className="size-4 text-primary"/><CardTitle className="text-base">Feature Flags</CardTitle></CardHeader>
@@ -386,7 +478,7 @@ export default function SuperAdminProfilePage() {
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">{f.desc}</p>
                       </div>
-                      <Switch checked={featureStates[f.name]} onCheckedChange={()=>toggleFeature(f.name)} className={isDanger?"data-[state=checked]:bg-destructive":""}/>
+                      <Switch checked={featureStates[f.name]} onCheckedChange={()=>toggleFeature(f.name)} className={cn("flex-shrink-0", isDanger && "data-[state=checked]:bg-destructive")}/>
                     </div>
                   )
                 })}

@@ -46,6 +46,13 @@ const holidays: Holiday[] = [
 
 const upcoming = holidays.filter(h => new Date(h.date) >= today).slice(0, 4)
 
+// Monthly holiday count for sparkline (Jan–Jun 2026)
+const HOLIDAY_MONTHLY_TREND: number[] = [2, 1, 2, 1, 1, 1]
+// Breakdown per type trend (same months)
+const NATIONAL_MONTHLY_TREND: number[] = [1, 0, 0, 0, 1, 0]
+const FESTIVAL_MONTHLY_TREND: number[] = [0, 1, 1, 1, 0, 1]
+const REGIONAL_MONTHLY_TREND: number[] = [1, 0, 1, 0, 0, 0]
+
 function buildCalendar(year: number, month: number) {
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const firstDay = new Date(year, month, 1).getDay()
@@ -149,11 +156,69 @@ export default function HolidayCalendarPage() {
     else setViewMonth(m => m + 1)
   }
 
-  const kpis = [
-    { label: "Total Holidays", value: holidays.length, total: 20, icon: <CalendarX className="size-5" />, iconClass: "bg-ef-brand-light text-primary" },
-    { label: "National", value: holidays.filter(h => h.type === "National").length, total: holidays.length, icon: <Flag className="size-5" />, iconClass: "bg-ef-brand-light text-primary" },
-    { label: "Festivals", value: holidays.filter(h => h.type === "Festival").length, total: holidays.length, icon: <Sparkles className="size-5" />, iconClass: "bg-ef-amber-light text-ef-amber-dark" },
-    { label: "Regional", value: holidays.filter(h => h.type === "Regional").length, total: holidays.length, icon: <MapPin className="size-5" />, iconClass: "bg-ef-green-light text-ef-green-dark" },
+  const nextUpcoming = upcoming[0]
+    ? new Date(upcoming[0].date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+    : "None"
+
+  type KpiTone = "brand" | "green" | "amber" | "red" | "purple" | "cyan"
+  interface HolidayKpi {
+    label: string
+    value: number
+    total: number
+    icon: React.ReactNode
+    iconClass: string
+    tone: KpiTone
+    subtitle: string
+    trend?: { value: number; label?: string }
+    sparklineData: number[]
+  }
+
+  const national = holidays.filter(h => h.type === "National").length
+  const festivals = holidays.filter(h => h.type === "Festival").length
+  const regional  = holidays.filter(h => h.type === "Regional").length
+
+  const kpis: HolidayKpi[] = [
+    {
+      label: "Total Holidays",
+      value: holidays.length,
+      total: 20,
+      icon: <CalendarX className="size-5" />,
+      iconClass: "bg-ef-brand-light text-primary",
+      tone: "brand",
+      subtitle: `next: ${nextUpcoming}`,
+      trend: { value: Math.round(((HOLIDAY_MONTHLY_TREND[5] - HOLIDAY_MONTHLY_TREND[4]) / Math.max(HOLIDAY_MONTHLY_TREND[4], 1)) * 100), label: "vs last month" },
+      sparklineData: HOLIDAY_MONTHLY_TREND,
+    },
+    {
+      label: "National",
+      value: national,
+      total: holidays.length,
+      icon: <Flag className="size-5" />,
+      iconClass: "bg-ef-brand-light text-primary",
+      tone: "brand",
+      subtitle: `${Math.round((national / holidays.length) * 100)}% of holidays`,
+      sparklineData: NATIONAL_MONTHLY_TREND,
+    },
+    {
+      label: "Festivals",
+      value: festivals,
+      total: holidays.length,
+      icon: <Sparkles className="size-5" />,
+      iconClass: "bg-ef-amber-light text-ef-amber-dark",
+      tone: "amber",
+      subtitle: `${Math.round((festivals / holidays.length) * 100)}% of holidays`,
+      sparklineData: FESTIVAL_MONTHLY_TREND,
+    },
+    {
+      label: "Regional",
+      value: regional,
+      total: holidays.length,
+      icon: <MapPin className="size-5" />,
+      iconClass: "bg-ef-green-light text-ef-green-dark",
+      tone: "green",
+      subtitle: `${Math.round((regional / holidays.length) * 100)}% of holidays`,
+      sparklineData: REGIONAL_MONTHLY_TREND,
+    },
   ]
 
   return (
@@ -183,20 +248,20 @@ export default function HolidayCalendarPage() {
       />
 
       {/* ── KPI Strip ── */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        {kpis.map(s => {
-          const pct = Math.round((s.value / s.total) * 100)
-          return (
-            <KpiCard
-              key={s.label}
-              icon={s.icon}
-              iconClassName={s.iconClass}
-              title={s.label}
-              value={s.value}
-              subtitle={`${pct}% of ${s.total}`}
-            />
-          )
-        })}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        {kpis.map(s => (
+          <KpiCard
+            key={s.label}
+            icon={s.icon}
+            iconClassName={s.iconClass}
+            title={s.label}
+            value={s.value}
+            tone={s.tone}
+            subtitle={s.subtitle}
+            trend={s.trend}
+            sparkline={{ variant: "bar", data: s.sparklineData }}
+          />
+        ))}
       </div>
 
       {/* ── Main grid ── */}

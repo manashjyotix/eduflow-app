@@ -24,7 +24,7 @@ export default function TeacherError({
 
       {/* Error heading */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-destructive">
+        <h1 className="text-2xl sm:text-3xl font-bold text-destructive leading-tight">
           Something went wrong
         </h1>
         <p className="max-w-sm text-base text-muted-foreground">

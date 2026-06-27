@@ -6,7 +6,7 @@ import {
   FileText, Megaphone, CheckSquare, Receipt, Wallet, NotebookPen,
   ScrollText, Globe, Building2,
   PlugZap, History, ListChecks, HeartHandshake, BookMarked,
-  ClipboardCheck, UserRoundSearch,
+  ClipboardCheck, UserRoundSearch, ShieldAlert, Siren, Bus,
 } from "lucide-react"
 import type { Role } from "@/lib/constants"
 
@@ -40,9 +40,11 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
       label: "Attendance & Leave",
       items: [
         { label: "Absences",      href: "/admin/absences",      icon: ClipboardList, badge: "3" },
+        { label: "Student Leave", href: "/admin/student-leave",  icon: FileText, badge: "2" },
         { label: "Swap Requests", href: "/admin/swap-requests", icon: ArrowLeftRight },
         { label: "Attendance",    href: "/admin/attendance",    icon: CheckSquare },
         { label: "Timetable",     href: "/admin/timetable",     icon: Calendar },
+        { label: "Exam Scheduler", href: "/admin/exams",        icon: GraduationCap },
         { label: "Holiday Calendar", href: "/admin/holiday-calendar", icon: BookMarked },
       ],
     },
@@ -58,6 +60,7 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
       items: [
         { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
         { label: "Reports",   href: "/admin/reports",   icon: FileText },
+        { label: "Report Cards", href: "/admin/report-cards", icon: ScrollText },
       ],
     },
     {
@@ -65,6 +68,14 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
       items: [
         { label: "Notices",        href: "/admin/notices",        icon: ScrollText },
         { label: "Announcements",  href: "/admin/announcements",  icon: Megaphone },
+      ],
+    },
+    {
+      label: "Safety",
+      items: [
+        { label: "Hazard Alerts", href: "/admin/alerts", icon: Siren },
+        { label: "Transport SOS", href: "/admin/sos", icon: ShieldAlert },
+        { label: "Transport Tracking", href: "/admin/transport", icon: Bus },
       ],
     },
     {
@@ -96,6 +107,7 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
       label: "Attendance & Leave",
       items: [
         { label: "Absence Approval", href: "/management/absences",   icon: ClipboardList, badge: "1" },
+        { label: "Student Leave",    href: "/management/student-leave", icon: FileText, badge: "2" },
         { label: "Proxy Board",      href: "/management/proxy",      icon: LayoutGrid },
         { label: "Swap Approvals",   href: "/management/swaps",      icon: ArrowLeftRight },
         { label: "Workload",         href: "/management/workload",   icon: TrendingUp },
@@ -113,7 +125,21 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
       label: "Insights",
       items: [
         { label: "Proxy Reports", href: "/management/reports", icon: BarChart3 },
-        { label: "Notices",       href: "/management/notices", icon: ScrollText },
+      ],
+    },
+    {
+      label: "Communication",
+      items: [
+        { label: "Notices",       href: "/management/notices",       icon: ScrollText },
+        { label: "Announcements", href: "/management/announcements", icon: Megaphone },
+      ],
+    },
+    {
+      label: "Safety",
+      items: [
+        { label: "Hazard Alerts", href: "/management/alerts", icon: Siren },
+        { label: "Transport SOS", href: "/management/sos", icon: ShieldAlert },
+        { label: "Transport Tracking", href: "/management/transport", icon: Bus },
       ],
     },
     {
@@ -144,6 +170,7 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
     {
       label: "Records",
       items: [
+        { label: "Class Journal",      href: "/teacher/journal",            icon: NotebookPen },
         { label: "Mark Attendance",    href: "/teacher/attendance/mark",    icon: CheckSquare },
         { label: "Attendance History", href: "/teacher/attendance-history", icon: ListChecks },
       ],
@@ -152,7 +179,14 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
       label: "Communication",
       items: [
         { label: "Notices",       href: "/teacher/notices",       icon: ScrollText },
+        { label: "Announcements", href: "/teacher/announcements", icon: Megaphone },
         { label: "Notifications", href: "/teacher/notifications", icon: Bell },
+      ],
+    },
+    {
+      label: "Safety",
+      items: [
+        { label: "Hazard Alerts", href: "/teacher/alerts", icon: Siren },
       ],
     },
     {
@@ -190,7 +224,17 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
     {
       label: "Communication",
       items: [
+        { label: "Notices",       href: "/parent/notices",       icon: ScrollText },
+        { label: "Announcements", href: "/parent/announcements", icon: Megaphone },
         { label: "Notifications", href: "/parent/notifications", icon: Bell },
+      ],
+    },
+    {
+      label: "Safety",
+      items: [
+        { label: "Hazard Alerts", href: "/parent/alerts", icon: Siren },
+        { label: "Transport SOS", href: "/parent/sos", icon: ShieldAlert, badge: "NEW" },
+        { label: "Bus Tracking", href: "/parent/transport", icon: Bus, badge: "LIVE" },
       ],
     },
     {
@@ -226,6 +270,13 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
       ],
     },
     {
+      label: "Communication",
+      items: [
+        { label: "Notices",       href: "/super-admin/notices",       icon: ScrollText },
+        { label: "Announcements", href: "/super-admin/announcements", icon: Megaphone },
+      ],
+    },
+    {
       label: "Operations",
       items: [
         { label: "Backup & Restore",  href: "/super-admin/backup",    icon: Database },
@@ -238,6 +289,23 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
       label: "Account",
       items: [
         { label: "My Profile", href: "/super-admin/profile", icon: User },
+      ],
+    },
+  ],
+
+  // ── Driver (3 pages) ──────────────────────────────────────────────────────
+  driver: [
+    {
+      label: "Today",
+      items: [
+        { label: "My Trip",  href: "/driver/dashboard", icon: LayoutDashboard },
+        { label: "My Route", href: "/driver/route",     icon: Bus },
+      ],
+    },
+    {
+      label: "Account",
+      items: [
+        { label: "My Profile", href: "/driver/profile", icon: User },
       ],
     },
   ],

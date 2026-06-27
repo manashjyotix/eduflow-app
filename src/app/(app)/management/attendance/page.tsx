@@ -10,6 +10,9 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TEACHERS } from "@/data/teachers"
 import { useTableSort, SortableHead } from "@/components/shared/sortable-table"
+import { ToggleTabs } from "@/components/shared/toggle-tabs"
+import { AttendanceEditInbox } from "@/components/domain/attendance/AttendanceEditInbox"
+import { useAttendance } from "@/context/attendance-context"
 
 const TEACHER_ATTENDANCE = TEACHERS.map((t, i) => ({
   id: t.id,
@@ -49,7 +52,8 @@ function pctColor(pct: number): string {
 }
 
 export default function AttendanceSummaryPage() {
-  const [viewMode, setViewMode] = useState(0) // 0=Daily, 1=Weekly, 2=Monthly
+  const [viewMode, setViewMode] = useState<"Daily" | "Weekly" | "Monthly">("Daily")
+  const { pendingCount } = useAttendance()
 
   const teacherSort = useTableSort<
     (typeof TEACHER_ATTENDANCE)[number],
@@ -83,17 +87,11 @@ export default function AttendanceSummaryPage() {
         title="Attendance Summary"
         subtitle="Teacher and student attendance overview — June 2026"
         actions={
-          <div className="inline-flex bg-muted rounded-[10px] p-[3px] gap-0.5">
-            {(["Daily", "Weekly", "Monthly"] as const).map((label, idx) => (
-              <button
-                key={label}
-                onClick={() => setViewMode(idx)}
-                className={`px-3 h-7 rounded-lg text-xs transition-colors ${viewMode === idx ? "bg-card text-primary font-bold shadow-sm" : "text-muted-foreground font-medium"}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <ToggleTabs
+            options={["Daily", "Weekly", "Monthly"] as const}
+            value={viewMode}
+            onChange={setViewMode}
+          />
         }
       />
 
@@ -104,6 +102,12 @@ export default function AttendanceSummaryPage() {
           </TabsTrigger>
           <TabsTrigger value="students" className="flex items-center gap-2">
             <ClipboardList size={14} /> Students
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="flex items-center gap-2">
+            <ClipboardList size={14} /> Edit Requests
+            {pendingCount > 0 && (
+              <Badge variant="warning" className="h-5 px-1.5 text-[10px]">{pendingCount}</Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -205,6 +209,11 @@ export default function AttendanceSummaryPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Edit Requests Tab */}
+        <TabsContent value="requests">
+          <AttendanceEditInbox reviewer="Mrinal Ojha" />
         </TabsContent>
       </Tabs>
     </div>

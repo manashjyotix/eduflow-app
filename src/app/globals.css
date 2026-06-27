@@ -100,6 +100,9 @@
   --color-ef-cyan:          var(--ef-cyan);
   --color-ef-cyan-light:    var(--ef-cyan-light);
 
+  /* Shadow — card hover elevation (resolves per-mode via --shadow-card-hover) */
+  --shadow-card: var(--shadow-card-hover);
+
   /* Radius scale — Figma source: 6px base (New York style) */
   --radius-sm:   calc(var(--radius) - 2px);   /* 4px  */
   --radius-md:   var(--radius);               /* 6px  */
@@ -139,8 +142,10 @@
   --ef-cyan-light:   #43CCF8;   /* from Figma fill_UBGH9M */
 
   /* ── shadcn semantic tokens — Figma New York / Slate palette ── */
-  /* Figma values: background #F8FAFC, card #FFFFFF, foreground #020617 */
-  --background:             #F8FAFC;   /* slate-50  — Figma fill_F8FAFC */
+  /* Background matches the sidebar surface so header + body share the same
+     tone as the sidebar (white in light mode). Cards stay #FFFFFF and are
+     separated by borders/shadows. */
+  --background:             #FFFFFF;   /* matches --sidebar (white) */
   --foreground:             #020617;   /* slate-950 — Figma fill_020617 */
   --card:                   #FFFFFF;   /* white */
   --card-foreground:        #020617;
@@ -196,6 +201,10 @@
   --sidebar-accent-foreground:    var(--ef-brand);
   --sidebar-border:               #E2E8F0;
   --sidebar-ring:                 var(--ef-brand);
+
+  /* Soft, light card-hover shadow (cards are flat at rest; this blurred,
+     low-opacity shadow appears only on hover / focus-within). */
+  --shadow-card-hover: 0 8px 28px rgba(15, 23, 42, 0.08);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -203,18 +212,22 @@
    iOS dark-mode palette + shadcn slate dark
 ───────────────────────────────────────────────────────────── */
 .dark {
-  --background:             #020617;   /* slate-950 */
-  --foreground:             #F8FAFC;   /* slate-50  */
-  --card:                   #0F172A;   /* slate-900 */
+  /* Header + body use a true-black background. Cards/popovers sit on a
+     neutral near-black (#121212) and the sidebar stays the same neutral
+     surface so it reads as a slightly raised layer above the black page.
+     Neutral grays are used throughout (no blue tint) per design request. */
+  --background:             #000000;   /* true black */
+  --foreground:             #F8FAFC;   /* near-white */
+  --card:                   #121212;   /* neutral near-black */
   --card-foreground:        #F8FAFC;
-  --popover:                #0F172A;
+  --popover:                #121212;
   --popover-foreground:     #F8FAFC;
-  --primary:                #0A84FF;   /* iOS dark blue */
+  --primary:                #0A84FF;   /* iOS dark blue (brand accent) */
   --primary-foreground:     #FFFFFF;
-  --secondary:              #1E293B;   /* slate-800 */
+  --secondary:              #262626;   /* neutral-800 */
   --secondary-foreground:   #F8FAFC;
-  --muted:                  #1E293B;
-  --muted-foreground:       #94A3B8;   /* slate-400 */
+  --muted:                  #262626;
+  --muted-foreground:       #A1A1AA;   /* neutral-400 */
   --accent:                 rgba(10, 132, 255, 0.15);
   --accent-foreground:      #0A84FF;
   --destructive:            #FF453A;   /* iOS dark red */
@@ -236,7 +249,7 @@
   --chart-4:  #BF5AF2;
   --chart-5:  #64D2FF;
 
-  --sidebar:                      #0F172A;
+  --sidebar:                      #121212;
   --sidebar-foreground:           #F8FAFC;
   --sidebar-primary:              #0A84FF;
   --sidebar-primary-foreground:   #FFFFFF;
@@ -244,6 +257,10 @@
   --sidebar-accent-foreground:    #0A84FF;
   --sidebar-border:               rgba(248, 250, 252, 0.10);
   --sidebar-ring:                 #0A84FF;
+
+  /* Slightly deeper, still-soft blurred shadow so the hover lift is visible
+     against dark surfaces. */
+  --shadow-card-hover: 0 8px 28px rgba(0, 0, 0, 0.45);
 
   /* ── EduFlow brand primitive dark overrides ──
      Light "tint" tokens become low-opacity dark fills so icon
@@ -323,6 +340,74 @@ body {
 ::-webkit-scrollbar-track   { background: transparent; }
 ::-webkit-scrollbar-thumb   { background: var(--border); border-radius: var(--radius-pill); }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+
+/* ── OverlayScrollbars theme — floating, auto-hiding app scrollbar ──
+   Used by the shell <main> (see AppScrollArea). The handle floats over
+   content (zero layout width) and fades out shortly after scrolling stops,
+   so opening a dialog never resizes the page. Adapts to light/dark. */
+.os-theme-eduflow {
+  --os-size: 12px;
+  --os-padding-perpendicular: 2px;
+  --os-padding-axis: 3px;
+  --os-handle-border-radius: 100px;
+  --os-handle-bg:        rgba(60, 60, 67, 0.30);
+  --os-handle-bg-hover:  rgba(60, 60, 67, 0.50);
+  --os-handle-bg-active: rgba(60, 60, 67, 0.60);
+  --os-handle-min-size: 40px;
+}
+.dark .os-theme-eduflow {
+  --os-handle-bg:        rgba(235, 235, 245, 0.28);
+  --os-handle-bg-hover:  rgba(235, 235, 245, 0.48);
+  --os-handle-bg-active: rgba(235, 235, 245, 0.60);
+}
+
+/* Thin variant — used by horizontal scroll regions (tab bars, chip rows)
+   via the <ScrollX> helper. Same auto-hide behaviour, slimmer handle. */
+.os-theme-eduflow--thin {
+  --os-size: 6px;
+  --os-padding-perpendicular: 1px;
+  --os-padding-axis: 2px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   APP SHELL — single, viewport-locked scroll container
+   ──────────────────────────────────────────────────────────────
+   Only the authenticated app shell (it owns [data-slot="sidebar-wrapper"];
+   the public marketing layout does NOT) is locked to exactly one viewport
+   tall. With the shell pinned to 100svh and clipped, the document <body>
+   never grows past the viewport, so it never shows a *native* scrollbar.
+
+   The single vertical scroll then lives on the shell's <main> (AppScrollArea),
+   where OverlayScrollbars draws a floating, auto-hiding handle that overlays
+   content with zero layout width. Net effect:
+
+   • No native scrollbar → opening a Radix dialog/sheet (whose scroll-lock
+     compensates for native scrollbar width) adds 0px padding → NO layout shift.
+   • The floating handle stays in place; content never reflows on open/close.
+   • Sheets keep their smooth slide-in-from-right transition (Radix), dialogs
+     keep their zoom/fade — all unaffected by the now-stable layout.
+
+   Marketing/login pages are untouched and keep normal document scrolling. */
+[data-slot="sidebar-wrapper"] {
+  height: 100svh;
+  max-height: 100svh;
+  overflow: hidden;
+}
+
+/* Let the inset column shrink so its flex-1 <main> can own the scroll
+   instead of expanding the shell. */
+[data-slot="sidebar-inset"] {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Belt-and-braces: neutralise any residual scroll-lock padding a portal
+   library might add to <body>. Since the body has no native scrollbar in the
+   app shell, the compensation gap is already 0 — this guarantees it. */
+body[data-scroll-locked] {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
 
 /* ── Focus ring — non-input elements only ── */
 :focus-visible {
@@ -503,4 +588,29 @@ select:focus-visible {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+}
+
+/* ── Birthday Wish card — confetti + alternating greeting text ── */
+@keyframes ef-confetti {
+  0%   { transform: translateY(-6px) rotate(0deg);   opacity: 0; }
+  15%  { opacity: 0.8; }
+  100% { transform: translateY(26px) rotate(220deg); opacity: 0; }
+}
+/* One full cycle = 10s. Pure opacity toggle (no transform) so the two lines
+   never slide or overlap — each is simply shown for 5s, then hidden.
+   Line 1 (no delay) is visible 0s–5s; line 2 (-5s delay) is visible 5s–10s. */
+@keyframes ef-textcycle {
+  0%   { opacity: 1; }
+  46%  { opacity: 1; }
+  50%  { opacity: 0; }
+  96%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.ef-anim-confetti  { animation: ef-confetti 2.6s linear infinite; }
+.ef-anim-textcycle { animation: ef-textcycle 10s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ef-anim-confetti { animation: none; }
+  .ef-anim-textcycle { animation: none; }
 }

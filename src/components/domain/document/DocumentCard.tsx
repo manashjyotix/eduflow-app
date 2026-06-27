@@ -82,7 +82,7 @@ export function DocumentCard({
   })
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Card className="overflow-hidden">
       <CardContent className="p-4">
         <div className="flex flex-col gap-3">
           {/* File icon + category badge row */}

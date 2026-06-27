@@ -100,7 +100,7 @@ const CLASS_ATTENDANCE = [
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name?: string; color?: string }[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border bg-card px-3 py-2 shadow-md text-xs">
+    <div className="rounded-lg border bg-card px-3 py-2 shadow-card text-xs">
       <p className="font-semibold mb-1">{label}</p>
       {payload.map((p, i) => (
         <div key={i} className="flex items-center gap-1.5">
@@ -118,6 +118,30 @@ export default function AnalyticsPage() {
 
   const activeTeachers = TEACHERS.filter(t => t.status === "active").length
   const totalProxies = PROXY_MONTHLY.reduce((s, m) => s + m.count, 0)
+
+  // Derived KPI values
+  const avgAttendance = Math.round(ATTENDANCE_MONTHLY.reduce((s, m) => s + m.percent, 0) / ATTENDANCE_MONTHLY.length)
+  const prevAttendance = ATTENDANCE_MONTHLY[ATTENDANCE_MONTHLY.length - 2]?.percent ?? avgAttendance
+  const currAttendance = ATTENDANCE_MONTHLY[ATTENDANCE_MONTHLY.length - 1]?.percent ?? avgAttendance
+  const attendanceTrend = Math.round(((currAttendance - prevAttendance) / prevAttendance) * 100)
+
+  // Absence totals (sum of ABSENCE_CATEGORIES is the total absences)
+  const totalAbsences = ABSENCE_CATEGORIES.reduce((s, c) => s + c.value, 0)
+  const absenceMonthly = [12, 18, 9, 22, 15, 7] // Jan-Jun monthly absence counts
+  const prevAbsences = absenceMonthly[absenceMonthly.length - 2]
+  const currAbsences = absenceMonthly[absenceMonthly.length - 1]
+  const absenceTrend = Math.round(((currAbsences - prevAbsences) / prevAbsences) * 100)
+
+  // Proxy trend
+  const prevProxies = PROXY_MONTHLY[PROXY_MONTHLY.length - 2]?.count ?? 0
+  const currProxies = PROXY_MONTHLY[PROXY_MONTHLY.length - 1]?.count ?? 0
+  const proxyTrend = prevProxies > 0 ? Math.round(((currProxies - prevProxies) / prevProxies) * 100) : 0
+
+  // Uncovered slots series
+  const uncoveredSeries = [5, 3, 4, 2, 3, 2] as const
+  const currUncovered = 16
+  const prevUncovered = uncoveredSeries[uncoveredSeries.length - 1]
+  const uncoveredTrend = Math.round(((currUncovered - prevUncovered) / prevUncovered) * 100)
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8">
@@ -142,36 +166,42 @@ export default function AnalyticsPage() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Avg Coverage"
-          value="84%"
+          value={`${avgAttendance}%`}
+          subtitle={`Current: ${currAttendance}% · ${ATTENDANCE_MONTHLY.length} months`}
           icon={<TrendingUp className="size-5" />}
-          trend={{ value: 4, label: "vs last month" }}
-          sparkline={{ variant: "line", data: [78,80,82,81,83,84] }}
+          tone="brand"
+          trend={{ value: attendanceTrend, label: "vs last month" }}
+          sparkline={{ variant: "line", data: ATTENDANCE_MONTHLY.map(m => m.percent) }}
         />
         <KpiCard
           title="Total Absences"
-          value={83}
+          value={totalAbsences}
+          subtitle={`${absenceMonthly[absenceMonthly.length - 1]} this month · top: sick leave`}
           icon={<ClipboardList className="size-5" />}
-          iconClassName="bg-warning/20 text-warning-foreground"
-          sparkline={{ variant: "bar", data: [12,18,9,22,15,7], color: "var(--ef-amber)" }}
+          tone="amber"
+          trend={{ value: absenceTrend, label: "vs last month" }}
+          sparkline={{ variant: "bar", data: [...absenceMonthly] }}
         />
         <KpiCard
           title="Total Proxies"
           value={totalProxies}
+          subtitle={`${currProxies} this month · avg ${Math.round(totalProxies / PROXY_MONTHLY.length)}/mo`}
           icon={<Users className="size-5" />}
-          iconClassName="bg-primary/10 text-primary"
-          trend={{ value: 8, label: "vs last month" }}
+          tone="brand"
+          trend={{ value: proxyTrend, label: "vs last month" }}
           sparkline={{ variant: "bar", data: PROXY_MONTHLY.map(m => m.count) }}
         />
         <KpiCard
           title="Uncovered Slots"
-          value={16}
+          value={currUncovered}
+          subtitle={`${prevUncovered} last month · ${activeTeachers} active staff`}
           icon={<UserX className="size-5" />}
-          iconClassName="bg-destructive/10 text-destructive"
-          trend={{ value: -12, label: "vs last month" }}
-          sparkline={{ variant: "bar", data: [5,3,4,2,3,2,1], color: "var(--ef-red)" }}
+          tone="red"
+          trend={{ value: uncoveredTrend, label: "vs last month" }}
+          sparkline={{ variant: "bar", data: [...uncoveredSeries] }}
         />
       </div>
 

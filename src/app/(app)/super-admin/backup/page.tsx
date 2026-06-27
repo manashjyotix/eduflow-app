@@ -2,7 +2,7 @@
 import { useState } from "react"
 import {
   HardDrive, Download, RotateCcw, Plus, Search, Filter,
-  CheckCircle2, AlertTriangle, Clock, Building2, Database,
+  CheckCircle2, AlertTriangle, Building2, Database,
   FileArchive, Shield, Zap, RefreshCw, Eye, Trash2,
   CloudUpload, Package, Info,
 } from "lucide-react"
@@ -128,7 +128,7 @@ export default function BackupRestorePage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard title="Total Backups" value={stats.total} subtitle="All snapshots" icon={<HardDrive className="size-5" />} sparkline={{ variant: "bar", data: [7, 8, 9, 9, 10, 11] }} />
         <KpiCard title="Successful" value={stats.complete} subtitle="Completed OK" icon={<CheckCircle2 className="size-5" />} iconClassName="bg-ef-green-light text-ef-green" sparkline={{ variant: "line", data: [6, 7, 8, 9, 9, 9], color: "var(--ef-green)" }} />
         <KpiCard title="Failed" value={stats.failed} subtitle={stats.failed > 0 ? "Needs attention" : "All clear"} icon={<AlertTriangle className="size-5" />} iconClassName={stats.failed > 0 ? "bg-ef-red-light text-ef-red" : "bg-ef-green-light text-ef-green"} sparkline={{ variant: "bar", data: [1, 0, 1, 0, 1, 1], color: stats.failed > 0 ? "var(--ef-red)" : "var(--ef-green)" }} />
@@ -140,7 +140,7 @@ export default function BackupRestorePage() {
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex flex-wrap gap-4 items-center flex-1 min-w-0">
-              <div className="flex items-center gap-2.5 flex-shrink-0">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <div className="size-9 rounded-lg bg-ef-green-light text-ef-green-dark flex items-center justify-center"><Shield className="size-4" /></div>
                 <div>
                   <div className="text-sm font-bold">Auto-Backup: Enabled</div>
@@ -214,6 +214,7 @@ export default function BackupRestorePage() {
           <Badge variant="secondary">{filtered.length} results</Badge>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <caption className="sr-only">Backup snapshots</caption>
             <TableHeader>
@@ -275,6 +276,7 @@ export default function BackupRestorePage() {
               })}
             </TableBody>
           </Table>
+          </div>
           {filtered.length === 0 && (
             <div className="py-12 text-center">
               <Database className="size-9 text-muted-foreground/70 mx-auto mb-3" />
@@ -304,7 +306,7 @@ export default function BackupRestorePage() {
                 <AlertDescription>Restoring a backup replaces all current data for this school with the selected snapshot. This action cannot be undone.</AlertDescription>
               </Alert>
               {confirmRestore && (
-                <div className="bg-muted rounded-lg px-4 py-3.5 flex flex-col gap-2">
+                <div className="bg-muted rounded-lg px-4 py-4 flex flex-col gap-2">
                   {([
                     ["Backup ID", confirmRestore.id],
                     ["School", confirmRestore.schoolName],
@@ -353,7 +355,7 @@ export default function BackupRestorePage() {
               <Label>Backup Type</Label>
               <div className="grid grid-cols-2 gap-2">
                 {(Object.entries(TYPE_META) as [Backup["type"], typeof TYPE_META[Backup["type"]]][]).map(([type, meta]) => (
-                  <button key={type} onClick={() => setNewBackup(s => ({ ...s, type }))} className={`px-3.5 py-3 rounded-lg border-[1.5px] text-left transition-colors ${newBackup.type === type ? "border-primary bg-ef-brand-light" : "border-border bg-card"}`}>
+                  <button key={type} onClick={() => setNewBackup(s => ({ ...s, type }))} className={`px-4 py-3 rounded-lg border-[1.5px] text-left transition-colors ${newBackup.type === type ? "border-primary bg-ef-brand-light" : "border-border bg-card"}`}>
                     <div className="flex items-center gap-1.5"><span className={`inline-flex items-center justify-center rounded ${meta.className} size-5`}>{meta.icon}</span><span className="text-xs font-bold">{meta.label}</span></div>
                   </button>
                 ))}

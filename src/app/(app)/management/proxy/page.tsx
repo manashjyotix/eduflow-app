@@ -8,8 +8,15 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { TEACHERS } from "@/data/teachers"
 import { MOCK_ABSENCES } from "@/data/mock-absences"
+import { MOCK_PROXIES } from "@/data/proxy-assignments"
 import { TEACHING_PERIODS } from "@/lib/constants"
 import { cn } from "@/lib/utils"
+
+// Weekly trend series (Mon–Sat) for sparklines — realistic HCEA proxy history
+const WEEKLY_OPEN_GAPS: number[]    = [3, 5, 4, 6, 4, 4]
+const WEEKLY_ASSIGNED: number[]     = [2, 4, 3, 5, 3, 3]
+const WEEKLY_COMPLETED: number[]    = [1, 3, 2, 4, 2, 1]
+const WEEKLY_COVERAGE_PCT: number[] = [67, 80, 75, 83, 75, 71]
 
 const absentIds = new Set(MOCK_ABSENCES.filter(a => a.status === "approved").map(a => a.teacherId))
 
@@ -23,6 +30,30 @@ function getDotClass(teacherId: string, _periodId: string, absentSubject: string
 
 export default function ManagementProxyPage() {
   const approvedAbsences = MOCK_ABSENCES.filter(a => a.status === "approved")
+
+  // Derive proxy metrics from MOCK_PROXIES
+  const totalOpenGaps   = approvedAbsences.reduce((s, a) => s + a.periods.length, 0)
+  const assignedCount   = MOCK_PROXIES.filter(p => p.status === "accepted" || p.status === "assigned").length
+  const completedCount  = MOCK_PROXIES.filter(p => p.status === "accepted").length
+  const coveragePct     = totalOpenGaps > 0 ? Math.round((assignedCount / totalOpenGaps) * 100) : 0
+
+  // Trend: compare today (last value) vs previous day (second-to-last)
+  const prevGaps       = WEEKLY_OPEN_GAPS[WEEKLY_OPEN_GAPS.length - 2]
+  const todayGaps      = WEEKLY_OPEN_GAPS[WEEKLY_OPEN_GAPS.length - 1]
+  const gapTrend       = prevGaps > 0 ? Math.round(((todayGaps - prevGaps) / prevGaps) * 100) : 0
+
+  const prevAssigned   = WEEKLY_ASSIGNED[WEEKLY_ASSIGNED.length - 2]
+  const todayAssigned  = WEEKLY_ASSIGNED[WEEKLY_ASSIGNED.length - 1]
+  const assignTrend    = prevAssigned > 0 ? Math.round(((todayAssigned - prevAssigned) / prevAssigned) * 100) : 0
+
+  const prevCompleted  = WEEKLY_COMPLETED[WEEKLY_COMPLETED.length - 2]
+  const todayCompleted = WEEKLY_COMPLETED[WEEKLY_COMPLETED.length - 1]
+  const completeTrend  = prevCompleted > 0 ? Math.round(((todayCompleted - prevCompleted) / prevCompleted) * 100) : 0
+
+  const prevCoverage   = WEEKLY_COVERAGE_PCT[WEEKLY_COVERAGE_PCT.length - 2]
+  const todayCoverage  = WEEKLY_COVERAGE_PCT[WEEKLY_COVERAGE_PCT.length - 1]
+  const coverageTrend  = prevCoverage > 0 ? Math.round(((todayCoverage - prevCoverage) / prevCoverage) * 100) : 0
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8">
       <PageHeader
@@ -40,11 +71,43 @@ export default function ManagementProxyPage() {
         }
       />
 
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <KpiCard title="Open Gaps"    value={approvedAbsences.length * 2} icon={<Clock className="size-5" />} iconClassName="bg-destructive/10 text-destructive" />
-        <KpiCard title="Assigned"     value={3} icon={<CheckCircle className="size-5" />} iconClassName="bg-success/20 text-success-foreground" />
-        <KpiCard title="Completed"    value={1} icon={<CheckCircle className="size-5" />} iconClassName="bg-primary/10 text-primary" />
-        <KpiCard title="Coverage"     value="76%" icon={<PercentSquare className="size-5" />} />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <KpiCard
+          title="Open Gaps"
+          value={totalOpenGaps}
+          subtitle={`${approvedAbsences.length} teacher${approvedAbsences.length !== 1 ? "s" : ""} absent today`}
+          icon={<Clock className="size-5" />}
+          tone="red"
+          trend={{ value: gapTrend, label: "vs yesterday" }}
+          sparkline={{ variant: "bar", data: WEEKLY_OPEN_GAPS }}
+        />
+        <KpiCard
+          title="Assigned"
+          value={assignedCount}
+          subtitle={`${totalOpenGaps - assignedCount} period${totalOpenGaps - assignedCount !== 1 ? "s" : ""} still unassigned`}
+          icon={<CheckCircle className="size-5" />}
+          tone="green"
+          trend={{ value: assignTrend, label: "vs yesterday" }}
+          sparkline={{ variant: "bar", data: WEEKLY_ASSIGNED }}
+        />
+        <KpiCard
+          title="Completed"
+          value={completedCount}
+          subtitle="Accepted proxy duties"
+          icon={<CheckCircle className="size-5" />}
+          tone="brand"
+          trend={{ value: completeTrend, label: "vs yesterday" }}
+          sparkline={{ variant: "bar", data: WEEKLY_COMPLETED }}
+        />
+        <KpiCard
+          title="Coverage"
+          value={`${coveragePct}%`}
+          subtitle={`${assignedCount} of ${totalOpenGaps} periods covered`}
+          icon={<PercentSquare className="size-5" />}
+          tone="green"
+          trend={{ value: coverageTrend, label: "vs yesterday" }}
+          sparkline={{ variant: "arc", value: coveragePct }}
+        />
       </div>
 
       <div className="flex items-center gap-6 text-xs text-muted-foreground flex-wrap">

@@ -37,7 +37,7 @@ export default function PricingPage() {
 
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Simple, transparent pricing</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4 leading-tight">Simple, transparent pricing</h1>
           <p className="text-muted-foreground">One plan, all features. Pay by duration and save more.</p>
         </div>
 
@@ -45,7 +45,7 @@ export default function PricingPage() {
           {planEntries.map(([key, plan], i) => {
             const isPopular = key === "annual"
             return (
-              <Card key={key} className={isPopular ? "border-primary shadow-lg relative" : ""}>
+              <Card key={key} className={isPopular ? "border-primary relative" : ""}>
                 {isPopular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <Badge variant="default" className="text-xs">Most Popular</Badge>
@@ -54,7 +54,7 @@ export default function PricingPage() {
                 <CardHeader className="pb-3 text-center">
                   <CardTitle className="text-base capitalize">{plan.name}</CardTitle>
                   <div className="mt-2">
-                    <span className="text-3xl font-bold">₹{plan.price.toLocaleString("en-IN")}</span>
+                    <span className="text-2xl sm:text-3xl font-bold">₹{plan.price.toLocaleString("en-IN")}</span>
                     <span className="text-xs text-muted-foreground"> / {plan.duration}</span>
                   </div>
                   {plan.savingsPct > 0 && (

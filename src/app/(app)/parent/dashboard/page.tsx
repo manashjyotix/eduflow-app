@@ -47,6 +47,8 @@ const ResponsiveContainer = dynamic(
 
 import { KpiCard } from "@/components/shared/kpi-card"
 import { WeatherGreeting } from "@/components/shared/weather-greeting"
+import { BirthdayCard } from "@/components/shared/birthday-card"
+import { getActiveChildBirthday } from "@/data/birthdays"
 import { SubjectTracker } from "@/components/shared/subject-tracker"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -54,54 +56,124 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { SUBJECT_COMPLETION } from "@/data/subject-completion"
+import { useChild } from "@/context/child-context"
 
-const CHILD = { name: "Rohit Das", class: "VIII-A", roll: 12, attendance: 84.6, school: "Holy Child English Academy" }
+interface ChildClass {
+  period: string
+  subject: string
+  teacher: string
+  time: string
+  status: "completed" | "ongoing" | "upcoming"
+  homework: string
+  proxy?: boolean
+}
 
-const TODAY_CLASSES = [
-  { period: "P1", subject: "Mathematics", teacher: "Priya Sharma",   time: "9:30",  status: "completed" as const, homework: "Ex 4.3 Q1–10" },
-  { period: "P2", subject: "English",     teacher: "Rajesh Kalita",  time: "10:10", status: "completed" as const, homework: "" },
-  { period: "P3", subject: "Science",     teacher: "Sunita Borah",   time: "10:50", status: "ongoing"  as const,  homework: "", proxy: true },
-  { period: "P4", subject: "Hindi",       teacher: "Meena Gogoi",    time: "11:30", status: "upcoming" as const,  homework: "" },
-  { period: "P5", subject: "History",     teacher: "Rajesh Kalita",  time: "12:30", status: "upcoming" as const,  homework: "" },
-]
+interface ChildData {
+  name: string
+  class: string
+  roll: number
+  attendance: number
+  school: string
+  nextExamDate: string
+  todayClasses: ChildClass[]
+  attendanceTrend: { month: string; pct: number }[]
+  behaviorTrend: { week: string; excellent: number; good: number; fair: number; poor: number }[]
+  notifications: { id: string; msg: string; time: string; read: boolean; type: string }[]
+  upcomingExams: { subject: string; date: string; days: number }[]
+  feeDues: { head: string; month: string; amount: number; status: "overdue" | "pending" }[]
+  /** Last 6 months outstanding-due amounts (₹) — drives the Fee Due sparkline. */
+  feeTrend: number[]
+  /** Last 6 weeks notice counts — drives the Notices sparkline. */
+  noticeTrend: number[]
+}
 
-const ATTENDANCE_TREND = [
-  { month: "Jan", pct: 90 }, { month: "Feb", pct: 87 }, { month: "Mar", pct: 94 },
-  { month: "Apr", pct: 85 }, { month: "May", pct: 82 }, { month: "Jun", pct: 84.6 },
-]
+const SCHOOL = "Holy Child English Academy"
 
-// Behavioral trend — weekly scores per category (Excellent=5, Good=4, Fair=3, Poor=2, Absent=1)
-const BEHAVIOR_TREND = [
-  { week: "W1 May", excellent: 3, good: 1, fair: 1, poor: 0 },
-  { week: "W2 May", excellent: 2, good: 2, fair: 1, poor: 0 },
-  { week: "W3 May", excellent: 3, good: 2, fair: 0, poor: 0 },
-  { week: "W4 May", excellent: 1, good: 3, fair: 1, poor: 1 },
-  { week: "W1 Jun", excellent: 2, good: 2, fair: 2, poor: 0 },
-  { week: "W2 Jun", excellent: 4, good: 1, fair: 0, poor: 0 },
-]
-
-const NOTIFICATIONS = [
-  { id: "n1", msg: "PTM scheduled for June 28, 10 AM – 4 PM", time: "2h ago",   read: false, type: "info" },
-  { id: "n2", msg: "Fee due: ₹2,500 before June 30",          time: "1d ago",   read: false, type: "warning" },
-  { id: "n3", msg: "Mid-term exam schedule released",          time: "2d ago",   read: true,  type: "info" },
-  { id: "n4", msg: "Rohit scored 88% in Math test",           time: "3d ago",   read: true,  type: "success" },
-]
-
-const UPCOMING_EXAMS = [
-  { subject: "Mathematics", date: "Jun 20", days: 3 },
-  { subject: "Science",     date: "Jun 22", days: 5 },
-  { subject: "English",     date: "Jun 24", days: 7 },
-]
-
-const FEE_DUES = [
-  { head: "Tuition Fee", month: "May 2026", amount: 2500, status: "overdue" as const },
-  { head: "Exam Fee",    month: "Jun 2026", amount: 500,  status: "pending" as const },
-]
+// Per-child mock data — keyed by child id from <ChildProvider>.
+const CHILD_DATA: Record<string, ChildData> = {
+  "child-1": {
+    name: "Rohit Das", class: "VIII-A", roll: 12, attendance: 84.6, school: SCHOOL,
+    nextExamDate: "2026-06-20",
+    todayClasses: [
+      { period: "P1", subject: "Mathematics", teacher: "Priya Sharma",  time: "9:30",  status: "completed", homework: "Ex 4.3 Q1–10" },
+      { period: "P2", subject: "English",     teacher: "Rajesh Kalita", time: "10:10", status: "completed", homework: "" },
+      { period: "P3", subject: "Science",     teacher: "Sunita Borah",  time: "10:50", status: "ongoing",   homework: "", proxy: true },
+      { period: "P4", subject: "Hindi",       teacher: "Meena Gogoi",   time: "11:30", status: "upcoming",  homework: "" },
+      { period: "P5", subject: "History",     teacher: "Rajesh Kalita", time: "12:30", status: "upcoming",  homework: "" },
+    ],
+    attendanceTrend: [
+      { month: "Jan", pct: 90 }, { month: "Feb", pct: 87 }, { month: "Mar", pct: 94 },
+      { month: "Apr", pct: 85 }, { month: "May", pct: 82 }, { month: "Jun", pct: 84.6 },
+    ],
+    behaviorTrend: [
+      { week: "W1 May", excellent: 3, good: 1, fair: 1, poor: 0 },
+      { week: "W2 May", excellent: 2, good: 2, fair: 1, poor: 0 },
+      { week: "W3 May", excellent: 3, good: 2, fair: 0, poor: 0 },
+      { week: "W4 May", excellent: 1, good: 3, fair: 1, poor: 1 },
+      { week: "W1 Jun", excellent: 2, good: 2, fair: 2, poor: 0 },
+      { week: "W2 Jun", excellent: 4, good: 1, fair: 0, poor: 0 },
+    ],
+    notifications: [
+      { id: "n1", msg: "PTM scheduled for June 28, 10 AM – 4 PM", time: "2h ago", read: false, type: "info" },
+      { id: "n2", msg: "Fee due: ₹2,500 before June 30",          time: "1d ago", read: false, type: "warning" },
+      { id: "n3", msg: "Mid-term exam schedule released",          time: "2d ago", read: true,  type: "info" },
+      { id: "n4", msg: "Rohit scored 88% in Math test",           time: "3d ago", read: true,  type: "success" },
+    ],
+    upcomingExams: [
+      { subject: "Mathematics", date: "Jun 20", days: 3 },
+      { subject: "Science",     date: "Jun 22", days: 5 },
+      { subject: "English",     date: "Jun 24", days: 7 },
+    ],
+    feeDues: [
+      { head: "Tuition Fee", month: "May 2026", amount: 2500, status: "overdue" },
+      { head: "Exam Fee",    month: "Jun 2026", amount: 500,  status: "pending" },
+    ],
+    feeTrend: [1500, 0, 2000, 500, 1000, 3000],
+    noticeTrend: [2, 4, 1, 3, 2, 4],
+  },
+  "child-2": {
+    name: "Riya Das", class: "VI-B", roll: 8, attendance: 92.3, school: SCHOOL,
+    nextExamDate: "2026-06-22",
+    todayClasses: [
+      { period: "P1", subject: "English",     teacher: "Rajesh Kalita",  time: "9:30",  status: "completed", homework: "Read Ch. 6" },
+      { period: "P2", subject: "Mathematics", teacher: "Priya Sharma",   time: "10:10", status: "completed", homework: "Worksheet 2" },
+      { period: "P3", subject: "Geography",   teacher: "Anita Devi",     time: "10:50", status: "ongoing",   homework: "" },
+      { period: "P4", subject: "Science",     teacher: "Sunita Borah",   time: "11:30", status: "upcoming",  homework: "" },
+      { period: "P5", subject: "Drawing",     teacher: "Meena Gogoi",    time: "12:30", status: "upcoming",  homework: "" },
+    ],
+    attendanceTrend: [
+      { month: "Jan", pct: 95 }, { month: "Feb", pct: 91 }, { month: "Mar", pct: 96 },
+      { month: "Apr", pct: 89 }, { month: "May", pct: 93 }, { month: "Jun", pct: 92.3 },
+    ],
+    behaviorTrend: [
+      { week: "W1 May", excellent: 4, good: 1, fair: 0, poor: 0 },
+      { week: "W2 May", excellent: 3, good: 2, fair: 0, poor: 0 },
+      { week: "W3 May", excellent: 4, good: 1, fair: 0, poor: 0 },
+      { week: "W4 May", excellent: 3, good: 2, fair: 0, poor: 0 },
+      { week: "W1 Jun", excellent: 4, good: 1, fair: 0, poor: 0 },
+      { week: "W2 Jun", excellent: 5, good: 0, fair: 0, poor: 0 },
+    ],
+    notifications: [
+      { id: "n1", msg: "PTM scheduled for June 28, 10 AM – 4 PM", time: "2h ago", read: false, type: "info" },
+      { id: "n2", msg: "Riya selected for inter-school quiz",      time: "1d ago", read: false, type: "success" },
+      { id: "n3", msg: "Mid-term exam schedule released",          time: "2d ago", read: true,  type: "info" },
+      { id: "n4", msg: "Riya scored 95% in English test",          time: "4d ago", read: true,  type: "success" },
+    ],
+    upcomingExams: [
+      { subject: "English",     date: "Jun 22", days: 5 },
+      { subject: "Mathematics", date: "Jun 24", days: 7 },
+      { subject: "Science",     date: "Jun 26", days: 9 },
+    ],
+    feeDues: [],
+    feeTrend: [800, 0, 1200, 0, 0, 0],
+    noticeTrend: [3, 2, 4, 2, 3, 4],
+  },
+}
 
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name?: string }[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border bg-card px-3 py-2 shadow-md text-xs">
+    <div className="rounded-lg border bg-card px-3 py-2 shadow-card text-xs">
       <p className="font-semibold">{label}</p>
       <p className="text-primary font-bold">{payload[0]?.value}%</p>
     </div>
@@ -111,7 +183,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 function BehaviorTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name?: string; color?: string }[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-md text-xs min-w-[120px]">
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-card text-xs min-w-[120px]">
       <p className="font-semibold text-foreground mb-1.5">{label}</p>
       {payload.map((p, i) => (
         <div key={i} className="flex items-center gap-1.5">
@@ -125,13 +197,28 @@ function BehaviorTooltip({ active, payload, label }: { active?: boolean; payload
 }
 
 export default function ParentDashboardPage() {
-  const daysToExam = Math.max(0, Math.ceil((new Date("2026-06-20").getTime() - Date.now()) / 86400000))
+  const { selectedChildId } = useChild()
+  const CHILD = CHILD_DATA[selectedChildId] ?? CHILD_DATA["child-1"]
+
+  const TODAY_CLASSES = CHILD.todayClasses
+  const ATTENDANCE_TREND = CHILD.attendanceTrend
+  const BEHAVIOR_TREND = CHILD.behaviorTrend
+  const NOTIFICATIONS = CHILD.notifications
+  const UPCOMING_EXAMS = CHILD.upcomingExams
+  const FEE_DUES = CHILD.feeDues
+
+  const daysToExam = Math.max(0, Math.ceil((new Date(CHILD.nextExamDate).getTime() - Date.now()) / 86400000))
   const totalDue = FEE_DUES.reduce((s, f) => s + f.amount, 0)
   const unreadCount = NOTIFICATIONS.filter(n => !n.read).length
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8">
-      <WeatherGreeting />
+      <WeatherGreeting subtitle={`Parent of ${CHILD.name}`} />
+
+      {/* Birthday wishes — parent's own + their child's (in-app for family) */}
+      <BirthdayCard />
+      <BirthdayCard person={getActiveChildBirthday()} />
+
 
       <PageHeader
         icon={<LayoutDashboard size={22} />}
@@ -139,8 +226,8 @@ export default function ParentDashboardPage() {
         subtitle={`Monitoring ${CHILD.name}'s academic journey`}
       />
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      {/* KPIs — 1 col (mobile) · 2 cols (tablet) · 4 cols (desktop) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Attendance"
           value={`${CHILD.attendance}%`}
@@ -152,7 +239,7 @@ export default function ParentDashboardPage() {
         <KpiCard
           title="Exam In"
           value={`${daysToExam}d`}
-          subtitle="Mid-term: Jun 20"
+          subtitle={UPCOMING_EXAMS[0] ? `Next: ${UPCOMING_EXAMS[0].date}` : "No exams"}
           icon={<Calendar className="size-5" />}
           iconClassName="bg-primary/10 text-primary"
           sparkline={{ variant: "arc", value: Math.max(0, 100 - daysToExam * 10), color: "var(--ef-purple)" }}
@@ -160,9 +247,10 @@ export default function ParentDashboardPage() {
         <KpiCard
           title="Fee Due"
           value={`₹${totalDue.toLocaleString("en-IN")}`}
-          subtitle="Due Jun 30"
+          subtitle={totalDue > 0 ? "Due Jun 30" : "All clear"}
           icon={<DollarSign className="size-5" />}
           iconClassName="bg-destructive/10 text-destructive"
+          sparkline={{ variant: "bar", data: CHILD.feeTrend, color: "var(--ef-red)" }}
         />
         <KpiCard
           title="Notices"
@@ -170,6 +258,7 @@ export default function ParentDashboardPage() {
           subtitle={`${unreadCount} unread`}
           icon={<Bell className="size-5" />}
           iconClassName="bg-warning/20 text-warning-foreground"
+          sparkline={{ variant: "bar", data: CHILD.noticeTrend, color: "var(--ef-amber)" }}
         />
       </div>
 
@@ -179,11 +268,8 @@ export default function ParentDashboardPage() {
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <SmilePlus className="size-4 text-primary" /> Behavioral Trend — Last 6 Weeks
           </CardTitle>
-          <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="size-2 rounded-sm inline-block" style={{ background: "var(--chart-1)" }} /> Excellent</span>
-            <span className="flex items-center gap-1"><span className="size-2 rounded-sm inline-block" style={{ background: "var(--chart-2)" }} /> Good</span>
-            <span className="flex items-center gap-1"><span className="size-2 rounded-sm inline-block" style={{ background: "var(--chart-3)" }} /> Fair</span>
-            <span className="flex items-center gap-1"><span className="size-2 rounded-sm inline-block" style={{ background: "var(--chart-4)" }} /> Poor</span>
+          <div className="text-[11px] text-muted-foreground">
+            Weekly conduct ratings recorded by class teachers · Last 6 weeks
           </div>
         </CardHeader>
         <Separator />
@@ -212,9 +298,12 @@ export default function ParentDashboardPage() {
               <Bar dataKey="poor"      name="Poor"      fill="var(--chart-4)" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-          <p className="text-[11px] text-muted-foreground mt-2">
-            Weekly behavior ratings logged by class teachers · Periods P1–P7
-          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] text-muted-foreground mt-2">
+            <span className="flex items-center gap-1"><span className="size-2 rounded-sm inline-block" style={{ background: "var(--chart-1)" }} /> Excellent</span>
+            <span className="flex items-center gap-1"><span className="size-2 rounded-sm inline-block" style={{ background: "var(--chart-2)" }} /> Good</span>
+            <span className="flex items-center gap-1"><span className="size-2 rounded-sm inline-block" style={{ background: "var(--chart-3)" }} /> Fair</span>
+            <span className="flex items-center gap-1"><span className="size-2 rounded-sm inline-block" style={{ background: "var(--chart-4)" }} /> Poor</span>
+          </div>
         </CardContent>
       </Card>
 

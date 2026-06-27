@@ -1,7 +1,8 @@
 "use client"
 import { useState } from "react"
-import { ClipboardCheck, Download, Filter, Search } from "lucide-react"
+import { ClipboardCheck, Download, Search, ShieldCheck, AlertTriangle, XCircle, Activity } from "lucide-react"
 import { PageHeader } from "@/components/shared/page-header"
+import { KpiCard } from "@/components/shared/kpi-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table"
 import { useTableSort, SortableHead } from "@/components/shared/sortable-table"
@@ -33,6 +34,14 @@ const STATUS_BADGE: Record<string, string> = {
   warning: "bg-warning text-warning-foreground",
   error:   "bg-destructive text-destructive-foreground",
 }
+
+// ── Derived KPI values from AUDIT_LOGS ─────────────────────────────────
+const TOTAL_EVENTS   = AUDIT_LOGS.length
+const TODAY_EVENTS   = AUDIT_LOGS.filter(l => l.ts.startsWith("2026-06-15")).length
+const WARN_COUNT     = AUDIT_LOGS.filter(l => l.status === "warning").length
+const ERROR_COUNT    = AUDIT_LOGS.filter(l => l.status === "error").length
+// Daily event series (Jun 10–15 approximate)
+const EVENTS_SERIES: number[] = [8, 11, 6, 9, 7, TODAY_EVENTS]
 
 export default function AuditPage() {
   const [search, setSearch] = useState("")
@@ -69,18 +78,41 @@ export default function AuditPage() {
         actions={<Button variant="outline"><Download className="size-4 mr-1" />Export CSV</Button>}
       />
 
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Total Events", value: AUDIT_LOGS.length, color: "text-primary" },
-          { label: "Today", value: 4, color: "text-foreground" },
-          { label: "Warnings", value: 1, color: "text-[var(--ef-amber-dark)]" },
-          { label: "Errors", value: 1, color: "text-destructive" },
-        ].map(s => (
-          <Card key={s.label}><CardContent className="pt-4">
-            <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-          </CardContent></Card>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <KpiCard
+          title="Total Events"
+          value={TOTAL_EVENTS}
+          subtitle={`${TODAY_EVENTS} today · all roles`}
+          icon={<Activity className="size-5" />}
+          tone="brand"
+          trend={{ value: Math.round(((TODAY_EVENTS - 3) / 3) * 100), label: "vs yesterday" }}
+          sparkline={{ variant: "bar", data: EVENTS_SERIES }}
+        />
+        <KpiCard
+          title="Today"
+          value={TODAY_EVENTS}
+          subtitle={`${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short" })} · ${AUDIT_LOGS.filter(l => l.ts.startsWith("2026-06-15") && l.status === "success").length} success`}
+          icon={<ShieldCheck className="size-5" />}
+          tone="green"
+          sparkline={{ variant: "arc", value: Math.round((TODAY_EVENTS / TOTAL_EVENTS) * 100) }}
+        />
+        <KpiCard
+          title="Warnings"
+          value={WARN_COUNT}
+          subtitle={`${WARN_COUNT} flagged action${WARN_COUNT !== 1 ? "s" : ""} logged`}
+          icon={<AlertTriangle className="size-5" />}
+          tone="amber"
+          sparkline={{ variant: "bar", data: [0, 1, 0, 0, 0, WARN_COUNT] }}
+        />
+        <KpiCard
+          title="Errors"
+          value={ERROR_COUNT}
+          subtitle={`${ERROR_COUNT} failed login attempt${ERROR_COUNT !== 1 ? "s" : ""}`}
+          icon={<XCircle className="size-5" />}
+          tone="red"
+          trend={{ value: 0, label: "vs last period" }}
+          sparkline={{ variant: "bar", data: [0, 0, 1, 0, 0, ERROR_COUNT] }}
+        />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">

@@ -76,7 +76,7 @@ function ChildSwitcher() {
       <Separator orientation="vertical" className="h-4" />
       <Select value={selectedChildId} onValueChange={setSelectedChildId}>
         <SelectTrigger
-          className="h-8 w-auto gap-1.5 whitespace-nowrap text-xs border-border bg-muted/50 focus:ring-ring"
+          className="h-8 w-auto gap-1.5 whitespace-nowrap text-xs border-border bg-muted/50 shadow-none focus:ring-ring"
           aria-label="Switch child"
         >
           <span className="flex items-center gap-1.5 whitespace-nowrap">
@@ -101,12 +101,19 @@ function ChildSwitcher() {
 
 export function Topbar() {
   const { role, initials, name, subtitle, avatarColor } = useRole()
+  const { selectedChild } = useChild()
   const profileHref = PROFILE_HREF[role] ?? "/admin/profile"
   const notifications = role === "parent" ? PARENT_NOTIFICATIONS : MOCK_NOTIFICATIONS
   const unread = notifications.filter((n) => !n.read).length
 
+  // Parent subtitle tracks the selected child so it updates with the switcher.
+  const displaySubtitle =
+    role === "parent" && selectedChild
+      ? `Parent of ${selectedChild.name.split(" ")[0]}`
+      : subtitle
+
   return (
-    <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur-sm shadow-sm px-4">
+    <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur-sm px-4">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="h-4" />
 
@@ -226,7 +233,7 @@ export function Topbar() {
               {name}
             </p>
             <p className="text-[10px] text-muted-foreground leading-tight truncate max-w-[120px]">
-              {subtitle}
+              {displaySubtitle}
             </p>
           </div>
         </Link>

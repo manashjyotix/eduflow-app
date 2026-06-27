@@ -1,5 +1,4 @@
 "use client"
-import { useState } from "react"
 import { DollarSign, Plus, Download, Receipt, AlertCircle, TrendingUp, IndianRupee } from "lucide-react"
 import dynamic from "next/dynamic"
 
@@ -42,10 +41,6 @@ const PieChart = dynamic(
 )
 const Pie = dynamic(
   () => import("recharts").then((m) => ({ default: m.Pie })),
-  { ssr: false }
-)
-const Legend = dynamic(
-  () => import("recharts").then((m) => ({ default: m.Legend })),
   { ssr: false }
 )
 import { PageHeader } from "@/components/shared/page-header"
@@ -91,7 +86,7 @@ function feeInfo(s: (typeof STUDENTS)[number]) {
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: {value: number; name?: string; color?: string}[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-md text-xs">
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-card text-xs">
       <p className="font-semibold mb-1">{label}</p>
       {payload.map((p, i) => (
         <div key={i} className="flex items-center gap-1.5">
@@ -172,7 +167,7 @@ export default function FeesPage() {
       />
 
       {/* KPIs — 4-col grid */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Total Collected"
           value="₹1,80,000"

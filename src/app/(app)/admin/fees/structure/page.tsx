@@ -141,7 +141,7 @@ export default function FeeStructurePage() {
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard title="Total Fee Heads" value={feeHeads.length} subtitle="configured fee categories" icon={<DollarSign size={18} />} tone="brand" />
         <KpiCard title="Active Heads" value={totalActive} subtitle="currently applicable" icon={<CheckCircle2 size={18} />} tone="green" />
         <KpiCard title="Monthly Fees" value={totalMonthlyHeads} subtitle="billed every month" icon={<DollarSign size={18} />} tone="cyan" />

@@ -37,7 +37,7 @@ export default function ChildAttendancePage() {
         subtitle="Class VIII-A · Roll No. 12"
       />
 
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KpiCard
           title="Present"
           value={present}

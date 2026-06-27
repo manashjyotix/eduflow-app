@@ -113,7 +113,7 @@ export default function DefaultersPage() {
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Total Defaulters"
           value={15}

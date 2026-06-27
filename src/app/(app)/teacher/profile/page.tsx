@@ -3,12 +3,14 @@
 import { useState } from "react"
 import {
   User, Mail, Phone, Building2, CalendarDays, Shield, Bell,
-  Lock, Activity, Key, Pencil, Save, X, CheckCircle, BookOpen,
+  Lock, Activity, Key, Save, CheckCircle, BookOpen,
   Eye, EyeOff, LogOut, Download, Trash2, ChevronRight, Award,
-  ArrowRight, Clock, Star, TrendingUp,
+  ArrowRight, Clock, Star, TrendingUp, IdCard, GraduationCap,
+  Briefcase, MapPin, RotateCcw,
 } from "lucide-react"
 import Link from "next/link"
 import { AvatarUpload } from "@/components/shared/avatar-upload"
+import { ScrollX }      from "@/components/shared/scroll-x"
 import { PageHeader }    from "@/components/shared/page-header"
 import { KpiCard }    from "@/components/shared/kpi-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,6 +21,10 @@ import { Input }      from "@/components/ui/input"
 import { Label }      from "@/components/ui/label"
 import { Switch }     from "@/components/ui/switch"
 import { Progress }   from "@/components/ui/progress"
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn }         from "@/lib/utils"
 
 const TABS = [
@@ -30,6 +36,9 @@ const TABS = [
   { id: "activity", label: "Activity",     icon: Activity },
 ] as const
 type Tab = typeof TABS[number]["id"]
+
+const DESIGNATIONS = ["PRT", "TGT", "PGT", "TGT Mathematics", "TGT Science", "Vice Principal", "Senior Teacher", "Other"]
+const SECTIONS     = ["Pre-Primary", "Primary (I–V)", "Middle (VI–VIII)", "High Section (VII–X)", "Senior Secondary (XI–XII)"]
 
 const SUBJECTS = [
   { subject: "Mathematics", classes: ["VIII-A","IX-B","X-A"], periods: 12, isPrimary: true  },
@@ -71,21 +80,83 @@ function ToggleRow({label,sub,checked,onChange}:{label:string;sub:string;checked
   )
 }
 
+/** Editable text field with optional leading icon (borderless shadow). */
+function Field({
+  label, value, onChange, icon, type = "text", placeholder,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  icon?: React.ReactNode
+  type?: string
+  placeholder?: string
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <div className="relative">
+        {icon && (
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">{icon}</span>
+        )}
+        <Input
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className={cn("h-9 text-sm shadow-none", icon && "pl-8")}
+        />
+      </div>
+    </div>
+  )
+}
+
+/** Editable select field. */
+function SelectField({
+  label, value, onChange, options, icon, placeholder = "Select…",
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  options: string[]
+  icon?: React.ReactNode
+  placeholder?: string
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <div className="relative">
+        {icon && (
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 z-10 text-muted-foreground pointer-events-none">{icon}</span>
+        )}
+        <Select value={value || undefined} onValueChange={onChange}>
+          <SelectTrigger className={cn("h-9 text-sm shadow-none", icon && "pl-8")}>
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  )
+}
+
 export default function TeacherProfilePage() {
   const [tab,       setTab]      = useState<Tab>("profile")
-  const [editing,   setEditing]  = useState(false)
   const [showPw,    setShowPw]   = useState(false)
   const [showCurPw, setShowCurPw]= useState(false)
   const [showNewPw, setShowNewPw]= useState(false)
   const [saved,     setSaved]    = useState(false)
 
-  const [profile, setProfile] = useState({
+  const INITIAL_PROFILE = {
     name:"Priya Sharma", email:"priya@hcea.edu", phone:"+91 87654 32109",
     employeeId:"TCH-003", qualification:"M.Sc. Mathematics",
     designation:"TGT Mathematics", section:"High Section (VII–X)",
     address:"Howly, Barpeta, Assam",
     bio:"Mathematics & Science teacher with 7 years of experience. Specialises in remedial teaching for secondary grades.",
-  })
+  }
+  const [profile, setProfile] = useState(INITIAL_PROFILE)
+  const [dirty, setDirty] = useState(false)
 
   const [notifs, setNotifs] = useState({
     proxyRequest:true, leaveStatus:true, emailAll:false,
@@ -96,100 +167,211 @@ export default function TeacherProfilePage() {
   })
   const [twoFactor, setTwoFactor] = useState(false)
 
-  function save() { setSaved(true); setEditing(false); setTimeout(()=>setSaved(false),3000) }
-  const p = (k: keyof typeof profile) => (v: string) => setProfile(prev=>({...prev,[k]:v}))
+  const p = (k: keyof typeof profile) => (v: string) => { setProfile(prev=>({...prev,[k]:v})); setDirty(true) }
+  function save() { setSaved(true); setDirty(false); setTimeout(()=>setSaved(false),3000) }
+  function reset() { setProfile(INITIAL_PROFILE); setDirty(false) }
+
   const totalProxies = PROXIES.reduce((s,m)=>s+m.count,0)
 
+  const totalRemaining = LEAVE_BALANCE.reduce((s, lb) => s + (lb.total - lb.used), 0)
+  const totalLeave     = LEAVE_BALANCE.reduce((s, lb) => s + lb.total, 0)
+  const leaveArcPct   = Math.round((totalRemaining / totalLeave) * 100)
+
+  const periodsPerWeek   = SUBJECTS.reduce((s, sub) => s + sub.periods, 0)
+  const uniqueClasses    = new Set(SUBJECTS.flatMap(s => s.classes)).size
+
+  const proxyTrend = Math.round(
+    ((PROXIES[5].count - PROXIES[4].count) / Math.max(PROXIES[4].count, 1)) * 100
+  )
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap px-4 pt-6 sm:px-6 md:px-8">
         <PageHeader icon={<User size={22}/>} title="Profile & Settings" subtitle="Teacher account · Mathematics & Science"/>
-        <div className="flex items-center gap-2 flex-shrink-0 pb-2">
-          {saved && <span className="flex items-center gap-1.5 text-sm text-success-foreground font-medium"><CheckCircle className="size-4"/> Saved</span>}
-          {tab==="profile" && (editing
-            ? <><Button variant="outline" size="sm" onClick={()=>setEditing(false)}><X className="size-4"/> Cancel</Button>
-                <Button size="sm" onClick={save}><Save className="size-4"/> Save</Button></>
-            : <Button variant="outline" size="sm" onClick={()=>setEditing(true)}><Pencil className="size-4"/> Edit</Button>)}
-        </div>
+        {saved && (
+          <span className="flex items-center gap-1.5 text-sm text-success-foreground font-medium flex-shrink-0 pb-2">
+            <CheckCircle className="size-4"/> Changes saved
+          </span>
+        )}
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-4 sm:px-6 md:px-8 pt-6">
-        <KpiCard title="Leave Balance"   value="27 days"      icon={<Award className="size-5"/>}     iconClassName="bg-success/15 text-success-foreground" sparkline={{variant:"arc",value:90,color:"var(--ef-green)"}}/>
-        <KpiCard title="Proxy (Jun)"     value={PROXIES[5].count} icon={<ArrowRight className="size-5"/>} iconClassName="bg-warning/15 text-warning-foreground" trend={{value:-1,label:"vs last month"}}/>
-        <KpiCard title="Periods / Week"  value="17"           icon={<Clock className="size-5"/>}     iconClassName="bg-primary/10 text-primary" subtitle="3 classes"/>
-        <KpiCard title="YTD Proxies"     value={totalProxies} icon={<TrendingUp className="size-5"/>}iconClassName="bg-ef-purple-light text-ef-purple" sparkline={{variant:"bar",data:PROXIES.map(m=>m.count)}}/>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 px-4 sm:px-6 md:px-8 pt-6">
+        <KpiCard
+          title="Leave Balance"
+          value={`${totalRemaining} days`}
+          subtitle={`${totalRemaining} days remaining`}
+          icon={<Award className="size-5"/>}
+          iconClassName="bg-success/15 text-success-foreground"
+          tone="green"
+          sparkline={{variant:"arc",value:leaveArcPct,color:"var(--ef-green)"}}
+        />
+        <KpiCard
+          title="Proxy (Jun)"
+          value={PROXIES[5].count}
+          subtitle={`${totalProxies} YTD · ${PROXIES[5].count} this month`}
+          icon={<ArrowRight className="size-5"/>}
+          iconClassName="bg-warning/15 text-warning-foreground"
+          tone="amber"
+          trend={{value:proxyTrend,label:"vs last month"}}
+          sparkline={{variant:"bar",data:PROXIES.map(m=>m.count),color:"var(--ef-amber)"}}
+        />
+        <KpiCard
+          title="Periods / Week"
+          value={periodsPerWeek}
+          subtitle={`${SUBJECTS.length} subjects · ${uniqueClasses} classes`}
+          icon={<Clock className="size-5"/>}
+          iconClassName="bg-primary/10 text-primary"
+          tone="brand"
+        />
+        <KpiCard
+          title="YTD Proxies"
+          value={totalProxies}
+          subtitle={`Avg ${Math.round(totalProxies / 6)}/month`}
+          icon={<TrendingUp className="size-5"/>}
+          iconClassName="bg-ef-purple-light text-ef-purple"
+          tone="purple"
+          sparkline={{variant:"bar",data:PROXIES.map(m=>m.count)}}
+        />
       </div>
 
       {/* Tab nav */}
-      <div className="px-4 sm:px-6 md:px-8 mt-6 border-b border-border overflow-x-auto">
-        <nav className="flex gap-1 min-w-max">
-          {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)}
-              className={cn("flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
-                tab===t.id?"border-primary text-primary":"border-transparent text-muted-foreground hover:text-foreground hover:border-border")}>
-              <t.icon className="size-3.5"/>{t.label}
-            </button>
-          ))}
-        </nav>
+      <div className="px-4 sm:px-6 md:px-8 mt-6">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+          <ScrollX>
+            <TabsList className="w-max">
+              {TABS.map(t => (
+                <TabsTrigger key={t.id} value={t.id} className="gap-1.5">
+                  <t.icon className="size-3.5"/>{t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </ScrollX>
+        </Tabs>
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-4 sm:px-6 md:px-8 py-6 overflow-y-auto">
+      <div className="px-4 sm:px-6 md:px-8 py-6">
 
         {/* PROFILE */}
         {tab==="profile" && (
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-            <Card className={cn("xl:col-span-1", editing && "ring-2 ring-primary/30 shadow-md")}>
-              <CardContent className="pt-6 flex flex-col items-center text-center gap-3">
-                <AvatarUpload initials="PS" color="bg-[var(--ef-amber)]" editing={editing} />
-                {editing && (
-                  <p className="text-[11px] text-muted-foreground -mt-1">Click or drag to upload a photo</p>
-                )}
-                {editing ? <Input value={profile.name} onChange={e=>p("name")(e.target.value)} className="text-center font-semibold max-w-[180px]"/>
-                  : <h2 className="font-bold text-lg">{profile.name}</h2>}
+            {/* ── Summary card (modern) ── */}
+            <Card className="xl:col-span-1 h-fit overflow-hidden pt-0 gap-0">
+              <div className="h-24 bg-gradient-to-br from-[var(--ef-amber)] to-primary relative">
+                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_30%,white,transparent_60%)]" aria-hidden="true" />
+              </div>
+              <CardContent className="px-6 pb-6 flex flex-col items-center text-center gap-3">
+                <div className="-mt-14">
+                  <AvatarUpload initials="PS" color="bg-[var(--ef-amber)]" editing />
+                </div>
+                <p className="text-[11px] text-muted-foreground -mt-1">Tap the camera icon to upload a photo</p>
+                <div className="space-y-0.5">
+                  <h2 className="font-bold text-lg leading-tight">{profile.name}</h2>
+                  <p className="text-xs text-muted-foreground">{profile.email}</p>
+                </div>
                 <div className="flex flex-wrap gap-1.5 justify-center">
                   <Badge className="bg-[var(--ef-amber)] hover:bg-[var(--ef-amber)] text-white">Teacher</Badge>
                   <Badge variant="outline">{profile.designation}</Badge>
                 </div>
-                {editing
-                  ? <textarea value={profile.bio} onChange={e=>p("bio")(e.target.value)} rows={3} className="w-full text-xs border border-border rounded-lg px-2.5 py-1.5 resize-none bg-background text-foreground"/>
-                  : <p className="text-xs text-muted-foreground text-left">{profile.bio}</p>}
+
+                {/* Quick stat row */}
+                <div className="grid grid-cols-2 gap-2 w-full pt-1">
+                  <div className="rounded-lg border border-border bg-muted/40 px-3 py-2">
+                    <p className="text-base font-bold leading-none">{totalRemaining}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">Leave days</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-muted/40 px-3 py-2">
+                    <p className="text-base font-bold leading-none">{periodsPerWeek}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">Periods/wk</p>
+                  </div>
+                </div>
+
                 <Separator className="w-full"/>
-                <div className="w-full space-y-2 text-left text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2"><Mail className="size-3.5 text-primary flex-shrink-0"/><span className="truncate">{profile.email}</span></div>
+                <div className="w-full space-y-2.5 text-left text-xs text-muted-foreground">
                   <div className="flex items-center gap-2"><Phone className="size-3.5 text-primary flex-shrink-0"/><span>{profile.phone}</span></div>
+                  <div className="flex items-start gap-2"><MapPin className="size-3.5 text-primary flex-shrink-0 mt-0.5"/><span>{profile.address}</span></div>
+                  <div className="flex items-center gap-2"><GraduationCap className="size-3.5 text-primary flex-shrink-0"/><span>{profile.qualification}</span></div>
                   <div className="flex items-center gap-2"><Building2 className="size-3.5 text-primary flex-shrink-0"/><span>HCEA, Howly</span></div>
-                  <div className="flex items-center gap-2"><BookOpen className="size-3.5 text-primary flex-shrink-0"/><span>{profile.qualification}</span></div>
-                  <div className="flex items-center gap-2"><Shield className="size-3.5 text-primary flex-shrink-0"/><span>ID: {profile.employeeId}</span></div>
+                  <div className="flex items-center gap-2"><IdCard className="size-3.5 text-primary flex-shrink-0"/><span>ID: {profile.employeeId}</span></div>
                   <div className="flex items-center gap-2"><CalendarDays className="size-3.5 text-primary flex-shrink-0"/><span>Joined June 2023</span></div>
                 </div>
                 <Separator className="w-full"/>
-                <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive"><LogOut className="size-3.5"/> Sign Out</Button>
+                <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive" asChild>
+                  <Link href="/login"><LogOut className="size-3.5"/> Sign Out</Link>
+                </Button>
               </CardContent>
             </Card>
+
+            {/* ── Editable details ── */}
             <Card className="xl:col-span-3">
-              <CardHeader className="pb-3 flex-row items-center gap-2"><User className="size-4 text-muted-foreground"/><CardTitle className="text-base">Personal Details</CardTitle></CardHeader>
+              <CardHeader className="pb-3 flex-row items-center gap-2">
+                <User className="size-4 text-muted-foreground"/>
+                <CardTitle className="text-base">Personal Details</CardTitle>
+                {dirty && <Badge variant="secondary" className="ml-auto text-[10px]">Unsaved changes</Badge>}
+              </CardHeader>
               <Separator/>
-              <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {([
-                  ["Full Name","name"],["Employee ID","employeeId"],["Designation","designation"],
-                  ["Section","section"],["Qualification","qualification"],["Phone","phone"],
-                  ["Email","email"],
-                ] as [string, keyof typeof profile][]).map(([label,key]) => (
-                  <div key={key} className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">{label}</Label>
-                    {editing ? <Input value={profile[key]} onChange={e=>p(key)(e.target.value)} className="h-8 text-sm"/>
-                      : <p className="text-sm font-medium">{profile[key]}</p>}
+              <CardContent className="pt-5 space-y-6">
+                <section className="space-y-3">
+                  <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <IdCard className="size-3.5"/> Employment Information
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <Field       label="Full Name"     value={profile.name}          onChange={p("name")}          icon={<User className="size-3.5"/>} />
+                    <Field       label="Employee ID"   value={profile.employeeId}    onChange={p("employeeId")}    icon={<IdCard className="size-3.5"/>} />
+                    <SelectField label="Designation"   value={profile.designation}   onChange={p("designation")}   options={DESIGNATIONS} icon={<Briefcase className="size-3.5"/>} />
+                    <SelectField label="Section"       value={profile.section}       onChange={p("section")}       options={SECTIONS} icon={<BookOpen className="size-3.5"/>} />
+                    <Field       label="Qualification" value={profile.qualification} onChange={p("qualification")} icon={<GraduationCap className="size-3.5"/>} />
                   </div>
-                ))}
-                <div className="sm:col-span-2 lg:col-span-3 space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Address</Label>
-                  {editing ? <Input value={profile.address} onChange={e=>p("address")(e.target.value)} className="h-8 text-sm"/>
-                    : <p className="text-sm font-medium">{profile.address}</p>}
-                </div>
+                </section>
+
+                <Separator/>
+
+                <section className="space-y-3">
+                  <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <Phone className="size-3.5"/> Contact Information
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <Field label="Email" value={profile.email} onChange={p("email")} icon={<Mail className="size-3.5"/>} type="email" />
+                    <Field label="Phone" value={profile.phone} onChange={p("phone")} icon={<Phone className="size-3.5"/>} type="tel" />
+                    <div className="sm:col-span-2 lg:col-span-1">
+                      <Field label="Address" value={profile.address} onChange={p("address")} icon={<MapPin className="size-3.5"/>} />
+                    </div>
+                  </div>
+                </section>
+
+                <Separator/>
+
+                <section className="space-y-3">
+                  <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <Star className="size-3.5"/> About
+                  </h3>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Bio</Label>
+                    <textarea
+                      value={profile.bio}
+                      onChange={e => p("bio")(e.target.value)}
+                      rows={3}
+                      className="w-full text-sm border border-input rounded-md px-3 py-2 resize-none bg-transparent text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                    />
+                  </div>
+                </section>
               </CardContent>
+              <Separator/>
+              <div className="flex items-center justify-end gap-2 px-5 py-4">
+                {saved && (
+                  <span className="flex items-center gap-1.5 text-sm text-success-foreground font-medium mr-auto">
+                    <CheckCircle className="size-4"/> Saved
+                  </span>
+                )}
+                <Button variant="outline" size="sm" onClick={reset} disabled={!dirty}>
+                  <RotateCcw className="size-4"/> Reset
+                </Button>
+                <Button size="sm" onClick={save} disabled={!dirty}>
+                  <Save className="size-4"/> Update Profile
+                </Button>
+              </div>
             </Card>
           </div>
         )}

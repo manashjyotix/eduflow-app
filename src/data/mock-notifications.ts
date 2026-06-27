@@ -2,7 +2,10 @@ export interface Notification {
   id: string
   title: string
   body: string
-  type: "proxy" | "absence" | "swap" | "fee" | "announcement" | "system" | "leave"
+  type:
+    | "proxy" | "absence" | "swap" | "fee" | "announcement" | "system" | "leave" | "birthday"
+    // F1/F2/F8 operational types
+    | "attendance" | "journal" | "exam_duty" | "transport" | "report_card"
   read: boolean
   createdAt: string
   actionHref?: string
@@ -19,6 +22,7 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
   { id: "n8", title: "Proxy Accepted", body: "Rajesh Kalita has accepted the proxy assignment for Period 1 today.", type: "proxy", read: false, createdAt: "2026-06-15T09:35:00Z" },
   { id: "n9", title: "Leave Request Pending", body: "Priya Sharma has submitted a leave request for June 20. Awaiting your approval.", type: "leave", read: false, createdAt: "2026-06-15T10:00:00Z", actionHref: "/admin/absences" },
   { id: "n10", title: "Fee Collected", body: "₹15,000 received from Arjun Nath for Class X annual fees.", type: "fee", read: true, createdAt: "2026-06-11T14:00:00Z" },
+  { id: "n11", title: "🎂 Happy Birthday!", body: "Wishing you a wonderful birthday from everyone at EduFlow & Holy Child English Academy. Have a great day!", type: "birthday", read: false, createdAt: "2026-06-24T06:00:00Z" },
 ]
 
 export const PARENT_NOTIFICATIONS: Notification[] = [
@@ -27,4 +31,5 @@ export const PARENT_NOTIFICATIONS: Notification[] = [
   { id: "pn3", title: "Fee Due Reminder", body: "Monthly fee of ₹3,500 for July 2026 is due on July 5. Please pay promptly.", type: "fee", read: true, createdAt: "2026-06-13T11:00:00Z", actionHref: "/parent/fees" },
   { id: "pn4", title: "Leave Approved", body: "Rohit Das's leave request for June 17 has been approved.", type: "leave", read: true, createdAt: "2026-06-12T14:30:00Z" },
   { id: "pn5", title: "School Announcement", body: "Parent-Teacher Meeting scheduled for June 28. Please attend at 10 AM.", type: "announcement", read: true, createdAt: "2026-06-10T10:00:00Z" },
+  { id: "pn6", title: "🎂 Happy Birthday to Rohit!", body: "Wishing Rohit Das a very happy birthday from everyone at EduFlow & Holy Child English Academy. 🎉", type: "birthday", read: false, createdAt: "2026-06-24T06:00:00Z" },
 ]

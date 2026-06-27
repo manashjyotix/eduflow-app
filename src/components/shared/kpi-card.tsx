@@ -7,29 +7,43 @@ import { MiniSparkline, type MiniSparklineProps } from "@/components/shared/mini
 import { motion } from "motion/react"
 
 /**
- * Icon tone — controls the icon chip background + foreground so the icon
- * fill is clearly visible in BOTH light and dark mode (issue #4).
- * Each tone maps to an EduFlow primitive whose *-light token becomes a
- * low-opacity tint in dark mode and whose *-dark token stays readable.
+ * Icon tone — the SINGLE source of truth for the KPI icon chip color.
+ *
+ * Global rule (see globals.css `--ef-*` primitives):
+ *   • The icon foreground uses the solid tone color.
+ *   • The icon chip fill uses the SAME color at 10% transparency.
+ * This keeps the icon and its background in the same hue family so they
+ * complement each other, and guarantees a consistent, readable tint in both
+ * light and dark mode. No other (15% / 20% / 25% / `-light`) fills are used.
  */
-export type KpiTone = "brand" | "green" | "amber" | "red" | "purple" | "cyan"
+export type KpiTone = "brand" | "green" | "amber" | "red" | "purple" | "cyan" | "slate"
 
-const TONE_STYLES: Record<KpiTone, string> = {
-  brand:  "bg-[var(--ef-brand-light)]  text-[var(--ef-brand)]",
-  green:  "bg-[var(--ef-green-light)]  text-[var(--ef-green-dark)]",
-  amber:  "bg-[var(--ef-amber-light)]  text-[var(--ef-amber-dark)]",
-  red:    "bg-[var(--ef-red-light)]    text-[var(--ef-red-dark)]",
-  purple: "bg-[var(--ef-purple-light)] text-[var(--ef-purple)]",
-  cyan:   "bg-[var(--ef-cyan-light)]   text-[var(--ef-cyan)]",
-}
-
-const TONE_SPARK: Record<KpiTone, string> = {
+/** Base color per tone — used solid for the icon, at 25% for the chip fill. */
+const TONE_COLOR: Record<KpiTone, string> = {
   brand:  "var(--ef-brand)",
   green:  "var(--ef-green)",
   amber:  "var(--ef-amber)",
   red:    "var(--ef-red)",
   purple: "var(--ef-purple)",
   cyan:   "var(--ef-cyan)",
+  slate:  "var(--muted-foreground)",
+}
+
+/**
+ * Resolve a tone from a legacy `iconClassName` color string so existing call
+ * sites (e.g. `bg-success/10 text-success-foreground`) automatically adopt the
+ * unified 25%-transparent style without per-page edits.
+ */
+function inferTone(cls?: string): KpiTone | undefined {
+  if (!cls) return undefined
+  if (/green|success|emerald/.test(cls))        return "green"
+  if (/red|destructive|rose/.test(cls))         return "red"
+  if (/amber|warning|orange|yellow/.test(cls))  return "amber"
+  if (/purple|violet|indigo/.test(cls))         return "purple"
+  if (/cyan|sky|teal/.test(cls))                return "cyan"
+  if (/muted|slate|gray|grey/.test(cls))        return "slate"
+  if (/primary|brand|blue/.test(cls))           return "brand"
+  return undefined
 }
 
 interface KpiCardProps {
@@ -42,7 +56,11 @@ interface KpiCardProps {
   className?: string
   /** Color tone for the icon chip + default sparkline color. Defaults to "brand". */
   tone?: KpiTone
-  /** Override icon container styling entirely (takes precedence over `tone`). */
+  /**
+   * @deprecated Color is now owned by `tone` (25%-transparent fill). Kept for
+   * backwards compatibility — a color tone is inferred from this value when
+   * `tone` is not set. The raw classes are no longer applied to the chip.
+   */
   iconClassName?: string
   /** Disable the entrance/hover motion (e.g. inside virtualized lists). */
   noMotion?: boolean
@@ -56,16 +74,20 @@ export function KpiCard({
   trend,
   sparkline,
   className,
-  tone = "brand",
+  tone,
   iconClassName,
   noMotion,
 }: KpiCardProps) {
   const trendPositive = trend && trend.value > 0
   const trendNeutral  = trend && trend.value === 0
 
-  // Default the sparkline color to the card tone when none is supplied.
+  // Explicit `tone` wins; otherwise infer from a legacy iconClassName; else brand.
+  const resolvedTone: KpiTone = tone ?? inferTone(iconClassName) ?? "brand"
+  const toneColor = TONE_COLOR[resolvedTone]
+
+  // Default the sparkline color to the resolved tone when none is supplied.
   const resolvedSparkline = sparkline
-    ? ({ color: TONE_SPARK[tone], ...sparkline } as MiniSparklineProps)
+    ? ({ color: toneColor, ...sparkline } as MiniSparklineProps)
     : undefined
 
   const MotionWrap = noMotion ? "div" : motion.div
@@ -126,10 +148,12 @@ export function KpiCard({
             <div className="flex flex-col items-end gap-2 flex-shrink-0 ml-2">
               {icon && (
                 <div
-                  className={cn(
-                    "rounded-xl p-2 sm:p-2.5",
-                    iconClassName ?? TONE_STYLES[tone],
-                  )}
+                  className="rounded-xl p-2 sm:p-2.5"
+                  style={{
+                    // Same hue for icon + fill; fill is the tone color at 10%.
+                    backgroundColor: `color-mix(in srgb, ${toneColor} 10%, transparent)`,
+                    color: toneColor,
+                  }}
                 >
                   {icon}
                 </div>

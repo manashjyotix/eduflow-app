@@ -356,6 +356,31 @@ font-feature-settings: 'cv11', 'ss01';
 
 ## 7. Special Scholaris Components
 
+### Birthday Wish (Next.js app · `src/components/shared/birthday-card.tsx` + `src/data/birthdays.ts`)
+Branded birthday-wish card shown on every role dashboard (admin, management,
+teacher, parent, super-admin) next to the Weather greeting card. Appears for the
+full calendar day of a user's birthday (date-matched 24h window).
+- **Delivery tiers** (`CHANNELS_BY_AUDIENCE`): staff (teacher/admin/management/
+  super_admin) get **In-app + Push + SMS + WhatsApp** (branded EduFlow card);
+  family (parent/student) get **In-app** only. Students surface inside the Parent
+  portal (parent sees the child's card).
+- **Data:** `src/data/birthdays.ts` is the single source of truth — per-role
+  persona birthdays, demo child birthday, channel tiers, date helpers
+  (`isBirthdayToday`, `getActiveRoleBirthday`, `getActiveChildBirthday`), mock
+  dispatcher (`dispatchBirthdayWishes`). `dob` added to `Teacher` + `Student`.
+- **In-app notification:** new `birthday` notification type (cake icon) in
+  `NotificationRow`; mock entries `n11` / `pn6`.
+- **Demo:** `BIRTHDAY_DEMO_MODE = false` — the card shows only on the user's
+  actual birthday. Demo personas admin/teacher/parent + child use a 24-June
+  birthday so the card is visible on that date.
+- **Design:** built on the Figma-derived `--ef-*` tokens. A 3D animated candle
+  (`Candle3D`, flame flicker only — no dancing) sits left; a larger 3D animated
+  gift (`Gift3D`, gentle tilt/bob) sits right. The greeting line loops every ~2s
+  between "Nth Happy Birthday!" (age from `dob`) and "Wishes you a wonderful
+  day". Confetti + text-cycle keyframes (`ef-confetti`, `ef-textcycle`) live in
+  `globals.css` (reduced-motion safe); icon keyframes are scoped inside
+  `birthday-scene.tsx`. Figma MCP was not installed when this was authored.
+
 ### `EduFlowAssistant.tsx`
 AI-powered floating chatbot (bottom-right FAB).
 - Mock response engine covering: proxy assignment, absences, fees, timetable, attendance, reports, dark mode, HCEA context.
@@ -457,6 +482,7 @@ React context for school-level configuration.
 - Lucide React icons (do NOT mix other icon libraries)
 - `WeatherClock` live weather widget (Open-Meteo, no API key)
 - `EduFlowAssistant` chatbot FAB
+- `BirthdayCard` birthday-wish card on all role dashboards (`src/data/birthdays.ts` + `birthday-card.tsx`)
 - `SchoolSettingsContext` attendance mode toggle
 - Dark mode provider (`src/theme/DarkModeProvider`) — partial, needs full rollout
 

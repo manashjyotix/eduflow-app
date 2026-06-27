@@ -87,7 +87,7 @@ export default function AffiliatesPage() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard title="Total Affiliates" value={AFFILIATES.length} subtitle={`${activeCount} active`} icon={<Users className="size-5" />} sparkline={{ variant: "bar", data: [4, 5, 6, 7, 7, 8] }} />
         <KpiCard title="Active Partners" value={activeCount} subtitle={`${AFFILIATES.length - activeCount} inactive`} icon={<TrendingUp className="size-5" />} iconClassName="bg-ef-green-light text-ef-green" sparkline={{ variant: "line", data: [3, 4, 5, 5, 6, 6], color: "var(--ef-green)" }} />
         <KpiCard title="Pending Payouts" value={`₹${totalPending.toLocaleString("en-IN")}`} subtitle="6 partners" icon={<Wallet className="size-5" />} iconClassName="bg-ef-amber-light text-ef-amber" sparkline={{ variant: "bar", data: [800, 1200, 900, 1400, 1600, 1200], color: "var(--ef-amber)" }} />
@@ -103,12 +103,12 @@ export default function AffiliatesPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3 mb-5">
-              <div className="bg-ef-brand-light rounded-lg px-4 py-3.5">
+              <div className="bg-ef-brand-light rounded-lg px-4 py-4">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">First Payment</div>
                 <div className="text-2xl font-extrabold text-primary mt-1">25%</div>
                 <div className="text-xs text-muted-foreground mt-0.5">One-time commission</div>
               </div>
-              <div className="bg-ef-green-light rounded-lg px-4 py-3.5">
+              <div className="bg-ef-green-light rounded-lg px-4 py-4">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-ef-green-dark">Recurring</div>
                 <div className="text-2xl font-extrabold text-ef-green-dark mt-1">5%</div>
                 <div className="text-xs text-muted-foreground mt-0.5">Every renewal</div>
@@ -143,7 +143,7 @@ export default function AffiliatesPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="bg-muted rounded-lg px-3.5 py-2.5 mb-3">
+            <div className="bg-muted rounded-lg px-4 py-2 mb-3">
               <div className="text-[11px] text-muted-foreground/70 mb-1">Generated link</div>
               <div className="font-mono text-xs text-primary break-all">https://app.eduflowscholaris.com/signup?ref=aff_dipankar_sk22</div>
             </div>
@@ -179,6 +179,7 @@ export default function AffiliatesPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table className="text-sm">
             <caption className="sr-only">All affiliates with referrals, conversion, and payout status</caption>
             <TableHeader>
@@ -235,6 +236,7 @@ export default function AffiliatesPage() {
               })}
             </TableBody>
           </Table>
+          </div>
           <div className="flex items-center justify-between px-4 py-3 border-t border-border">
             <span className="text-xs text-muted-foreground">Total pending: <strong className="text-ef-amber-dark">₹{totalPending.toLocaleString("en-IN")}</strong> across 6 affiliates</span>
             <Button size="sm" onClick={() => setShowPayoutModal(true)}><Wallet className="size-4" /> Trigger All Payouts</Button>
@@ -259,7 +261,7 @@ export default function AffiliatesPage() {
               <Label htmlFor="aff-email">Email Address</Label>
               <Input id="aff-email" value={newAffiliate.email} onChange={e => setNewAffiliate(s => ({ ...s, email: e.target.value }))} placeholder="affiliate@email.com" type="email" />
             </div>
-            <div className="bg-muted rounded-lg px-4 py-3.5">
+            <div className="bg-muted rounded-lg px-4 py-4">
               <div className="text-xs font-semibold text-muted-foreground mb-2">Commission Preview</div>
               <div className="flex gap-4">
                 <div><div className="text-[11px] text-muted-foreground/70">First payment</div><div className="text-base font-bold text-primary">25%</div></div>
@@ -293,7 +295,7 @@ export default function AffiliatesPage() {
                 </div>
               ))}
             </div>
-            <div className="flex justify-between py-2.5 text-sm font-bold border-t-2 border-border">
+            <div className="flex justify-between py-2 text-sm font-bold border-t-2 border-border">
               <span>Total Payout</span>
               <span className="text-primary">₹{totalPending.toLocaleString("en-IN")}</span>
             </div>

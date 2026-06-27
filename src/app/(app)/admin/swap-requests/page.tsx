@@ -123,33 +123,41 @@ export default function SwapRequestsPage() {
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Total Requests"
           value={total}
-          subtitle="all swap requests"
+          subtitle={`${SWAP_TREND[SWAP_TREND.length - 1].requests} this week`}
           icon={<ArrowLeftRight size={18} />}
+          tone="brand"
+          trend={{ value: Math.round(((SWAP_TREND[SWAP_TREND.length - 1].requests - SWAP_TREND[SWAP_TREND.length - 2].requests) / Math.max(SWAP_TREND[SWAP_TREND.length - 2].requests, 1)) * 100), label: "vs last week" }}
+          sparkline={{ variant: "bar", data: SWAP_TREND.map(w => w.requests) }}
         />
         <KpiCard
           title="Pending"
           value={pending}
-          subtitle="awaiting peer response"
+          subtitle={pending === 0 ? "All responded" : `${pending} awaiting peer response`}
           icon={<Clock size={18} />}
-          iconClassName="bg-warning/10 text-warning-foreground"
+          tone="amber"
+          trend={{ value: Math.round(((SWAP_TREND[SWAP_TREND.length - 1].requests - SWAP_TREND[SWAP_TREND.length - 1].approved - (SWAP_TREND[SWAP_TREND.length - 2].requests - SWAP_TREND[SWAP_TREND.length - 2].approved)) / Math.max(SWAP_TREND[SWAP_TREND.length - 2].requests - SWAP_TREND[SWAP_TREND.length - 2].approved, 1)) * 100), label: "vs last week" }}
+          sparkline={{ variant: "bar", data: SWAP_TREND.map(w => w.requests - w.approved) }}
         />
         <KpiCard
           title="Agreed"
           value={agreed}
-          subtitle="both parties agreed"
+          subtitle={agreed === 0 ? "No agreements yet" : `${agreed} both parties agreed`}
           icon={<CheckCircle2 size={18} />}
-          iconClassName="bg-primary/10 text-primary"
+          tone="cyan"
+          sparkline={{ variant: "bar", data: SWAP_TREND.map(w => w.approved) }}
         />
         <KpiCard
           title="Approved"
           value={approved}
-          subtitle="management approved"
+          subtitle={`${SWAP_TREND[SWAP_TREND.length - 1].approved} approved this week`}
           icon={<ShieldCheck size={18} />}
-          iconClassName="bg-success/10 text-success-foreground"
+          tone="green"
+          trend={{ value: Math.round(((SWAP_TREND[SWAP_TREND.length - 1].approved - SWAP_TREND[SWAP_TREND.length - 2].approved) / Math.max(SWAP_TREND[SWAP_TREND.length - 2].approved, 1)) * 100), label: "vs last week" }}
+          sparkline={{ variant: "line", data: SWAP_TREND.map(w => w.approved) }}
         />
       </div>
 
@@ -227,6 +235,7 @@ export default function SwapRequestsPage() {
               <p className="text-sm text-muted-foreground">Try adjusting your search or filter</p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table className="text-sm">
               <caption className="sr-only">Swap requests between teachers</caption>
               <TableHeader>
@@ -331,6 +340,7 @@ export default function SwapRequestsPage() {
                   ))}
                 </TableBody>
               </Table>
+            </div>
           )}
         </CardContent>
       </Card>

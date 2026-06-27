@@ -25,7 +25,7 @@ export type SortDir = "asc" | "desc"
 export function useTableSort<T, K extends string>(
   rows: T[],
   accessors: Record<K, (row: T) => string | number | null | undefined>,
-  initial?: { field: K; dir?: SortDir },
+  initial?: { field: NoInfer<K>; dir?: SortDir },
 ) {
   const [sortField, setSortField] = useState<K | null>(initial?.field ?? null)
   const [sortDir, setSortDir] = useState<SortDir>(initial?.dir ?? "asc")

@@ -116,6 +116,20 @@ const USAGE_STATS = [
 
 const REFERRAL_LINK = "https://eduflow.app/r/HCEA2026"
 
+// ── Derived KPI values ──────────────────────────────────────────
+const STUDENT_COUNT   = 187
+const PLAN_CAPACITY   = 500
+const CAPACITY_PCT    = Math.round((STUDENT_COUNT / PLAN_CAPACITY) * 100)
+const DAYS_REMAINING  = 29
+const PLAN_DAYS_TOTAL = 30
+const DAYS_USED_PCT   = Math.round(((PLAN_DAYS_TOTAL - DAYS_REMAINING) / PLAN_DAYS_TOTAL) * 100)
+const TOTAL_SPENT     = INVOICES.reduce((s, inv) => s + inv.amount, 0)
+const PAID_COUNT      = INVOICES.filter(inv => inv.status === "paid").length
+const INVOICE_AMOUNTS = INVOICES.map(inv => inv.amount)
+const REFERRAL_COUNT  = 2
+const REFERRAL_EARN   = 2400
+const REFERRAL_SERIES = [0, 0, 1200, 1200, 2400, REFERRAL_EARN]
+
 export default function SubscriptionPage() {
   const [copied, setCopied] = useState(false)
 
@@ -159,7 +173,7 @@ export default function SubscriptionPage() {
                   <span className="h-1.5 w-1.5 rounded-full bg-ef-green inline-block" />Active
                 </Badge>
               </div>
-              <p className="text-4xl font-black text-white leading-none">
+              <p className="text-3xl sm:text-4xl font-black text-white leading-none">
                 ₹{(999).toLocaleString("en-IN")}
                 <span className="text-base font-normal opacity-75">/month</span>
               </p>
@@ -200,37 +214,42 @@ export default function SubscriptionPage() {
       </Card>
 
       {/* Usage KPIs */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Students Enrolled"
-          value="187 / 500"
-          subtitle="37% of plan capacity"
+          value={`${STUDENT_COUNT} / ${PLAN_CAPACITY}`}
+          subtitle={`${CAPACITY_PCT}% of plan capacity`}
           icon={<Users className="size-5" />}
-          sparkline={{ variant: "arc", value: 37, color: "var(--ef-brand)" }}
+          tone="brand"
+          trend={{ value: 3, label: "new this month" }}
+          sparkline={{ variant: "arc", value: CAPACITY_PCT }}
         />
         <KpiCard
           title="Days Remaining"
-          value={29}
-          subtitle="Renews July 1, 2026"
+          value={DAYS_REMAINING}
+          subtitle={`${DAYS_USED_PCT}% of billing cycle used`}
           icon={<Calendar className="size-5" />}
-          iconClassName="bg-ef-amber-light text-ef-amber"
-          sparkline={{ variant: "bar", data: [31, 30, 30, 29, 29, 29], color: "var(--ef-amber)" }}
+          tone="amber"
+          trend={{ value: -3, label: "vs last cycle" }}
+          sparkline={{ variant: "arc", value: DAYS_REMAINING }}
         />
         <KpiCard
           title="Spent This Year"
-          value={`₹${(3996).toLocaleString("en-IN")}`}
-          subtitle="4 invoices paid"
+          value={`₹${TOTAL_SPENT.toLocaleString("en-IN")}`}
+          subtitle={`${PAID_COUNT} invoice${PAID_COUNT !== 1 ? "s" : ""} paid · all on time`}
           icon={<CreditCard className="size-5" />}
-          iconClassName="bg-ef-green-light text-ef-green"
-          sparkline={{ variant: "line", data: [999, 999, 999, 999], color: "var(--ef-green)" }}
+          tone="green"
+          trend={{ value: 0, label: "stable billing" }}
+          sparkline={{ variant: "line", data: INVOICE_AMOUNTS }}
         />
         <KpiCard
           title="Referral Earnings"
-          value={`₹${(2400).toLocaleString("en-IN")}`}
-          subtitle="2 schools referred"
+          value={`₹${REFERRAL_EARN.toLocaleString("en-IN")}`}
+          subtitle={`${REFERRAL_COUNT} school${Number(REFERRAL_COUNT) !== 1 ? "s" : ""} referred · 10% commission`}
           icon={<Gift className="size-5" />}
-          iconClassName="bg-ef-purple-light text-ef-purple"
-          sparkline={{ variant: "bar", data: [0, 1200, 1200, 2400, 2400, 2400], color: "var(--ef-purple)" }}
+          tone="purple"
+          trend={{ value: 100, label: "vs last quarter" }}
+          sparkline={{ variant: "bar", data: REFERRAL_SERIES }}
         />
       </div>
 
@@ -258,7 +277,7 @@ export default function SubscriptionPage() {
 
                 {/* Price + savings */}
                 <div>
-                  <p className={`text-3xl font-black ${p.popular ? "text-primary" : "text-foreground"}`}>
+                  <p className={`text-2xl sm:text-3xl font-black leading-tight ${p.popular ? "text-primary" : "text-foreground"}`}>
                     ₹{p.price.toLocaleString("en-IN")}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
@@ -344,6 +363,7 @@ export default function SubscriptionPage() {
           <CardTitle className="text-base font-semibold">Payment History</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table className="text-sm">
             <caption className="sr-only">Payment history</caption>
             <TableHeader>
@@ -373,6 +393,7 @@ export default function SubscriptionPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

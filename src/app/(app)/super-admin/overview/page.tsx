@@ -1,8 +1,8 @@
 "use client"
 import Link from "next/link"
 import {
-  BarChart3, TrendingUp, CreditCard, AlertTriangle, School, ArrowRight,
-  Building2, IndianRupee, Activity, Zap, Users, CheckCircle2,
+  TrendingUp, AlertTriangle, School, ArrowRight,
+  Building2, IndianRupee, Activity, Zap, Users,
 } from "lucide-react"
 import dynamic from "next/dynamic"
 
@@ -43,27 +43,15 @@ const Line = dynamic(
   () => import("recharts").then((m) => ({ default: m.Line })),
   { ssr: false }
 )
-const PieChart = dynamic(
-  () => import("recharts").then((m) => ({ default: m.PieChart })),
-  { ssr: false }
-)
-const Pie = dynamic(
-  () => import("recharts").then((m) => ({ default: m.Pie })),
-  { ssr: false }
-)
-const Cell = dynamic(
-  () => import("recharts").then((m) => ({ default: m.Cell })),
-  { ssr: false }
-)
-import { PageHeader } from "@/components/shared/page-header"
 import { KpiCard } from "@/components/shared/kpi-card"
+import { BirthdayCard } from "@/components/shared/birthday-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
 import { useTableSort, SortableHead } from "@/components/shared/sortable-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { Progress } from "@/components/ui/progress"
+
 
 const SCHOOLS = [
   { id: "sch-1",  name: "Holy Child English Academy", location: "Howly, Assam",   plan: "annual",      mrr: 15000, status: "active",  health: 87, teachers: 10, students: 240 },
@@ -83,10 +71,10 @@ const MRR_TREND = [
 ]
 
 const PLAN_DIST = [
-  { name: "Annual",      value: 2,  color: "var(--ef-brand)" },
-  { name: "Half-Yearly", value: 1,  color: "var(--ef-green)" },
-  { name: "Quarterly",   value: 1,  color: "var(--ef-amber)" },
-  { name: "Trial",       value: 1,  color: "var(--ef-red)" },
+  { name: "Annual",      value: 2,  color: "#007AFF" },
+  { name: "Half-Yearly", value: 1,  color: "#34C759" },
+  { name: "Quarterly",   value: 1,  color: "#FF9500" },
+  { name: "Trial",       value: 1,  color: "#FF3B30" },
 ]
 
 const PLATFORM_HEALTH = [
@@ -101,7 +89,7 @@ const PLATFORM_HEALTH = [
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name?: string; color?: string }[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border bg-card px-3 py-2 shadow-md text-xs">
+    <div className="rounded-lg border bg-card px-3 py-2 shadow-card text-xs">
       <p className="font-semibold mb-1">{label}</p>
       {payload.map((p, i) => (
         <div key={i} className="flex items-center gap-1.5">
@@ -129,33 +117,32 @@ export default function SaaSOverviewPage() {
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8">
-      {/* Hero banner */}
-      <Card className="border-0 text-white bg-gradient-to-br from-[#4147D5] to-[#007AFF]">
-        <CardContent className="p-5 flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <p className="text-sm opacity-75 mb-1 flex items-center gap-2"><Zap className="size-3.5" /> EduFlow Platform · June 2026</p>
-            <h2 className="text-2xl font-extrabold">Platform Overview</h2>
-            <p className="text-sm opacity-75 mt-0.5">12 active tenants · ₹1,32,000 MRR · 68% trial conversion</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10" asChild>
-              <Link href="/super-admin/analytics">Deep Analytics <ArrowRight className="size-3" /></Link>
-            </Button>
-            <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10" asChild>
-              <Link href="/super-admin/tenants">Manage Tenants</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Platform Overview banner — light blue WeatherGreeting style */}
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-gradient-to-br from-primary/5 to-transparent p-4 flex-wrap">
+        <div className="min-w-0">
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5 mb-0.5">
+            <Zap className="size-3.5 text-primary" /> EduFlow Platform · June 2026
+          </p>
+          <p className="text-lg font-bold text-foreground">Platform Overview</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {activeCount} active tenants · ₹{(totalMRR / 1000).toFixed(0)}K MRR · 68% trial conversion
+          </p>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/super-admin/analytics">Deep Analytics <ArrowRight className="size-3" /></Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href="/super-admin/tenants">Manage Tenants</Link>
+          </Button>
+        </div>
+      </div>
 
-      <PageHeader
-        icon={<BarChart3 size={22} />}
-        title="SaaS Overview"
-        subtitle="EduFlow platform metrics — real-time"
-      />
+      <BirthdayCard />
+
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="MRR"
           value={`₹${(totalMRR/1000).toFixed(0)}K`}
@@ -211,11 +198,11 @@ export default function SaaSOverviewPage() {
               </LineChart>
             </ResponsiveContainer>
             <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-border">
-              <div className="bg-success rounded-lg px-3.5 py-2.5">
+              <div className="bg-success rounded-lg px-4 py-2">
                 <div className="text-[10px] font-semibold text-success-foreground uppercase">New MRR Jun</div>
                 <div className="text-base font-extrabold text-success-foreground">+₹15K</div>
               </div>
-              <div className="bg-destructive/10 rounded-lg px-3.5 py-2.5">
+              <div className="bg-destructive/10 rounded-lg px-4 py-2">
                 <div className="text-[10px] font-semibold text-destructive uppercase">Churned Jun</div>
                 <div className="text-base font-extrabold text-destructive">−₹1.9K</div>
               </div>
@@ -223,34 +210,72 @@ export default function SaaSOverviewPage() {
           </CardContent>
         </Card>
 
-        {/* Plan distribution */}
-        <Card>
+        {/* Plan distribution — pure SVG donut (recharts Cell breaks with next/dynamic) */}
+        <Card className="flex flex-col">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold">Plan Distribution</CardTitle>
           </CardHeader>
           <Separator />
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <ResponsiveContainer width={120} height={120}>
-                <PieChart>
-                  <Pie data={PLAN_DIST} cx="50%" cy="50%" innerRadius={32} outerRadius={52} dataKey="value" strokeWidth={2} stroke="var(--card)">
-                    {PLAN_DIST.map((d, i) => <Cell key={i} fill={d.color} />)}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex-1 space-y-2.5">
+          <CardContent className="flex-1 flex items-center p-5">
+            <div className="flex items-center gap-6 w-full">
+              {/* SVG Donut Chart */}
+              <div className="shrink-0">
+                <svg width="140" height="140" viewBox="0 0 140 140">
+                  {(() => {
+                    const total = PLAN_DIST.reduce((s, d) => s + d.value, 0)
+                    const cx = 70, cy = 70, outerR = 62, innerR = 40, gap = 0.03
+                    let cumulative = 0
+                    return PLAN_DIST.map((d, i) => {
+                      const sliceFrac = d.value / total
+                      const startAngle = cumulative * 2 * Math.PI - Math.PI / 2 + gap
+                      cumulative += sliceFrac
+                      const endAngle = cumulative * 2 * Math.PI - Math.PI / 2 - gap
+                      const largeArc = endAngle - startAngle > Math.PI ? 1 : 0
+                      const x1o = cx + outerR * Math.cos(startAngle)
+                      const y1o = cy + outerR * Math.sin(startAngle)
+                      const x2o = cx + outerR * Math.cos(endAngle)
+                      const y2o = cy + outerR * Math.sin(endAngle)
+                      const x2i = cx + innerR * Math.cos(endAngle)
+                      const y2i = cy + innerR * Math.sin(endAngle)
+                      const x1i = cx + innerR * Math.cos(startAngle)
+                      const y1i = cy + innerR * Math.sin(startAngle)
+                      const path = [
+                        `M ${x1o} ${y1o}`,
+                        `A ${outerR} ${outerR} 0 ${largeArc} 1 ${x2o} ${y2o}`,
+                        `L ${x2i} ${y2i}`,
+                        `A ${innerR} ${innerR} 0 ${largeArc} 0 ${x1i} ${y1i}`,
+                        `Z`,
+                      ].join(' ')
+                      return <path key={i} d={path} fill={d.color} />
+                    })
+                  })()}
+                  {/* Center label */}
+                  <text x="70" y="66" textAnchor="middle" className="fill-foreground text-xl font-bold">{PLAN_DIST.reduce((s, d) => s + d.value, 0)}</text>
+                  <text x="70" y="82" textAnchor="middle" className="fill-muted-foreground text-[10px]">schools</text>
+                </svg>
+              </div>
+              {/* Legend with bars */}
+              <div className="flex-1 space-y-3">
                 {[
-                  { plan: "Annual",      count: 2, mrr: 60000, pct: 45, color: "var(--ef-brand)" },
-                  { plan: "Half-Yearly", count: 1, mrr: 9998,  pct: 8,  color: "var(--ef-green)" },
-                  { plan: "Quarterly",   count: 1, mrr: 9000,  pct: 7,  color: "var(--ef-amber)" },
-                  { plan: "Trial",       count: 1, mrr: 0,     pct: 0,  color: "var(--ef-red)" },
+                  { plan: "Annual",      count: 2, pct: 40, color: "#007AFF" },
+                  { plan: "Half-Yearly", count: 1, pct: 20, color: "#34C759" },
+                  { plan: "Quarterly",   count: 1, pct: 20, color: "#FF9500" },
+                  { plan: "Trial",       count: 1, pct: 20, color: "#FF3B30" },
                 ].map(item => (
                   <div key={item.plan} className="space-y-1">
                     <div className="flex justify-between text-xs">
-                      <span className="flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ background: item.color }} />{item.plan}</span>
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="size-2.5 rounded-full" style={{ background: item.color }} />
+                        {item.plan}
+                      </span>
                       <span className="text-muted-foreground">{item.count} schools</span>
                     </div>
-                    <Progress value={item.pct === 0 ? 5 : item.pct} className="h-1.5" style={{ "--progress-color": item.color } as React.CSSProperties} />
+                    <div className="h-1.5 w-full rounded-full bg-secondary/60 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${item.pct}%`, background: item.color }}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>

@@ -25,6 +25,7 @@ export interface MockChild {
   id: string
   name: string
   className: string // e.g. "VIII-A"
+  transportRoute?: string // route ID for SOS feature
 }
 
 interface ChildContextValue {
@@ -37,8 +38,8 @@ interface ChildContextValue {
 // ─── Mock data ──────────────────────────────────────────────────────────────────
 
 export const MOCK_CHILDREN: MockChild[] = [
-  { id: "child-1", name: "Rohit Das",  className: "VIII-A" },
-  { id: "child-2", name: "Riya Das",   className: "VI-B"   },
+  { id: "child-1", name: "Rohit Das",  className: "VIII-A", transportRoute: "route-1" },
+  { id: "child-2", name: "Riya Das",   className: "VI-B",   transportRoute: "route-1" },
 ]
 
 // ─── Context ───────────────────────────────────────────────────────────────────

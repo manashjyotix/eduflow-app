@@ -4,7 +4,7 @@ import Link from "next/link"
 import {
   Users, UserX, CheckCircle2, Clock, LayoutGrid, ClipboardList,
   TrendingUp, ArrowRight, BookOpen, Zap, Bell, BarChart3,
-  IndianRupee, GraduationCap, AlertTriangle,
+  IndianRupee, GraduationCap, AlertTriangle, Repeat,
 } from "lucide-react"
 import dynamic from "next/dynamic"
 
@@ -64,6 +64,7 @@ const Legend = dynamic(
 import { PageHeader } from "@/components/shared/page-header"
 import { KpiCard } from "@/components/shared/kpi-card"
 import { WeatherGreeting } from "@/components/shared/weather-greeting"
+import { BirthdayCard } from "@/components/shared/birthday-card"
 import { TaskList, type TaskItem } from "@/components/shared/task-list"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -123,7 +124,7 @@ const HELP_TASKS: TaskItem[] = [
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: {value: number; name?: string; color?: string}[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-md text-xs">
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-card text-xs">
       <p className="font-semibold mb-1">{label}</p>
       {payload.map((p, i) => (
         <div key={i} className="flex items-center gap-1.5">
@@ -145,6 +146,8 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8">
+      <WeatherGreeting />
+
       <PageHeader
         icon={<LayoutGrid size={20} />}
         title="Dashboard"
@@ -168,10 +171,10 @@ export default function AdminDashboardPage() {
         }
       />
 
-      <WeatherGreeting />
+      <BirthdayCard />
 
       {/* KPI Strip */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
         <KpiCard
           title="Active Teachers"
           value={activeTeachers}
@@ -205,6 +208,15 @@ export default function AdminDashboardPage() {
           icon={<Clock className="size-5" />}
           iconClassName="bg-warning/20 text-warning-foreground"
           sparkline={{ variant: "bar", data: [2,1,3,0,1,2,pendingCount], color: "var(--ef-amber)" }}
+        />
+        <KpiCard
+          title="Proxies This Month"
+          value={PROXY_MONTHLY[PROXY_MONTHLY.length - 1].count}
+          subtitle="duties assigned"
+          icon={<Repeat className="size-5" />}
+          tone="brand"
+          trend={{ value: 1, label: "vs last month" }}
+          sparkline={{ variant: "bar", data: PROXY_MONTHLY.map(m => m.count), color: "var(--ef-brand)" }}
         />
       </div>
 

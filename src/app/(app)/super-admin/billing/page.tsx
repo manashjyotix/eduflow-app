@@ -91,7 +91,7 @@ export default function BillingLogsPage() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard title="Total Revenue MTD" value={`₹${mtdRevenue.toLocaleString("en-IN")}`} subtitle="This month" icon={<IndianRupee className="size-5" />} iconClassName="bg-ef-green-light text-ef-green" sparkline={{ variant: "line", data: [4200, 5100, 3800, 6200, 5997, 5997], color: "var(--ef-green)" }} />
         <KpiCard title="Failed Payments" value={failedCount} subtitle={failedCount > 0 ? "Needs attention" : "All clear"} icon={<AlertTriangle className="size-5" />} iconClassName={failedCount > 0 ? "bg-ef-red-light text-ef-red" : "bg-ef-green-light text-ef-green"} sparkline={{ variant: "bar", data: [1, 0, 2, 1, 0, 2], color: failedCount > 0 ? "var(--ef-red)" : "var(--ef-green)" }} />
         <KpiCard title="Grace Period Schools" value={1} subtitle="At risk of churn" icon={<Clock className="size-5" />} iconClassName="bg-ef-amber-light text-ef-amber" sparkline={{ variant: "bar", data: [2, 1, 1, 0, 1, 1], color: "var(--ef-amber)" }} />
@@ -105,7 +105,7 @@ export default function BillingLogsPage() {
           <Badge variant="warning">● 1 issue</Badge>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="px-5 py-3.5 border-b border-border">
+          <div className="px-5 py-4 border-b border-border">
             <div className="flex items-start gap-3 flex-wrap">
               <div className="flex-1 min-w-[200px]">
                 <div className="text-sm font-semibold">Bright Minds Academy</div>

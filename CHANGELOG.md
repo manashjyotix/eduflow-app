@@ -21,6 +21,46 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### 2026-06-24 — Birthday Wish Feature
+
+Added a branded **Birthday Wish** card + multi-channel notification, surfaced on
+every role dashboard (admin, management, teacher, parent, super-admin) alongside
+the existing Weather greeting card.
+
+#### Added
+- `src/data/birthdays.ts` — single source of truth for the feature: per-role
+  persona birthdays, demo child birthday, delivery-channel tiers
+  (staff = In-app · Push · SMS · WhatsApp; family = In-app only), date helpers
+  (`isBirthdayToday`, `getActiveRoleBirthday`, `getActiveChildBirthday`), and a
+  mock multi-channel dispatcher (`dispatchBirthdayWishes`). Includes a
+  `BIRTHDAY_DEMO_MODE` flag (default `true`) so the card is always demoable.
+- `src/components/shared/birthday-card.tsx` — `BirthdayCard`, an animated wish
+  banner: a 3D candle (flame flicker) on the left, a larger 3D gift (tilt/bob)
+  on the right, looping confetti, and a greeting line that alternates every ~2s
+  between "Nth Happy Birthday!" (age ordinal computed from `dob`) and "Wishes
+  you a wonderful day". Self-hides when it is not the user's birthday.
+- `src/components/shared/birthday-scene.tsx` — `Candle3D` + `Gift3D` glossy
+  animated SVG icons (pure SVG + scoped keyframes, reduced-motion safe).
+- `dob` field added to `Teacher` and `Student` data models (populated for all
+  mock teachers + students).
+- Birthday in-app notifications (`n11`, `pn6`) in `mock-notifications.ts`, plus a
+  new `birthday` notification type with a cake icon in `NotificationRow`.
+
+#### Changed
+- Admin, management, teacher, parent, and super-admin dashboards now render
+  `<BirthdayCard />`. The parent dashboard also shows the child's birthday card.
+
+#### Notes
+- Figma MCP was not installed in this session; the card was built on the
+  existing Figma-derived `--ef-*` design tokens already in `globals.css`, with
+  cheer/confetti keyframes (`ef-bob`, `ef-wiggle`, `ef-pop`, `ef-float-up`,
+  `ef-confetti`) appended to `globals.css` (respect `prefers-reduced-motion`).
+- The card shows only on the user's **actual birthday** (`BIRTHDAY_DEMO_MODE =
+  false`). Demo personas admin/teacher/parent + the child carry a 24-June
+  birthday so the card is visible on that date via a genuine match.
+
+---
+
 ### 2026-06-21 — Design System Compliance Sweep (Batches A–F)
 
 Complete execution of the `DESIGN_AUDIT.md` remediation plan on the Next.js 15

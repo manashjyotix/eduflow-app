@@ -4,40 +4,10 @@ import {
   ClipboardList, Filter, CheckCircle, XCircle, Clock,
   Calendar, TrendingUp, Award,
 } from "lucide-react"
-import dynamic from "next/dynamic"
-
-// ── Dynamic recharts imports (SSR-safe, code-split) ───────────────────────────
-const ResponsiveContainer = dynamic(
-  () => import("recharts").then((m) => ({ default: m.ResponsiveContainer })),
-  { ssr: false }
-)
-const BarChart = dynamic(
-  () => import("recharts").then((m) => ({ default: m.BarChart })),
-  { ssr: false }
-)
-const Bar = dynamic(
-  () => import("recharts").then((m) => ({ default: m.Bar })),
-  { ssr: false }
-)
-const XAxis = dynamic(
-  () => import("recharts").then((m) => ({ default: m.XAxis })),
-  { ssr: false }
-)
-const YAxis = dynamic(
-  () => import("recharts").then((m) => ({ default: m.YAxis })),
-  { ssr: false }
-)
-const Tooltip = dynamic(
-  () => import("recharts").then((m) => ({ default: m.Tooltip })),
-  { ssr: false }
-)
-const CartesianGrid = dynamic(
-  () => import("recharts").then((m) => ({ default: m.CartesianGrid })),
-  { ssr: false }
-)
 import { PageHeader } from "@/components/shared/page-header"
 import { KpiCard } from "@/components/shared/kpi-card"
 import { MiniSparkline } from "@/components/shared/mini-sparkline"
+import { EduBarChart } from "@/components/shared/edu-bar-chart"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table"
 import { useTableSort, SortableHead } from "@/components/shared/sortable-table"
@@ -82,6 +52,9 @@ const MONTHLY_USAGE = [
   { month: "Apr", days: 14 }, { month: "May", days: 3 }, { month: "Jun", days: 7 },
 ]
 
+// Monthly approved leave counts Jan–Jun derived from LEAVE_HISTORY
+const MONTHLY_APPROVED: number[] = [2, 2, 3, 3, 1, 1]
+
 const TYPE_LABELS: Record<LeaveType, string> = {
   sick_leave: "Sick Leave", casual_leave: "Casual Leave",
   earned_leave: "Earned Leave", emergency: "Emergency", official_duty: "Official Duty",
@@ -104,19 +77,6 @@ const LEAVE_COLUMNS = [
   { field: "status",     label: "Status" },
 ] as const
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name?: string; color?: string }[]; label?: string }) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-lg border bg-card px-3 py-2 shadow-md text-xs">
-      <p className="font-semibold mb-1">{label}</p>
-      <div className="flex items-center gap-1.5">
-        <span className="size-2 rounded-sm bg-primary" />
-        <span className="text-muted-foreground">Days:</span>
-        <span className="font-bold">{payload[0]?.value}</span>
-      </div>
-    </div>
-  )
-}
 
 export default function LeaveHistoryPage() {
   const [statusFilter, setStatusFilter] = useState("all")
@@ -131,6 +91,9 @@ export default function LeaveHistoryPage() {
   const approved  = LEAVE_HISTORY.filter(l => l.status === "approved").length
   const rejected  = LEAVE_HISTORY.filter(l => l.status === "rejected").length
   const totalDays = LEAVE_HISTORY.filter(l => l.status === "approved").reduce((s, l) => s + (l.periods === 7 ? 1 : 0.5), 0)
+  const daysUsedTrend = Math.round(
+    ((MONTHLY_USAGE[5].days - MONTHLY_USAGE[4].days) / Math.max(MONTHLY_USAGE[4].days, 1)) * 100
+  )
 
   const { sorted, sortField, sortDir, toggleSort } = useTableSort(filtered, {
     date:       l => new Date(l.date).getTime(),
@@ -150,37 +113,71 @@ export default function LeaveHistoryPage() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <KpiCard title="Total Leaves"  value={LEAVE_HISTORY.length}   icon={<ClipboardList className="size-5" />} sparkline={{ variant: "bar", data: MONTHLY_USAGE.map(m => m.days) }} />
-        <KpiCard title="Approved"      value={approved}               icon={<CheckCircle className="size-5" />}   iconClassName="bg-success/20 text-success-foreground" sparkline={{ variant: "bar", data: [2,2,3,3,1,1], color: "var(--ef-green)" }} />
-        <KpiCard title="Rejected"      value={rejected}               icon={<XCircle className="size-5" />}       iconClassName="bg-destructive/10 text-destructive" sparkline={{ variant: "bar", data: [0,0,0,1,0,0], color: "var(--ef-red)" }} />
-        <KpiCard title="Days Used"     value={`${totalDays}d`}        icon={<Calendar className="size-5" />}      iconClassName="bg-primary/10 text-primary" trend={{ value: -3, label: "vs last year" }} />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <KpiCard
+          title="Total Leaves"
+          value={LEAVE_HISTORY.length}
+          subtitle={`${LEAVE_HISTORY.length} requests this year`}
+          icon={<ClipboardList className="size-5" />}
+          tone="brand"
+          sparkline={{ variant: "bar", data: MONTHLY_USAGE.map(m => m.days) }}
+        />
+        <KpiCard
+          title="Approved"
+          value={approved}
+          subtitle={`${approved} of ${LEAVE_HISTORY.length} requests`}
+          icon={<CheckCircle className="size-5" />}
+          iconClassName="bg-success/20 text-success-foreground"
+          tone="green"
+          sparkline={{ variant: "bar", data: MONTHLY_APPROVED, color: "var(--ef-green)" }}
+        />
+        <KpiCard
+          title="Rejected"
+          value={rejected}
+          subtitle={`${rejected} rejected · ${LEAVE_HISTORY.length - approved - rejected} pending`}
+          icon={<XCircle className="size-5" />}
+          iconClassName="bg-destructive/10 text-destructive"
+          tone="red"
+          sparkline={{ variant: "bar", data: [0,0,0,1,0,0], color: "var(--ef-red)" }}
+        />
+        <KpiCard
+          title="Days Used"
+          value={`${totalDays}d`}
+          subtitle={`${totalDays} days taken this year`}
+          icon={<Calendar className="size-5" />}
+          iconClassName="bg-primary/10 text-primary"
+          tone="amber"
+          trend={{ value: daysUsedTrend, label: "Jun vs May" }}
+          sparkline={{ variant: "bar", data: MONTHLY_USAGE.map(m => m.days) }}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly usage chart */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <TrendingUp className="size-4 text-primary" /> Monthly Leave Usage — 2026
             </CardTitle>
           </CardHeader>
           <Separator />
-          <CardContent className="p-4">
-            <ResponsiveContainer width="100%" height={140}>
-              <BarChart data={MONTHLY_USAGE} margin={{ top: 4, right: 4, left: -28, bottom: 0 }} barCategoryGap="30%">
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--muted)", opacity: 0.4 }} />
-                <Bar dataKey="days" name="Days" fill="var(--primary)" radius={[4,4,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <CardContent className="p-4 flex-1 flex flex-col">
+            <div className="flex-1 min-h-0">
+              <EduBarChart
+                data={MONTHLY_USAGE}
+                series={[{ dataKey: "days", name: "Days", color: "var(--primary)" }]}
+                xKey="month"
+                fluid
+                showLabels
+                showYAxis={false}
+                tooltipFormatter={(v) => `${v} days`}
+              />
+            </div>
           </CardContent>
         </Card>
 
         {/* Leave balances */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Award className="size-4 text-primary" /> Leave Balance — 2026–27
@@ -216,7 +213,9 @@ export default function LeaveHistoryPage() {
       {/* Filters + Table */}
       <Card>
         <CardHeader className="flex-row items-center justify-between pb-3 gap-3 flex-wrap">
-          <CardTitle className="text-base font-semibold">Leave Records</CardTitle>
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <ClipboardList className="size-4 text-primary" /> Leave Records
+          </CardTitle>
           <div className="flex items-center gap-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-8 w-36 text-xs">

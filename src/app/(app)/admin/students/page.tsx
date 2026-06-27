@@ -47,7 +47,6 @@ import { ImportModal } from "@/components/shared/import-modal"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useTableSort, SortableHead } from "@/components/shared/sortable-table"
@@ -111,7 +110,7 @@ STUDENTS.forEach(s => {
 function AttTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-md text-xs">
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-card text-xs">
       <p className="font-semibold mb-0.5">{label}</p>
       <p>{payload[0].value} students</p>
     </div>
@@ -205,7 +204,7 @@ export default function StudentsPage() {
       />
 
       {/* KPI grid — 4 cols */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Total Students"
           value={STUDENTS.length}
@@ -310,7 +309,7 @@ export default function StudentsPage() {
       {filtered.length === 0 ? (
         <EmptyState icon={<GraduationCap className="size-10" />} title="No students found" description="Adjust your search or filters" />
       ) : (
-        <div className="rounded-lg border border-border overflow-hidden">
+        <div className="rounded-lg border border-border overflow-hidden overflow-x-auto">
           <Table>
             <caption className="sr-only">Student directory</caption>
             <TableHeader>

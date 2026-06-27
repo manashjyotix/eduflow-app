@@ -144,7 +144,7 @@ export default function SchoolSignupPage() {
   if (done) {
     return (
       <div className="min-h-[calc(100vh-57px)] flex items-center justify-center px-4 py-12">
-        <Card className="max-w-md w-full border-2 border-primary/30 shadow-xl">
+        <Card className="max-w-md w-full border-2 border-primary/30">
           <CardContent className="p-10 text-center">
             <div className="size-20 rounded-full bg-[var(--ef-green-light)] dark:bg-[var(--ef-green-light)] flex items-center justify-center mx-auto mb-5">
               <CheckCircle className="size-10 text-[var(--ef-green-dark)]" />
@@ -214,7 +214,7 @@ export default function SchoolSignupPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           {/* ── Form panel ── */}
           <div className="lg:col-span-2">
-            <Card className="shadow-sm">
+            <Card>
               <CardContent className="p-6 md:p-8">
 
                 {/* Step 1 — School Info */}

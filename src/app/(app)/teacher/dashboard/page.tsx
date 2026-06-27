@@ -3,7 +3,7 @@ import { useState } from "react"
 import Link from "next/link"
 import {
   LayoutDashboard, Calendar, CheckCircle, AlertCircle, Clock,
-  ArrowRight, Bell, BookOpen, Award, TrendingUp, Zap, User,
+  ArrowRight, Bell, BookOpen, Award, TrendingUp, Zap,
 } from "lucide-react"
 import dynamic from "next/dynamic"
 
@@ -38,13 +38,14 @@ const CartesianGrid = dynamic(
 )
 import { PageHeader } from "@/components/shared/page-header"
 import { KpiCard } from "@/components/shared/kpi-card"
-import { WeatherGreeting } from "@/components/shared/weather-greeting"
+import { BirthdayCard } from "@/components/shared/birthday-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { TEACHING_PERIODS } from "@/lib/constants"
+import { WeatherGreeting } from "@/components/shared/weather-greeting"
 
 const TODAY_SCHEDULE = [
   { period: "P1", subject: "Mathematics", class: "VIII-A", time: "9:30 – 10:10",  type: "regular" as const },
@@ -78,7 +79,7 @@ const RECENT_NOTIFICATIONS = [
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name?: string; color?: string }[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border bg-card px-3 py-2 shadow-md text-xs">
+    <div className="rounded-lg border bg-card px-3 py-2 shadow-card text-xs">
       <p className="font-semibold mb-1">{label}</p>
       {payload.map((p, i) => (
         <div key={i} className="flex items-center gap-1.5">
@@ -101,28 +102,20 @@ export default function TeacherDashboardPage() {
   const monthProxies = MONTHLY_PROXIES.reduce((s, m) => s + m.count, 0)
   const pendingRequests = PROXY_REQUESTS.filter(r => !acceptedIds.includes(r.id) && !declinedIds.includes(r.id))
 
+  // Leave balance derived values
+  const leaveRemaining = LEAVE_BALANCE.reduce((s, lb) => s + (lb.total - lb.used), 0)
+  const leaveTotal     = LEAVE_BALANCE.reduce((s, lb) => s + lb.total, 0)
+  const leaveArcPct    = Math.round((leaveRemaining / leaveTotal) * 100)
+  const leaveSubtitle  = LEAVE_BALANCE.map(lb => `${lb.type.split(" ")[0]}: ${lb.total - lb.used}d`).join(" · ")
+
+  // Proxy trend: % change Jun vs May
+  const proxyTrend = Math.round(
+    ((MONTHLY_PROXIES[5].count - MONTHLY_PROXIES[4].count) / Math.max(MONTHLY_PROXIES[4].count, 1)) * 100
+  )
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8">
       <WeatherGreeting />
-
-      {/* Greeting banner */}
-      <Card className="border-0 text-white bg-gradient-to-br from-[#007AFF] to-[#0062CC]">
-        <CardContent className="p-5 flex items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-sm opacity-75 mb-1">
-              <User className="size-3.5" />
-              <span>Priya Sharma · Mathematics & Science · High Section</span>
-            </div>
-            <h2 className="text-xl font-extrabold">Good morning, Priya! 👋</h2>
-            <p className="text-sm opacity-75 mt-0.5">{today} · {totalPeriods} periods scheduled today</p>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10" asChild>
-              <Link href="/teacher/leave"><Calendar className="size-4" /> Apply Leave</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       <PageHeader
         icon={<LayoutDashboard size={22} />}
@@ -137,18 +130,52 @@ export default function TeacherDashboardPage() {
         }
       />
 
+      <BirthdayCard />
+
       {/* KPIs */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <KpiCard title="Periods Today"      value={totalPeriods}  icon={<Clock className="size-5" />}        sparkline={{ variant: "bar", data: [4,5,3,4,4,3,totalPeriods] }} />
-        <KpiCard title="Proxy Today"        value={proxyCount}    icon={<AlertCircle className="size-5" />}  iconClassName="bg-warning/20 text-warning-foreground" sparkline={{ variant: "bar", data: [0,1,1,2,1,1,proxyCount], color: "var(--ef-amber)" }} />
-        <KpiCard title="Leave Balance"      value="29 days"       icon={<CheckCircle className="size-5" />}  iconClassName="bg-success/20 text-success-foreground" sparkline={{ variant: "arc", value: 73, color: "var(--ef-green)" }} />
-        <KpiCard title="Proxies This Month" value={monthProxies}  icon={<Calendar className="size-5" />}     iconClassName="bg-primary/10 text-primary" trend={{ value: -1, label: "vs last month" }} sparkline={{ variant: "bar", data: MONTHLY_PROXIES.map(m => m.count) }} />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <KpiCard
+          title="Periods Today"
+          value={totalPeriods}
+          subtitle={`${proxyCount} proxy · ${totalPeriods - proxyCount} regular`}
+          icon={<Clock className="size-5" />}
+          tone="brand"
+          sparkline={{ variant: "bar", data: [4,5,3,4,4,3,totalPeriods] }}
+        />
+        <KpiCard
+          title="Proxy Today"
+          value={proxyCount}
+          subtitle={`${pendingRequests.length} request${pendingRequests.length !== 1 ? "s" : ""} pending`}
+          icon={<AlertCircle className="size-5" />}
+          iconClassName="bg-warning/20 text-warning-foreground"
+          tone="amber"
+          sparkline={{ variant: "bar", data: [0,1,1,2,1,1,proxyCount], color: "var(--ef-amber)" }}
+        />
+        <KpiCard
+          title="Leave Balance"
+          value={`${leaveRemaining} days`}
+          subtitle={leaveSubtitle}
+          icon={<CheckCircle className="size-5" />}
+          iconClassName="bg-success/20 text-success-foreground"
+          tone="green"
+          sparkline={{ variant: "arc", value: leaveArcPct, color: "var(--ef-green)" }}
+        />
+        <KpiCard
+          title="Proxies This Month"
+          value={monthProxies}
+          subtitle={`${monthProxies} duties YTD`}
+          icon={<Calendar className="size-5" />}
+          iconClassName="bg-primary/10 text-primary"
+          tone="brand"
+          trend={{ value: proxyTrend, label: "vs last month" }}
+          sparkline={{ variant: "bar", data: MONTHLY_PROXIES.map(m => m.count) }}
+        />
       </div>
 
       {/* Proxy Requests Alert */}
       {pendingRequests.map(req => (
         <Card key={req.id} className="border-warning/50 bg-warning/5">
-          <CardContent className="p-4 flex items-start justify-between gap-4 flex-wrap">
+          <CardContent className="p-4 flex items-start sm:items-center justify-between gap-4 flex-wrap">
             <div className="flex items-start gap-3">
               <div className="size-8 rounded-full bg-warning/20 text-warning-foreground flex items-center justify-center flex-shrink-0 mt-0.5">
                 <Zap className="size-4" />

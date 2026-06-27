@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ToggleTabs } from "@/components/shared/toggle-tabs"
 
 type ExportFormat = "PDF" | "XLSX" | "CSV"
 
@@ -56,6 +57,25 @@ type TrendFilter = (typeof TREND_FILTERS)[number]["k"]
 
 const maxVal = Math.max(...MONTHLY_DATA.flatMap(d => [d.coverage, d.attendance]))
 
+// Derived KPI computations
+const totalReports = 48
+const prevMonthReports = 42 // previous period
+const reportsTrend = Math.round(((totalReports - prevMonthReports) / prevMonthReports) * 100)
+
+const avgCoverage = Math.round(MONTHLY_DATA.reduce((s, d) => s + d.coverage, 0) / MONTHLY_DATA.length)
+const prevCoverage = MONTHLY_DATA[MONTHLY_DATA.length - 2]?.coverage ?? 0
+const currCoverage = MONTHLY_DATA[MONTHLY_DATA.length - 1]?.coverage ?? 0
+const coverageTrend = prevCoverage > 0 ? Math.round(((currCoverage - prevCoverage) / prevCoverage) * 100) : 0
+
+const totalAbsenceTypes = ABSENCE_TYPES.reduce((s, t) => s + t.value, 0)
+const proxyFillPct = 97 // mock: 97% fill rate
+const prevFillPct  = 95
+const fillTrend = Math.round(((proxyFillPct - prevFillPct) / prevFillPct) * 100)
+
+const exportsThisMonth = 12
+const prevExports = 9
+const exportsTrend = Math.round(((exportsThisMonth - prevExports) / prevExports) * 100)
+
 // Subject score → complete literal fill class (no dynamic class names)
 function scoreBarClass(avg: number): string {
   if (avg >= 80) return "bg-ef-green"
@@ -67,7 +87,7 @@ export default function ReportsPage() {
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [trendFilter, setTrendFilter] = useState<TrendFilter>("monthly")
   const [trendYear, setTrendYear] = useState("2026")
-  const [viewMode, setViewMode] = useState(2) // 0=Daily, 1=Weekly, 2=Monthly
+  const [viewMode, setViewMode] = useState<"Daily" | "Weekly" | "Monthly">("Monthly")
 
   function handleExport(id: string, label: string, format: ExportFormat) {
     setLoadingId(id)
@@ -92,17 +112,11 @@ export default function ReportsPage() {
         subtitle="Academic Year 2025–26 · HCEA, Howly"
         actions={
           <div className="flex items-center gap-2">
-            <div className="inline-flex bg-muted rounded-[10px] p-[3px] gap-0.5">
-              {(["Daily", "Weekly", "Monthly"] as const).map((label, idx) => (
-                <button
-                  key={label}
-                  onClick={() => setViewMode(idx)}
-                  className={`px-3 h-7 rounded-lg text-xs transition-colors ${viewMode === idx ? "bg-card text-primary font-bold shadow-sm" : "text-muted-foreground font-medium"}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <ToggleTabs
+              options={["Daily", "Weekly", "Monthly"] as const}
+              value={viewMode}
+              onChange={setViewMode}
+            />
             <Button variant="secondary" size="default" className="gap-2" onClick={exportAll}>
               <Download size={14} />Export All
             </Button>
@@ -111,33 +125,45 @@ export default function ReportsPage() {
       />
 
       {/* KPI Stats */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Reports Generated"
-          value="48"
-          subtitle="+6 this month"
+          value={totalReports}
+          subtitle={`+${totalReports - prevMonthReports} vs last month`}
           icon={<BarChart3 className="size-5" />}
+          tone="brand"
+          trend={{ value: reportsTrend, label: "vs last month" }}
+          sparkline={{ variant: "bar", data: [32, 38, 35, 40, 42, totalReports] }}
         />
         <KpiCard
           title="Avg. Coverage"
-          value="94%"
-          subtitle="↑ 1.2% vs last month"
+          value={`${avgCoverage}%`}
+          subtitle={`${currCoverage}% this month · ${MONTHLY_DATA.length} months tracked`}
           icon={<TrendingUp className="size-5" />}
+          tone="green"
           iconClassName="bg-ef-green-light text-ef-green"
+          trend={{ value: coverageTrend, label: "vs last month" }}
+          sparkline={{ variant: "line", data: MONTHLY_DATA.map(d => d.coverage) }}
         />
         <KpiCard
           title="Proxy Fill Rate"
-          value="97%"
-          subtitle="↑ 2% vs last term"
+          value={`${proxyFillPct}%`}
+          subtitle={`${totalAbsenceTypes} absences · ${proxyFillPct - prevFillPct}% up this term`}
           icon={<ArrowLeftRight className="size-5" />}
+          tone="purple"
           iconClassName="bg-ef-purple-light text-ef-purple"
+          trend={{ value: fillTrend, label: "vs last term" }}
+          sparkline={{ variant: "arc", value: proxyFillPct }}
         />
         <KpiCard
           title="Exports This Month"
-          value="12"
-          subtitle="+3 this week"
+          value={exportsThisMonth}
+          subtitle={`+${exportsThisMonth - prevExports} vs last month · ${EXPORTS.length} types`}
           icon={<Download className="size-5" />}
+          tone="amber"
           iconClassName="bg-ef-amber-light text-ef-amber"
+          trend={{ value: exportsTrend, label: "vs last month" }}
+          sparkline={{ variant: "bar", data: [4, 6, 7, 9, 10, exportsThisMonth] }}
         />
       </div>
 
@@ -174,11 +200,11 @@ export default function ReportsPage() {
                 <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
                   <div className="flex items-end gap-0.5 h-32">
                     <div
-                      className="w-full max-w-[18px] rounded-t-sm transition-all bg-primary"
+                      className="w-full max-w-[20px] rounded-t-sm transition-all bg-primary"
                       style={{ height: `${(d.coverage / maxVal) * 112}px`, minHeight: 4 }}
                     />
                     <div
-                      className="w-full max-w-[18px] rounded-t-sm transition-all bg-ef-green"
+                      className="w-full max-w-[20px] rounded-t-sm transition-all bg-ef-green"
                       style={{ height: `${(d.attendance / maxVal) * 112}px`, minHeight: 4 }}
                     />
                   </div>

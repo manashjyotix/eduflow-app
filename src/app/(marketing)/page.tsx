@@ -72,7 +72,7 @@ export default function LandingPage() {
 
       {/* Features */}
       <section className="max-w-6xl mx-auto px-4 md:px-6 py-16">
-        <h2 className="text-3xl font-bold text-center mb-3">Everything your school needs</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-3 leading-tight">Everything your school needs</h2>
         <p className="text-muted-foreground text-center mb-12">One platform for absence tracking, proxy management, fees, timetable, and reports.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {FEATURES.map(f => (
@@ -93,7 +93,7 @@ export default function LandingPage() {
 
       {/* Testimonials */}
       <section className="max-w-6xl mx-auto px-4 md:px-6 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">Loved by schools across India</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-12 leading-tight">Loved by schools across India</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {TESTIMONIALS.map(t => (
             <Card key={t.name}>
@@ -118,7 +118,7 @@ export default function LandingPage() {
 
       {/* CTA */}
       <section className="max-w-6xl mx-auto px-4 md:px-6 py-16 text-center">
-        <h2 className="text-3xl font-bold mb-4">Ready to streamline your school?</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold mb-4 leading-tight">Ready to streamline your school?</h2>
         <p className="text-muted-foreground mb-8">Join 12+ schools already using EduFlow. Starter plan from ₹999/month.</p>
         <Button size="xl" asChild>
           <Link href="/signup">

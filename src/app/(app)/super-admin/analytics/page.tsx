@@ -81,12 +81,12 @@ const PLAN_REVENUE = [
 
 function CohortCell({ value }: { value: number | null }) {
   if (value === null)
-    return <TableCell className="px-3.5 py-2 text-center text-xs bg-muted text-muted-foreground/70">—</TableCell>
+    return <TableCell className="px-4 py-2 text-center text-xs bg-muted text-muted-foreground/70">—</TableCell>
   const cls =
     value >= 70 ? "bg-ef-green-light text-ef-green-dark"
     : value >= 50 ? "bg-ef-amber-light text-ef-amber-dark"
     : "bg-ef-red-light text-ef-red-dark"
-  return <TableCell className={`px-3.5 py-2 text-center text-xs font-bold ${cls}`}>{value}%</TableCell>
+  return <TableCell className={`px-4 py-2 text-center text-xs font-bold ${cls}`}>{value}%</TableCell>
 }
 
 export default function PlatformAnalyticsPage() {
@@ -124,7 +124,7 @@ export default function PlatformAnalyticsPage() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard title="MRR" value="₹1,32,000" subtitle="+9.1% vs last month" icon={<IndianRupee className="size-5" />} sparkline={{ variant: "line", data: [65, 78, 92, 108, 121, 132] }} />
         <KpiCard title="Paying Schools" value="10" subtitle="+2 MoM" icon={<Building2 className="size-5" />} iconClassName="bg-ef-green-light text-ef-green" sparkline={{ variant: "bar", data: [6, 7, 8, 8, 9, 10], color: "var(--ef-green)" }} />
         <KpiCard title="Trial Conversion" value="68%" subtitle="+4% vs last month" icon={<Target className="size-5" />} iconClassName="bg-ef-purple-light text-ef-purple" sparkline={{ variant: "line", data: [52, 55, 60, 62, 64, 68], color: "var(--ef-purple)" }} />
@@ -152,12 +152,12 @@ export default function PlatformAnalyticsPage() {
                 )
               })}
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-2.5">
-              <div className="bg-ef-green-light rounded-lg px-3.5 py-2.5">
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="bg-ef-green-light rounded-lg px-4 py-2">
                 <div className="text-[11px] font-semibold uppercase text-ef-green-dark">New MRR</div>
                 <div className="text-lg font-extrabold text-ef-green-dark">+₹{(last.newMrr / 1000).toFixed(0)}K</div>
               </div>
-              <div className="bg-ef-red-light rounded-lg px-3.5 py-2.5">
+              <div className="bg-ef-red-light rounded-lg px-4 py-2">
                 <div className="text-[11px] font-semibold uppercase text-ef-red-dark">Churned</div>
                 <div className="text-lg font-extrabold text-ef-red">−₹{(last.churn / 1000).toFixed(0)}K</div>
               </div>
@@ -215,7 +215,7 @@ export default function PlatformAnalyticsPage() {
                 </div>
               )
             })}
-            <div className="mt-4 px-3.5 py-2.5 bg-ef-green-light rounded-lg">
+            <div className="mt-4 px-4 py-2 bg-ef-green-light rounded-lg">
               <div className="text-xs font-semibold text-ef-green-dark">Overall Conversion Rate</div>
               <div className="text-2xl font-extrabold text-ef-green-dark">35.4%</div>
               <div className="text-[11px] text-muted-foreground/70">Demo → Paid (last 6 months)</div>
@@ -241,7 +241,7 @@ export default function PlatformAnalyticsPage() {
                 </div>
               </div>
             ))}
-            <div className="mt-3.5 px-3.5 py-2.5 bg-ef-brand-light rounded-lg text-xs text-primary">
+            <div className="mt-4 px-4 py-2 bg-ef-brand-light rounded-lg text-xs text-primary">
               <strong>9 cities covered</strong> across Assam. Next expansion target: Tezpur, Nagaon.
             </div>
           </CardContent>
@@ -290,22 +290,23 @@ export default function PlatformAnalyticsPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <caption className="sr-only">Cohort retention by month</caption>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <SortableHead field="cohort" label="Cohort" sortField={cohortSortField} sortDir={cohortSortDir} onSort={cohortToggleSort} className="px-3.5 text-xs" />
-                <SortableHead field="size" label="Schools" sortField={cohortSortField} sortDir={cohortSortDir} onSort={cohortToggleSort} className="px-3.5 text-xs" />
+                <SortableHead field="cohort" label="Cohort" sortField={cohortSortField} sortDir={cohortSortDir} onSort={cohortToggleSort} className="px-4 text-xs" />
+                <SortableHead field="size" label="Schools" sortField={cohortSortField} sortDir={cohortSortDir} onSort={cohortToggleSort} className="px-4 text-xs" />
                 {["Month 1", "Month 2", "Month 3", "Month 6", "Month 12"].map(h => (
-                  <TableHead key={h} className="px-3.5 text-xs">{h}</TableHead>
+                  <TableHead key={h} className="px-4 text-xs">{h}</TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedCohorts.map((row, i) => (
                 <TableRow key={row.cohort} className={i < COHORT_DATA.length - 1 ? "" : "border-0"}>
-                  <TableCell className="px-3.5 text-sm font-semibold whitespace-nowrap">{row.cohort}</TableCell>
-                  <TableCell className="px-3.5 text-sm font-semibold text-muted-foreground">n={row.size}</TableCell>
+                  <TableCell className="px-4 text-sm font-semibold whitespace-nowrap">{row.cohort}</TableCell>
+                  <TableCell className="px-4 text-sm font-semibold text-muted-foreground">n={row.size}</TableCell>
                   <CohortCell value={row.m1} />
                   <CohortCell value={row.m2} />
                   <CohortCell value={row.m3} />
@@ -315,6 +316,7 @@ export default function PlatformAnalyticsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
         <CardFooter className="justify-end">
           <div className="flex gap-3 text-xs">
@@ -333,7 +335,7 @@ export default function PlatformAnalyticsPage() {
           <Badge>₹1,32,000 MRR</Badge>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {PLAN_REVENUE.map(p => (
               <div key={p.plan} className="bg-muted rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2.5">

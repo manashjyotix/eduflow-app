@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-export type PaymentMode = "Online" | "Cash" | "Cheque" | "—"
+export type PaymentMode = "Online" | "Cash" | "Cheque" | "Bank" | "—"
 export type PaymentStatus = "paid" | "pending" | "overdue"
 
 export interface FeeReceipt {
@@ -35,6 +35,7 @@ const PAYMENT_MODE_STYLE: Record<PaymentMode, string> = {
   Online: "bg-primary/10 text-primary",
   Cash:   "bg-success/40 text-success-foreground",
   Cheque: "bg-warning/40 text-warning-foreground",
+  Bank:   "bg-[var(--ef-cyan-light)] text-[var(--ef-cyan)]",
   "—":    "bg-muted text-muted-foreground",
 }
 
@@ -64,82 +65,88 @@ export function FeeReceiptCard({
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-0">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4">
-          {/* Avatar + name */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="size-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0" aria-hidden="true">
-              {initials}
+        <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+          {/* Group A — mobile: name + amount on one row; desktop: dissolves into the main row */}
+          <div className="flex items-start justify-between gap-3 sm:contents">
+            {/* Avatar + name */}
+            <div className="flex items-center gap-3 min-w-0 sm:flex-1">
+              <div className="size-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0" aria-hidden="true">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold truncate">{receipt.studentName}</p>
+                  <Badge variant="outline" className="font-mono text-xs flex-shrink-0">
+                    {receipt.class}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground truncate">{receipt.feeHead}</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-sm font-semibold truncate">{receipt.studentName}</p>
-                <Badge variant="outline" className="font-mono text-xs flex-shrink-0">
-                  {receipt.class}
+
+            {/* Amount */}
+            <div className="text-right flex-shrink-0">
+              <p className="text-base font-bold">{formattedAmount}</p>
+              <p className="text-xs text-muted-foreground">{formattedDate}</p>
+            </div>
+          </div>
+
+          {/* Group B — mobile: receipt meta + actions on one row; desktop: dissolves into the main row */}
+          <div className="flex items-center justify-between gap-3 sm:contents">
+            {/* Receipt no + mode + status */}
+            <div className="flex flex-col items-start gap-1 flex-shrink-0 sm:items-end sm:min-w-[140px]">
+              <p className="font-mono text-xs text-muted-foreground">{receipt.receiptNo}</p>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`text-xs font-medium px-2 py-0.5 rounded-full ${PAYMENT_MODE_STYLE[receipt.paymentMode]}`}
+                >
+                  {receipt.paymentMode}
+                </span>
+                <Badge
+                  variant={
+                    receipt.status === "paid"
+                      ? "success"
+                      : receipt.status === "overdue"
+                      ? "destructive"
+                      : "warning"
+                  }
+                  className="capitalize"
+                >
+                  {receipt.status}
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground truncate">{receipt.feeHead}</p>
             </div>
-          </div>
 
-          {/* Amount */}
-          <div className="text-right flex-shrink-0">
-            <p className="text-base font-bold">{formattedAmount}</p>
-            <p className="text-xs text-muted-foreground">{formattedDate}</p>
+            {/* Actions */}
+            {(canPrint || showDownload) && (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {canPrint && onPrint && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    title="Print Receipt"
+                    onClick={() => onPrint(receipt)}
+                  >
+                    <Printer className="size-3.5" />
+                    <span className="sr-only">Print receipt</span>
+                  </Button>
+                )}
+                {showDownload && onDownload && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    title="Download Receipt"
+                    onClick={() => onDownload(receipt)}
+                  >
+                    <Download className="size-3.5" />
+                    <span className="sr-only">Download receipt</span>
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
-
-          {/* Receipt no + mode + status */}
-          <div className="flex flex-col items-end gap-1 flex-shrink-0 min-w-[140px]">
-            <p className="font-mono text-xs text-muted-foreground">{receipt.receiptNo}</p>
-            <div className="flex items-center gap-1.5">
-              <span
-                className={`text-xs font-medium px-2 py-0.5 rounded-full ${PAYMENT_MODE_STYLE[receipt.paymentMode]}`}
-              >
-                {receipt.paymentMode}
-              </span>
-              <Badge
-                variant={
-                  receipt.status === "paid"
-                    ? "success"
-                    : receipt.status === "overdue"
-                    ? "destructive"
-                    : "warning"
-                }
-                className="capitalize"
-              >
-                {receipt.status}
-              </Badge>
-            </div>
-          </div>
-
-          {/* Actions */}
-          {(canPrint || showDownload) && (
-            <div className="flex items-center gap-1 flex-shrink-0">
-              {canPrint && onPrint && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  title="Print Receipt"
-                  onClick={() => onPrint(receipt)}
-                >
-                  <Printer className="size-3.5" />
-                  <span className="sr-only">Print receipt</span>
-                </Button>
-              )}
-              {showDownload && onDownload && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  title="Download Receipt"
-                  onClick={() => onDownload(receipt)}
-                >
-                  <Download className="size-3.5" />
-                  <span className="sr-only">Download receipt</span>
-                </Button>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Paid receipt footer stripe */}

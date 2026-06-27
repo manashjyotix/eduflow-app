@@ -15,47 +15,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useChild } from "@/context/child-context"
+import { useRole } from "@/context/role-context"
+import { useStudentLeave } from "@/context/student-leave-context"
+import {
+  STUDENT_LEAVE_TYPE_LABELS as TYPE_LABELS,
+  STUDENT_LEAVE_STATUS_VARIANTS as STATUS_VARIANTS,
+  type StudentLeaveType,
+} from "@/data/mock-student-leave"
 
-type LeaveType = "sick" | "family_emergency" | "personal" | "religious" | "travel" | "medical" | "other"
-type LeaveStatus = "approved" | "pending" | "rejected"
 type DurationMode = "single" | "multiple"
-
-interface PastLeave {
-  id: string
-  subject: string
-  from: string
-  to: string
-  days: number
-  type: LeaveType
-  reason: string
-  status: LeaveStatus
-  submittedOn: string
-}
-
-const PAST_LEAVES: PastLeave[] = [
-  { id: "pl1", subject: "Family function",       from: "2026-06-17", to: "2026-06-17", days: 1, type: "personal",         reason: "Family function at relatives' house", status: "approved", submittedOn: "2026-06-10" },
-  { id: "pl2", subject: "Fever — doctor advised", from: "2026-06-03", to: "2026-06-04", days: 2, type: "sick",             reason: "Rohit had fever and was advised rest by doctor", status: "approved", submittedOn: "2026-06-03" },
-  { id: "pl3", subject: "Grandfather hospitalised", from: "2026-05-22", to: "2026-05-22", days: 1, type: "family_emergency", reason: "Grandfather hospitalised — Rohit needed to accompany", status: "approved", submittedOn: "2026-05-22" },
-  { id: "pl4", subject: "Festival trip",          from: "2026-05-08", to: "2026-05-09", days: 2, type: "personal",         reason: "Trip to native village for festival", status: "rejected", submittedOn: "2026-05-05" },
-  { id: "pl5", subject: "Stomach ache",           from: "2026-04-15", to: "2026-04-15", days: 1, type: "sick",             reason: "Stomach ache and mild diarrhoea", status: "approved", submittedOn: "2026-04-15" },
-]
-
-const TYPE_LABELS: Record<LeaveType, string> = {
-  sick:             "Sick Leave",
-  family_emergency: "Family Emergency",
-  personal:         "Personal",
-  religious:        "Religious / Festival",
-  travel:           "Travel",
-  medical:          "Medical Appointment",
-  other:            "Other",
-}
-
-const STATUS_VARIANTS: Record<LeaveStatus, "success" | "destructive" | "warning"> = {
-  approved: "success",
-  rejected: "destructive",
-  pending:  "warning",
-}
-
 type SortField = "subject" | "from" | "type" | "days" | "status" | "submittedOn"
 type SortDir = "asc" | "desc"
 
@@ -64,6 +33,10 @@ function formatDate(dateStr: string) {
 }
 
 export default function ParentLeavePage() {
+  const { selectedChild } = useChild()
+  const { name: parentName } = useRole()
+  const { requests, submitLeave } = useStudentLeave()
+
   const [durationMode, setDurationMode] = useState<DurationMode>("single")
   const [from, setFrom]         = useState("")
   const [to, setTo]             = useState("")
@@ -72,17 +45,19 @@ export default function ParentLeavePage() {
   const [otherType, setOtherType] = useState("")
   const [reason, setReason]     = useState("")
   const [submitted, setSubmitted] = useState(false)
-  const [pastLeaves, setPastLeaves] = useState<PastLeave[]>(PAST_LEAVES)
 
   const [sortField, setSortField] = useState<SortField>("submittedOn")
   const [sortDir, setSortDir]     = useState<SortDir>("desc")
+
+  // Only this child's leave requests are shown to the parent.
+  const childLeaves = requests.filter(r => r.studentId === selectedChild?.id)
 
   function toggleSort(field: SortField) {
     if (sortField === field) setSortDir(d => (d === "asc" ? "desc" : "asc"))
     else { setSortField(field); setSortDir("asc") }
   }
 
-  const sortedLeaves = [...pastLeaves].sort((a, b) => {
+  const sortedLeaves = [...childLeaves].sort((a, b) => {
     let cmp = 0
     if (sortField === "subject")          cmp = a.subject.localeCompare(b.subject)
     else if (sortField === "from")        cmp = a.from.localeCompare(b.from)
@@ -95,32 +70,37 @@ export default function ParentLeavePage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!selectedChild) return
     const effectiveTo = durationMode === "single" ? from : to
     const days = durationMode === "single"
       ? 1
       : Math.max(1, Math.round((new Date(effectiveTo).getTime() - new Date(from).getTime()) / 86400000) + 1)
-    const newLeave: PastLeave = {
-      id: `pl${Date.now()}`,
+
+    submitLeave({
+      studentId: selectedChild.id,
+      studentName: selectedChild.name,
+      className: selectedChild.className,
+      parentName,
       subject: subject.trim() || "Leave request",
       from,
       to: effectiveTo,
       days,
-      type: (leaveType || "personal") as LeaveType,
-      reason: reason.trim(),
-      status: "pending",
-      submittedOn: new Date().toISOString().split("T")[0],
-    }
-    setPastLeaves(prev => [newLeave, ...prev])
+      type: (leaveType || "personal") as StudentLeaveType,
+      reason: leaveType === "other" && otherType.trim()
+        ? `${otherType.trim()} — ${reason.trim()}`
+        : reason.trim(),
+    })
+
     setSubmitted(true)
     setTimeout(() => setSubmitted(false), 4000)
     toast.success("Leave request submitted", {
-      description: `${days} day${days > 1 ? "s" : ""} · pending admin review.`,
+      description: `${days} day${days > 1 ? "s" : ""} · sent to admin & management for review.`,
     })
     setDurationMode("single")
     setFrom(""); setTo(""); setSubject(""); setLeaveType(""); setOtherType(""); setReason("")
   }
 
-  const sortableHeaders: { label: string; field: SortField; className?: string }[] = [
+  const sortableHeaders: { label: string; field: SortField }[] = [
     { label: "Subject", field: "subject" },
     { label: "Date Range", field: "from" },
     { label: "Type", field: "type" },
@@ -129,18 +109,21 @@ export default function ParentLeavePage() {
     { label: "Submitted", field: "submittedOn" },
   ]
 
+  const childName = selectedChild?.name ?? "your child"
+  const childClass = selectedChild?.className ?? ""
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8">
       <PageHeader
         icon={<FileText size={20} />}
         title="Leave Request"
-        subtitle="Apply for student leave — Rohit Das, Class VIII-A"
+        subtitle={`Apply for student leave — ${childName}${childClass ? `, Class ${childClass}` : ""}`}
       />
 
       {submitted && (
         <Alert className="border-success-foreground/30 bg-success/40">
           <AlertDescription className="text-success-foreground font-medium">
-            Leave request submitted successfully! Admin will review and respond within 24 hours.
+            Leave request submitted successfully! Admin / Management will review and respond within 24 hours.
           </AlertDescription>
         </Alert>
       )}
@@ -161,13 +144,13 @@ export default function ParentLeavePage() {
               <Label className="text-xs font-semibold">Student Name</Label>
               <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-border bg-muted/30 text-sm text-muted-foreground">
                 <User className="size-3.5" />
-                Rohit Das
+                {childName}
               </div>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Class</Label>
               <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-border bg-muted/30 text-sm text-muted-foreground">
-                VIII-A
+                {childClass || "—"}
               </div>
             </div>
 
@@ -335,7 +318,7 @@ export default function ParentLeavePage() {
             <TableBody>
               {sortedLeaves.map((l, i) => (
                 <TableRow key={l.id} className={`hover:bg-muted/20 ${i % 2 ? "bg-muted/10" : ""}`}>
-                  <TableCell className="px-4 py-3 text-xs font-medium max-w-xs truncate" title={l.reason}>{l.subject}</TableCell>
+                  <TableCell className="px-4 py-3 text-xs font-medium max-w-xs truncate" title={l.reviewNote ? `${l.reason} · Review: ${l.reviewNote}` : l.reason}>{l.subject}</TableCell>
                   <TableCell className="px-4 py-3 text-xs whitespace-nowrap">
                     {formatDate(l.from)}{l.from !== l.to ? ` – ${formatDate(l.to)}` : ""}
                   </TableCell>
@@ -349,6 +332,13 @@ export default function ParentLeavePage() {
                   <TableCell className="px-4 py-3 text-xs text-muted-foreground">{formatDate(l.submittedOn)}</TableCell>
                 </TableRow>
               ))}
+              {sortedLeaves.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                    No leave requests yet for {childName}.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>

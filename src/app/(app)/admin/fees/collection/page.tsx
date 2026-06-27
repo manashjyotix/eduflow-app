@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
 import {
-  CreditCard, Plus, TrendingUp, Clock, CheckCircle2
+  CreditCard, Plus, TrendingUp, Clock, CheckCircle2,
+  Upload, Download, FileSpreadsheet, AlertTriangle,
 } from "lucide-react"
 import { PageHeader } from "@/components/shared/page-header"
 import { KpiCard } from "@/components/shared/kpi-card"
@@ -22,6 +23,10 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FeeReceiptCard, type FeeReceipt } from "@/components/domain/fee/FeeReceiptCard"
+import {
+  downloadFeeTemplate, parseFeeFile, validateFeeRows, exportFeePayments,
+  type FeeValidationResult,
+} from "@/lib/fee-io"
 
 interface Payment {
   id: string
@@ -32,7 +37,8 @@ interface Payment {
   date: string
   receiptNo: string
   status: "paid" | "pending"
-  paymentMode: "Online" | "Cash" | "Cheque" | "—"
+  paymentMode: "Online" | "Cash" | "Cheque" | "Bank" | "—"
+  reference?: string
 }
 
 const INITIAL_PAYMENTS: Payment[] = [
@@ -52,7 +58,7 @@ const paymentSchema = z.object({
   className: z.string().optional().default(""),
   feeHead: z.string().optional().default(""),
   amount: z.coerce.number().int().positive("Amount must be a positive number"),
-  mode: z.enum(["Online", "Cash", "Cheque"]),
+  mode: z.enum(["Online", "Cash", "Cheque", "Bank"]),
 })
 type PaymentFormValues = z.infer<typeof paymentSchema>
 
@@ -67,6 +73,52 @@ const PAYMENT_DEFAULTS: PaymentFormValues = {
 export default function FeeCollectionPage() {
   const [payments, setPayments] = useState<Payment[]>(INITIAL_PAYMENTS)
   const [collectOpen, setCollectOpen] = useState(false)
+
+  // ── Import (Excel/CSV) ──
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [importResult, setImportResult] = useState<FeeValidationResult | null>(null)
+  const [importedCount, setImportedCount] = useState<number | null>(null)
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImportedCount(null)
+    const rows = await parseFeeFile(file)
+    setImportResult(validateFeeRows(rows))
+  }
+
+  function commitImport() {
+    if (!importResult || importResult.valid.length === 0) return
+    const newPayments: Payment[] = importResult.valid.map((p, i) => ({
+      id: `imp-${Date.now()}-${i}`,
+      studentName: p.studentName,
+      class: p.className,
+      feeHead: p.feeHead,
+      amount: p.amount,
+      date: p.date,
+      receiptNo: `RCP-2026-${1200 + payments.length + i}`,
+      status: "paid",
+      paymentMode: p.mode,
+      reference: p.reference,
+    }))
+    setPayments(prev => [...newPayments, ...prev])
+    setImportedCount(newPayments.length)
+    setImportResult(null)
+    if (fileRef.current) fileRef.current.value = ""
+    toast.success("Collections imported", { description: `${newPayments.length} offline payments added.` })
+  }
+
+  function handleExport() {
+    exportFeePayments(payments.map(p => ({
+      studentName: p.studentName,
+      className: p.class,
+      feeHead: p.feeHead,
+      amount: p.amount,
+      mode: p.paymentMode === "—" ? "" : p.paymentMode,
+      reference: p.reference,
+      date: p.date,
+    })))
+  }
 
   // Collect-payment form (RHF + zod)
   const form = useForm<PaymentFormValues>({
@@ -118,7 +170,7 @@ export default function FeeCollectionPage() {
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Collected Today"
           value="₹42,500"
@@ -194,6 +246,69 @@ export default function FeeCollectionPage() {
           </Card>
         ))}
       </div>
+
+      {/* Offline collection import / export */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold">Offline Collections — Import / Export</CardTitle>
+        </CardHeader>
+        <Separator />
+        <CardContent className="flex flex-col gap-4 pt-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" onClick={() => downloadFeeTemplate()}>
+              <Download className="size-4 mr-1" /> Download demo template
+            </Button>
+            <Button onClick={() => fileRef.current?.click()}>
+              <Upload className="size-4 mr-1" /> Import .xlsx / .csv
+            </Button>
+            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportFile} />
+            <Button variant="outline" className="ml-auto" onClick={handleExport}>
+              <Download className="size-4 mr-1" /> Export all
+            </Button>
+          </div>
+
+          <p className="flex items-center gap-2 text-xs text-muted-foreground">
+            <FileSpreadsheet className="size-3.5" />
+            For fees collected offline (cash / cheque / bank). One row per payment. The template has an Instructions sheet.
+          </p>
+
+          {importedCount !== null && (
+            <div className="flex items-center gap-2 rounded-lg border border-[var(--ef-green)]/30 bg-[var(--ef-green-light)] px-3 py-2 text-sm text-[var(--ef-green-dark)]">
+              <CheckCircle2 className="size-4" /> Imported {importedCount} payment{importedCount > 1 ? "s" : ""}.
+            </div>
+          )}
+
+          {importResult && (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap gap-3 text-sm">
+                <span className="inline-flex items-center gap-1.5 text-[var(--ef-green-dark)]">
+                  <CheckCircle2 className="size-4" /> {importResult.valid.length} valid row{importResult.valid.length !== 1 ? "s" : ""}
+                </span>
+                {importResult.errors.length > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-destructive">
+                    <AlertTriangle className="size-4" /> {importResult.errors.length} row{importResult.errors.length !== 1 ? "s" : ""} with errors
+                  </span>
+                )}
+              </div>
+              {importResult.errors.length > 0 && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 max-h-40 overflow-y-auto">
+                  <ul className="space-y-1 text-xs text-destructive">
+                    {importResult.errors.map(err => (
+                      <li key={err.row}><strong>Row {err.row}:</strong> {err.message}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Button onClick={commitImport} disabled={importResult.valid.length === 0}>
+                  Commit {importResult.valid.length} payment{importResult.valid.length !== 1 ? "s" : ""}
+                </Button>
+                <Button variant="ghost" onClick={() => setImportResult(null)}>Discard</Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent Payments — FeeReceiptCard list */}
       <Card>
@@ -301,6 +416,7 @@ export default function FeeCollectionPage() {
                           <SelectItem value="Online">Online</SelectItem>
                           <SelectItem value="Cash">Cash</SelectItem>
                           <SelectItem value="Cheque">Cheque</SelectItem>
+                          <SelectItem value="Bank">Bank Transfer</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>

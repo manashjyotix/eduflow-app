@@ -167,11 +167,40 @@ export default function AbsencesPage() {
         }
       />
 
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <KpiCard title="Total Today"  value={absences.length}  icon={<ClipboardList className="size-5" />} sparkline={{ variant: "bar", data: [1,2,1,3,2,1,absences.length] }} />
-        <KpiCard title="Approved"     value={approved}         icon={<CheckCircle className="size-5" />}   iconClassName="bg-success/20 text-success-foreground" sparkline={{ variant: "bar", data: [1,2,1,2,1,1,approved], color: "var(--ef-green)" }} />
-        <KpiCard title="Pending"      value={pending}          icon={<Clock className="size-5" />}          iconClassName="bg-warning/20 text-warning-foreground" sparkline={{ variant: "bar", data: [0,1,0,1,1,0,pending], color: "var(--ef-amber)" }} />
-        <KpiCard title="Rejected"     value={rejected}         icon={<XCircle className="size-5" />}        iconClassName="bg-destructive/10 text-destructive" sparkline={{ variant: "bar", data: [0,0,0,1,0,0,rejected], color: "var(--ef-red)" }} />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <KpiCard
+          title="Total Today"
+          value={absences.length}
+          subtitle={`${pending} pending review`}
+          icon={<ClipboardList className="size-5" />}
+          tone="brand"
+          trend={{ value: Math.round(((ABSENCE_TREND[ABSENCE_TREND.length - 1].absences - ABSENCE_TREND[ABSENCE_TREND.length - 2].absences) / Math.max(ABSENCE_TREND[ABSENCE_TREND.length - 2].absences, 1)) * 100), label: "vs yesterday" }}
+          sparkline={{ variant: "bar", data: ABSENCE_TREND.map(d => d.absences) }}
+        />
+        <KpiCard
+          title="Approved"
+          value={approved}
+          subtitle={approved === 0 ? "None approved yet" : `${approved} of ${absences.length} cleared`}
+          icon={<CheckCircle className="size-5" />}
+          tone="green"
+          sparkline={{ variant: "bar", data: ABSENCE_TREND.map(d => Math.round(d.absences * 0.6)) }}
+        />
+        <KpiCard
+          title="Pending"
+          value={pending}
+          subtitle={pending === 0 ? "All clear" : `${pending} awaiting decision`}
+          icon={<Clock className="size-5" />}
+          tone="amber"
+          sparkline={{ variant: "bar", data: ABSENCE_TREND.map(d => Math.round(d.absences * 0.3)) }}
+        />
+        <KpiCard
+          title="Rejected"
+          value={rejected}
+          subtitle={rejected === 0 ? "No rejections" : `${rejected} request${rejected > 1 ? "s" : ""} declined`}
+          icon={<XCircle className="size-5" />}
+          tone="red"
+          sparkline={{ variant: "bar", data: ABSENCE_TREND.map(d => Math.max(0, Math.round(d.absences * 0.1))) }}
+        />
       </div>
 
       {/* Absence Trend Chart */}

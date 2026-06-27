@@ -180,7 +180,7 @@ export default function EmergencyConsolePage() {
       </Alert>
 
       {maintenanceActive && (
-        <div className="rounded-xl px-5 py-3.5 flex items-center gap-3 text-white bg-gradient-to-br from-[#DC2626] to-[#B91C1C]">
+        <div className="rounded-xl px-5 py-4 flex items-center gap-3 text-white bg-gradient-to-br from-[#DC2626] to-[#B91C1C]">
           <Power className="size-5" />
           <div className="flex-1">
             <div className="font-bold">MAINTENANCE MODE ACTIVE</div>
@@ -191,8 +191,8 @@ export default function EmergencyConsolePage() {
       )}
 
       {running && (
-        <div className="bg-ef-amber-light rounded-lg px-5 py-3.5 border border-ef-amber">
-          <div className="flex items-center gap-2.5 mb-2">
+        <div className="bg-ef-amber-light rounded-lg px-5 py-4 border border-ef-amber">
+          <div className="flex items-center gap-2 mb-2">
             <RefreshCw className="size-4 text-ef-amber animate-spin" />
             <span className="text-sm font-semibold text-ef-amber-dark">Action in progress…</span>
           </div>
@@ -226,14 +226,14 @@ export default function EmergencyConsolePage() {
           {QUICK_ACTIONS.map(group => (
             <div key={group.group}>
               <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-2.5">{group.group}</div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                 {group.actions.map(action => {
                   const needsSchool = action.school === "required"
                   const isCompleted = completedActions.includes(action.label)
                   const disabled = running || (needsSchool && !selectedSchool) || isCompleted
                   return (
                     <button key={action.label} disabled={disabled} onClick={() => setConfirm(action)}
-                      className={`flex items-center gap-3 px-3.5 py-3 rounded-lg border-[1.5px] text-left transition-colors disabled:cursor-not-allowed ${isCompleted ? "bg-ef-green-light border-ef-green" : "bg-card border-border hover:bg-muted/40"} ${needsSchool && !selectedSchool ? "opacity-50" : ""}`}>
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg border-[1.5px] text-left transition-colors disabled:cursor-not-allowed ${isCompleted ? "bg-ef-green-light border-ef-green" : "bg-card border-border hover:bg-muted/40"} ${needsSchool && !selectedSchool ? "opacity-50" : ""}`}>
                       <div className={`size-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isCompleted ? "bg-ef-green-light text-ef-green-dark" : "bg-muted text-muted-foreground"}`}>
                         {isCompleted ? <CheckCircle2 className="size-4" /> : <Wrench className="size-4" />}
                       </div>
@@ -253,7 +253,7 @@ export default function EmergencyConsolePage() {
           ))}
 
           {completedActions.length > 0 && (
-            <div className="px-4 py-3 bg-ef-green-light rounded-lg flex items-center gap-2.5 text-sm">
+            <div className="px-4 py-3 bg-ef-green-light rounded-lg flex items-center gap-2 text-sm">
               <CheckCircle2 className="size-4 text-ef-green-dark" />
               <span className="text-ef-green-dark font-semibold flex-1">{completedActions.length} action{completedActions.length > 1 ? "s" : ""} completed this session: {completedActions.join(", ")}</span>
               <Button variant="ghost" size="sm" onClick={() => setCompletedActions([])}>Clear</Button>
@@ -281,7 +281,7 @@ export default function EmergencyConsolePage() {
               <div className="flex flex-col gap-1.5">
                 <Label>Message Type</Label>
                 <div className="flex gap-2 flex-wrap">
-                  {MSG_TYPES.map(t => <button key={t.type} onClick={() => setMsgType(t.type)} className={`px-3.5 py-1.5 rounded-lg border-[1.5px] text-xs font-semibold transition-all ${msgType === t.type ? t.className + " ring-2 ring-offset-1 ring-offset-background ring-primary/40" : "border-border bg-card text-muted-foreground"}`}>{t.label}</button>)}
+                  {MSG_TYPES.map(t => <button key={t.type} onClick={() => setMsgType(t.type)} className={`px-4 py-1.5 rounded-lg border-[1.5px] text-xs font-semibold transition-all ${msgType === t.type ? t.className + " ring-2 ring-offset-1 ring-offset-background ring-primary/40" : "border-border bg-card text-muted-foreground"}`}>{t.label}</button>)}
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
@@ -347,7 +347,7 @@ export default function EmergencyConsolePage() {
               Confirm: {confirm?.label}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col gap-3.5">
+          <div className="flex flex-col gap-4">
             <Alert variant={confirm?.risk === "high" ? "destructive" : confirm?.risk === "medium" ? "warning" : "default"}>
               <AlertTriangle className="size-4" />
               <AlertTitle>Risk: {confirm?.risk?.toUpperCase()}</AlertTitle>

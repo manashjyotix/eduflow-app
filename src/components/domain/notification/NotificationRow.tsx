@@ -1,8 +1,9 @@
 import type { Notification } from "@/data/mock-notifications"
 import { Badge } from "@/components/ui/badge"
 import {
-  Bell, CheckCheck, Grid3x3, ClipboardList, ArrowLeftRight,
-  Megaphone, Settings, DollarSign, BookOpen, Calendar, Info,
+  Bell, Grid3x3, ClipboardList, ArrowLeftRight,
+  Megaphone, Settings, DollarSign, BookOpen, Calendar, Info, Cake,
+  NotebookPen, GraduationCap, Bus, ScrollText,
 } from "lucide-react"
 
 // ─── Type → icon / label / colour config ─────────────────────────────────────
@@ -23,6 +24,12 @@ const TYPE_CONFIG: Record<string, NotificationTypeConfig> = {
   announcement: { icon: Megaphone,    label: "Announcement", color: "text-[var(--ef-cyan)] dark:text-[var(--ef-cyan-light)]",  bg: "bg-[var(--ef-cyan-light)] dark:bg-[var(--ef-cyan-light)]"        },
   absence:      { icon: Bell,         label: "Absence",      color: "text-destructive",                                        bg: "bg-[var(--ef-red-light)] dark:bg-[var(--ef-red-light)]"          },
   system:       { icon: Settings,     label: "System",       color: "text-muted-foreground",                                   bg: "bg-muted dark:bg-muted/50"                                       },
+  birthday:     { icon: Cake,         label: "Birthday",     color: "text-[var(--ef-purple)]",                                 bg: "bg-[var(--ef-purple-light)] dark:bg-[var(--ef-purple-light)]"    },
+  // F2/F4/F7 operational types
+  journal:      { icon: NotebookPen,  label: "Journal",      color: "text-primary",                                            bg: "bg-[var(--ef-brand-light)] dark:bg-[var(--ef-brand-muted)]"      },
+  exam_duty:    { icon: GraduationCap,label: "Exam Duty",    color: "text-[var(--ef-purple)]",                                 bg: "bg-[var(--ef-purple-light)] dark:bg-[var(--ef-purple-light)]"    },
+  transport:    { icon: Bus,          label: "Transport",    color: "text-[var(--ef-cyan)] dark:text-[var(--ef-cyan-light)]",  bg: "bg-[var(--ef-cyan-light)] dark:bg-[var(--ef-cyan-light)]"        },
+  report_card:  { icon: ScrollText,   label: "Report Card",  color: "text-success-foreground",                                 bg: "bg-[var(--ef-green-light)] dark:bg-[var(--ef-green-light)]"      },
   // Parent-facing type aliases
   attendance:   { icon: Calendar,     label: "Attendance",   color: "text-destructive",                                        bg: "bg-[var(--ef-red-light)] dark:bg-[var(--ef-red-light)]"          },
   academic:     { icon: BookOpen,     label: "Academic",     color: "text-primary",                                            bg: "bg-[var(--ef-brand-light)] dark:bg-[var(--ef-brand-muted)]"      },

@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/shared/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { MOCK_NOTIFICATIONS } from "@/data/mock-notifications"
+import { useNotifications } from "@/context/notification-context"
 import { NotificationRow } from "@/components/domain/notification/NotificationRow"
 
 // ─── Filter chips config ─────────────────────────────────────────────────────
@@ -23,7 +23,7 @@ const FILTERS: { id: FilterId; label: string }[] = [
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 export default function TeacherNotificationsPage() {
-  const [items, setItems] = useState(MOCK_NOTIFICATIONS)
+  const { staff: items, markRead: markReadCtx, markAllRead: markAllReadCtx } = useNotifications()
   const [filter, setFilter] = useState<FilterId>("all")
 
   const filtered = items.filter(n => {
@@ -38,11 +38,11 @@ export default function TeacherNotificationsPage() {
   const unreadCount = items.filter(n => !n.read).length
 
   function markAllRead() {
-    setItems(prev => prev.map(n => ({ ...n, read: true })))
+    markAllReadCtx("staff")
   }
 
   function markRead(id: string) {
-    setItems(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+    markReadCtx("staff", id)
   }
 
   return (

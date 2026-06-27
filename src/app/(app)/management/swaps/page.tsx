@@ -7,6 +7,7 @@ import {
   MessageSquare, User, BookOpen, Hash,
 } from "lucide-react"
 import { PageHeader } from "@/components/shared/page-header"
+import { KpiCard } from "@/components/shared/kpi-card"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,6 +16,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+
+// Weekly series (Mon–Sat) for sparklines — realistic HCEA swap history
+const WEEKLY_TOTAL_SWAPS: number[]    = [3, 5, 4, 6, 5, 5]
+const WEEKLY_PENDING_SWAPS: number[]  = [1, 2, 1, 3, 1, 2]
+const WEEKLY_APPROVED_SWAPS: number[] = [2, 2, 2, 2, 3, 1]
+const WEEKLY_REJECTED_SWAPS: number[] = [0, 1, 1, 1, 1, 1]
 
 type SwapStatus = "pending" | "approved" | "rejected" | "expired"
 
@@ -120,13 +127,6 @@ export default function SwapApprovalsPage() {
     setSwapStates(p => { const next = { ...p }; delete next[id]; return next })
   }
 
-  const KPIS = [
-    { label: "Total",    key: "all",      value: counts.all,      icon: Hash,        chip: "bg-primary/10 text-primary" },
-    { label: "Pending",  key: "pending",  value: counts.pending,  icon: Clock,       chip: "bg-ef-amber-light text-ef-amber" },
-    { label: "Approved", key: "approved", value: counts.approved, icon: CheckCircle2,chip: "bg-ef-green-light text-ef-green" },
-    { label: "Rejected", key: "rejected", value: counts.rejected, icon: XCircle,     chip: "bg-ef-red-light text-ef-red" },
-  ] as const
-
   const TAB_ITEMS = [
     { key: "all", label: "All", count: counts.all, active: "bg-primary text-white border-primary" },
     { key: "pending", label: "Pending", count: counts.pending, active: "bg-ef-amber text-white border-ef-amber" },
@@ -147,20 +147,71 @@ export default function SwapApprovalsPage() {
       />
 
       {/* KPI Strip */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        {KPIS.map(k => (
-          <button key={k.label} onClick={() => setStatusFilter(k.key)} className="text-left">
-            <Card className="hover:border-primary/40 transition-colors">
-              <CardContent className="p-4 flex items-center gap-3.5">
-                <div className={`size-10 rounded-[10px] flex items-center justify-center flex-shrink-0 ${k.chip}`}><k.icon className="size-4" /></div>
-                <div>
-                  <div className="text-[22px] font-extrabold leading-none">{k.value}</div>
-                  <div className="text-xs text-muted-foreground mt-1">{k.label}</div>
-                </div>
-              </CardContent>
-            </Card>
-          </button>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <KpiCard
+          title="Total Swaps"
+          value={counts.all}
+          subtitle={`${counts.pending} pending · ${counts.approved} approved`}
+          icon={<Hash className="size-5" />}
+          tone="brand"
+          trend={{
+            value: (() => {
+              const prev = WEEKLY_TOTAL_SWAPS[WEEKLY_TOTAL_SWAPS.length - 2]
+              const cur  = WEEKLY_TOTAL_SWAPS[WEEKLY_TOTAL_SWAPS.length - 1]
+              return prev > 0 ? Math.round(((cur - prev) / prev) * 100) : 0
+            })(),
+            label: "vs yesterday",
+          }}
+          sparkline={{ variant: "line", data: WEEKLY_TOTAL_SWAPS }}
+        />
+        <KpiCard
+          title="Pending"
+          value={counts.pending}
+          subtitle={counts.pending > 0 ? "Awaiting your decision" : "All caught up"}
+          icon={<Clock className="size-5" />}
+          tone="amber"
+          trend={{
+            value: (() => {
+              const prev = WEEKLY_PENDING_SWAPS[WEEKLY_PENDING_SWAPS.length - 2]
+              const cur  = WEEKLY_PENDING_SWAPS[WEEKLY_PENDING_SWAPS.length - 1]
+              return prev > 0 ? Math.round(((cur - prev) / prev) * 100) : 0
+            })(),
+            label: "vs yesterday",
+          }}
+          sparkline={{ variant: "bar", data: WEEKLY_PENDING_SWAPS }}
+        />
+        <KpiCard
+          title="Approved"
+          value={counts.approved}
+          subtitle="Applied to timetable"
+          icon={<CheckCircle2 className="size-5" />}
+          tone="green"
+          trend={{
+            value: (() => {
+              const prev = WEEKLY_APPROVED_SWAPS[WEEKLY_APPROVED_SWAPS.length - 2]
+              const cur  = WEEKLY_APPROVED_SWAPS[WEEKLY_APPROVED_SWAPS.length - 1]
+              return prev > 0 ? Math.round(((cur - prev) / prev) * 100) : 0
+            })(),
+            label: "vs yesterday",
+          }}
+          sparkline={{ variant: "bar", data: WEEKLY_APPROVED_SWAPS }}
+        />
+        <KpiCard
+          title="Rejected"
+          value={counts.rejected}
+          subtitle="Teachers notified"
+          icon={<XCircle className="size-5" />}
+          tone="red"
+          trend={{
+            value: (() => {
+              const prev = WEEKLY_REJECTED_SWAPS[WEEKLY_REJECTED_SWAPS.length - 2]
+              const cur  = WEEKLY_REJECTED_SWAPS[WEEKLY_REJECTED_SWAPS.length - 1]
+              return prev > 0 ? Math.round(((cur - prev) / prev) * 100) : 0
+            })(),
+            label: "vs yesterday",
+          }}
+          sparkline={{ variant: "bar", data: WEEKLY_REJECTED_SWAPS }}
+        />
       </div>
 
       {pendingCount > 0 && (
@@ -222,7 +273,7 @@ export default function SwapApprovalsPage() {
               className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${statusFilter === t.key ? t.active : "bg-card text-muted-foreground border-border"}`}
             >
               {t.label}
-              <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold px-1.5 ${statusFilter === t.key ? "bg-white/25" : "bg-muted"}`}>{t.count}</span>
+              <span className={`inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[10px] font-bold px-1.5 ${statusFilter === t.key ? "bg-white/25" : "bg-muted"}`}>{t.count}</span>
             </button>
           ))}
         </div>
@@ -246,7 +297,7 @@ export default function SwapApprovalsPage() {
             const isPending = status === "pending"
             const cfg = STATUS_CFG[status]
             return (
-              <div key={swap.id} className={`rounded-[14px] border border-l-[3px] border-border ${cfg.leftBorder} bg-card overflow-hidden flex flex-col shadow-sm ${status === "expired" ? "opacity-70" : ""}`}>
+              <div key={swap.id} className={`rounded-[14px] border border-l-[3px] border-border ${cfg.leftBorder} bg-card overflow-hidden flex flex-col ${status === "expired" ? "opacity-70" : ""}`}>
                 {/* header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border gap-2 min-h-[48px]">
                   <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
@@ -263,7 +314,7 @@ export default function SwapApprovalsPage() {
                 {/* body */}
                 <div className="px-4 py-3.5 flex-1 flex flex-col gap-3">
                   <div className="flex gap-2 items-stretch">
-                    <div className="flex-1 bg-ef-brand-light border border-primary/30 rounded-[10px] px-3 py-2.5">
+                    <div className="flex-1 bg-ef-brand-light border border-primary/30 rounded-[10px] px-3 py-2">
                       <div className="text-[9px] font-bold text-primary uppercase tracking-wider mb-1.5">Gives up</div>
                       <div className="flex items-center gap-1.5 mb-2">
                         <Initial name={swap.teacherA} className="bg-primary/15 text-primary" />
@@ -278,7 +329,7 @@ export default function SwapApprovalsPage() {
                       </div>
                     </div>
                     <div className="flex items-center justify-center flex-shrink-0"><ArrowLeftRight className="size-4 text-muted-foreground" /></div>
-                    <div className="flex-1 bg-ef-green-light border border-ef-green rounded-[10px] px-3 py-2.5">
+                    <div className="flex-1 bg-ef-green-light border border-ef-green rounded-[10px] px-3 py-2">
                       <div className="text-[9px] font-bold text-ef-green-dark uppercase tracking-wider mb-1.5">Takes over</div>
                       <div className="flex items-center gap-1.5 mb-2">
                         <Initial name={swap.teacherB} className="bg-ef-green/20 text-ef-green-dark" />
@@ -319,7 +370,7 @@ export default function SwapApprovalsPage() {
                 </div>
 
                 {/* footer */}
-                <div className="flex items-center justify-between px-4 py-2.5 border-t border-border bg-muted/40 gap-2 flex-wrap">
+                <div className="flex items-center justify-between px-4 py-2 border-t border-border bg-muted/40 gap-2 flex-wrap">
                   {isPending ? (
                     <>
                       <Button variant="ghost" size="sm" onClick={() => setDetailId(swap.id)}><Eye className="size-3" /> View</Button>
@@ -391,14 +442,14 @@ export default function SwapApprovalsPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>Swap Details — {detailSwap?.id}</DialogTitle></DialogHeader>
           {detailSwap && (
-            <div className="flex flex-col gap-3.5">
+            <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2">
                 <Badge variant={STATUS_CFG[detailSwap.status].badge}>● {STATUS_CFG[detailSwap.status].label}</Badge>
                 <span className="text-xs text-muted-foreground">Date: {detailSwap.date}</span>
                 {detailSwap.resolvedAt && <span className="text-xs text-muted-foreground ml-auto">Resolved: {detailSwap.resolvedAt}</span>}
               </div>
-              <div className="grid grid-cols-[1fr_auto_1fr] gap-2.5 items-center">
-                <div className="bg-ef-brand-light border border-primary/40 rounded-[10px] px-3.5 py-3">
+              <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                <div className="bg-ef-brand-light border border-primary/40 rounded-[10px] px-4 py-3">
                   <div className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1.5">Teacher A</div>
                   <div className="font-bold text-sm">{detailSwap.teacherA}</div>
                   <div className="text-xs text-muted-foreground">{detailSwap.subjectA}</div>
@@ -406,7 +457,7 @@ export default function SwapApprovalsPage() {
                   <div className="text-[11px] text-muted-foreground font-mono mt-0.5">{detailSwap.timeA}</div>
                 </div>
                 <ArrowLeftRight className="size-4 text-muted-foreground flex-shrink-0" />
-                <div className="bg-ef-green-light border border-ef-green rounded-[10px] px-3.5 py-3">
+                <div className="bg-ef-green-light border border-ef-green rounded-[10px] px-4 py-3">
                   <div className="text-[10px] font-bold text-ef-green-dark uppercase tracking-wider mb-1.5">Teacher B</div>
                   <div className="font-bold text-sm">{detailSwap.teacherB}</div>
                   <div className="text-xs text-muted-foreground">{detailSwap.subjectB}</div>
@@ -414,13 +465,13 @@ export default function SwapApprovalsPage() {
                   <div className="text-[11px] text-muted-foreground font-mono mt-0.5">{detailSwap.timeB}</div>
                 </div>
               </div>
-              <div className="bg-muted/50 rounded-lg px-3.5 py-2.5">
+              <div className="bg-muted/50 rounded-lg px-4 py-2">
                 <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-1">Reason</div>
                 <div className="text-sm">{detailSwap.reason}</div>
                 <div className="text-[11px] text-muted-foreground mt-1">Submitted: {detailSwap.submittedAt}</div>
               </div>
               {detailSwap.rejectionNote && (
-                <div className="bg-ef-red-light border border-ef-red rounded-lg px-3.5 py-2.5">
+                <div className="bg-ef-red-light border border-ef-red rounded-lg px-4 py-2">
                   <div className="text-[11px] font-bold text-ef-red-dark uppercase tracking-wide mb-1">Rejection Note</div>
                   <div className="text-sm text-ef-red-dark">{detailSwap.rejectionNote}</div>
                 </div>

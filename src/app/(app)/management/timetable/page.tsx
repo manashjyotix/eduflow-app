@@ -12,106 +12,20 @@ import {
   type TimetableAssignment,
   type TimetablePeriod,
 } from "@/components/domain/timetable/TimetableGrid"
+import {
+  SCHOOL_TIMETABLE,
+  PERIOD_CONFIG,
+  DAYS,
+} from "@/data/timetable"
 
-const CLASSES = ["VI-A", "VI-B", "VII-A", "VII-B", "VIII-A", "IX-A", "X-A"]
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+const CLASSES = Object.keys(SCHOOL_TIMETABLE)
 
-const PERIODS_CONFIG: TimetablePeriod[] = [
-  { id: "P1", time: "9:30–10:10" },
-  { id: "P2", time: "10:10–10:50" },
-  { id: "P3", time: "10:50–11:30" },
-  { id: "P4", time: "11:30–12:10" },
-  { id: "TIFFIN", label: "TIFFIN", time: "12:10–12:30", isBreak: true },
-  { id: "P5", time: "12:30–1:10" },
-  { id: "P6", time: "1:10–1:50" },
-  { id: "P7", time: "1:50–2:30" },
-]
-
-type Cell = { subject: string; teacher: string } | null
-type TimetableData = Record<string, Record<string, Record<string, Cell>>>
-
-const TIMETABLE_DATA: TimetableData = {
-  "VIII-A": {
-    P1: {
-      Monday: { subject: "Mathematics", teacher: "Priya Sharma" },
-      Tuesday: { subject: "English", teacher: "Rajesh Kalita" },
-      Wednesday: { subject: "Science", teacher: "Anita Devi" },
-      Thursday: { subject: "Social Studies", teacher: "Rajesh Kalita" },
-      Friday: { subject: "Hindi", teacher: "Rima Das" },
-    },
-    P2: {
-      Monday: { subject: "English", teacher: "Rajesh Kalita" },
-      Tuesday: { subject: "Mathematics", teacher: "Priya Sharma" },
-      Wednesday: { subject: "Hindi", teacher: "Rima Das" },
-      Thursday: { subject: "Science", teacher: "Anita Devi" },
-      Friday: { subject: "Mathematics", teacher: "Priya Sharma" },
-    },
-    P3: {
-      Monday: { subject: "Science", teacher: "Anita Devi" },
-      Tuesday: { subject: "Social Studies", teacher: "Rajesh Kalita" },
-      Wednesday: { subject: "Mathematics", teacher: "Priya Sharma" },
-      Thursday: { subject: "English", teacher: "Rajesh Kalita" },
-      Friday: { subject: "Science", teacher: "Anita Devi" },
-    },
-    P4: {
-      Monday: { subject: "Hindi", teacher: "Rima Das" },
-      Tuesday: { subject: "Science", teacher: "Anita Devi" },
-      Wednesday: { subject: "Social Studies", teacher: "Rajesh Kalita" },
-      Thursday: { subject: "Mathematics", teacher: "Priya Sharma" },
-      Friday: { subject: "English", teacher: "Rajesh Kalita" },
-    },
-    TIFFIN: { Monday: null, Tuesday: null, Wednesday: null, Thursday: null, Friday: null },
-    P5: {
-      Monday: { subject: "Sanskrit", teacher: "Himanta Bezbaruah" },
-      Tuesday: { subject: "Hindi", teacher: "Rima Das" },
-      Wednesday: { subject: "English", teacher: "Rajesh Kalita" },
-      Thursday: { subject: "Sanskrit", teacher: "Himanta Bezbaruah" },
-      Friday: { subject: "Social Studies", teacher: "Rajesh Kalita" },
-    },
-    P6: {
-      Monday: { subject: "Social Studies", teacher: "Rajesh Kalita" },
-      Tuesday: { subject: "Sanskrit", teacher: "Himanta Bezbaruah" },
-      Wednesday: { subject: "Phys. Ed", teacher: "Himanta Bezbaruah" },
-      Thursday: { subject: "Hindi", teacher: "Rima Das" },
-      Friday: { subject: "Mathematics", teacher: "Priya Sharma" },
-    },
-    P7: {
-      Monday: { subject: "Phys. Ed", teacher: "Himanta Bezbaruah" },
-      Tuesday: { subject: "Mathematics", teacher: "Priya Sharma" },
-      Wednesday: { subject: "Sanskrit", teacher: "Himanta Bezbaruah" },
-      Thursday: { subject: "Phys. Ed", teacher: "Himanta Bezbaruah" },
-      Friday: { subject: "Science", teacher: "Anita Devi" },
-    },
-  },
-}
-
-const ORDERED_PERIOD_IDS = ["P1", "P2", "P3", "P4", "TIFFIN", "P5", "P6", "P7"]
-const SUBJECTS = ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Sanskrit", "EVS"]
-const TEACHERS_LIST = [
-  "Priya Sharma", "Rajesh Kalita", "Biju Das", "Meena Gogoi",
-  "Sunita Borah", "Rima Das", "Himanta Bezbaruah",
-]
-
+/** Convert the shared timetable data into flat TimetableAssignment[] for TimetableGrid */
 function buildAssignments(cls: string): TimetableAssignment[] {
-  const raw: Record<string, Record<string, Cell>> = TIMETABLE_DATA[cls] ?? (() => {
-    const data: Record<string, Record<string, Cell>> = {}
-    let idx = 0
-    for (const pid of ORDERED_PERIOD_IDS) {
-      data[pid] = {}
-      for (const d of DAYS) {
-        if (pid === "TIFFIN") { data[pid][d] = null; continue }
-        data[pid][d] = {
-          subject: SUBJECTS[idx % SUBJECTS.length],
-          teacher: TEACHERS_LIST[idx % TEACHERS_LIST.length],
-        }
-        idx++
-      }
-    }
-    return data
-  })()
-
+  const periodMap = SCHOOL_TIMETABLE[cls]
+  if (!periodMap) return []
   const assignments: TimetableAssignment[] = []
-  for (const [periodId, dayMap] of Object.entries(raw)) {
+  for (const [periodId, dayMap] of Object.entries(periodMap)) {
     for (const [day, cell] of Object.entries(dayMap)) {
       if (cell) {
         assignments.push({ periodId, day, subject: cell.subject, teacher: cell.teacher })
@@ -120,6 +34,13 @@ function buildAssignments(cls: string): TimetableAssignment[] {
   }
   return assignments
 }
+
+const PERIODS_CONFIG: TimetablePeriod[] = PERIOD_CONFIG.map(p => ({
+  id:      p.id,
+  label:   p.label,
+  time:    p.time,
+  isBreak: p.isBreak,
+}))
 
 export default function TimetableViewerPage() {
   const [selectedClass, setSelectedClass] = useState("VIII-A")
@@ -130,7 +51,7 @@ export default function TimetableViewerPage() {
       <PageHeader
         icon={<Calendar size={20} />}
         title="Timetable"
-        subtitle="Weekly class schedule — all sections"
+        subtitle="Weekly class schedule — all sections · synced with school timetable"
         actions={
           <Button variant="outline" size="sm">
             <Download size={14} className="mr-1.5" /> Export PDF

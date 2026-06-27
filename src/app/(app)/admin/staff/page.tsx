@@ -32,6 +32,12 @@ const STAFF_MEMBERS = [
 
 const DEPARTMENTS = ["All Departments", "Administration", "Finance", "Library", "Maintenance", "Security", "Health", "IT", "Canteen"]
 
+// 6-week staff headcount trend (total, active, on-leave) — used for sparklines
+const STAFF_TOTAL_TREND = [8, 9, 9, 10, 10, 10] as const
+const STAFF_ACTIVE_TREND = [7, 8, 8, 9, 9, 9] as const
+const STAFF_LEAVE_TREND  = [1, 1, 1, 1, 1, 1] as const
+const STAFF_DEPT_TREND   = [6, 6, 7, 7, 8, 8] as const
+
 // Every department maps to an EduFlow brand primitive tint (ef-*-light bg +
 // ef-* fg). The *-light tokens already shift to a low-opacity tint in dark
 // mode, so these render correctly without separate `dark:` variants.
@@ -93,33 +99,42 @@ export default function StaffDirectoryPage() {
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Total Staff"
           value={STAFF_MEMBERS.length}
-          subtitle="non-teaching members"
+          subtitle={`${active} active, ${onLeave} on leave`}
           icon={<Users size={18} />}
+          tone="brand"
+          trend={{ value: Math.round(((STAFF_TOTAL_TREND[5] - STAFF_TOTAL_TREND[4]) / Math.max(STAFF_TOTAL_TREND[4], 1)) * 100), label: "vs last week" }}
+          sparkline={{ variant: "line", data: [...STAFF_TOTAL_TREND] }}
         />
         <KpiCard
           title="Active"
           value={active}
-          subtitle="currently working"
+          subtitle={`${Math.round((active / STAFF_MEMBERS.length) * 100)}% of total staff`}
           icon={<BadgeCheck size={18} />}
-          iconClassName="bg-success/10 text-success-foreground"
+          tone="green"
+          trend={{ value: Math.round(((STAFF_ACTIVE_TREND[5] - STAFF_ACTIVE_TREND[4]) / Math.max(STAFF_ACTIVE_TREND[4], 1)) * 100), label: "vs last week" }}
+          sparkline={{ variant: "bar", data: [...STAFF_ACTIVE_TREND] }}
         />
         <KpiCard
           title="On Leave"
           value={onLeave}
-          subtitle="currently on leave"
+          subtitle={onLeave === 0 ? "All staff present" : `${onLeave} member${onLeave > 1 ? "s" : ""} absent today`}
           icon={<Users size={18} />}
-          iconClassName="bg-warning/10 text-warning-foreground"
+          tone="amber"
+          trend={{ value: Math.round(((STAFF_LEAVE_TREND[5] - STAFF_LEAVE_TREND[4]) / Math.max(STAFF_LEAVE_TREND[4], 1)) * 100), label: "vs last week" }}
+          sparkline={{ variant: "bar", data: [...STAFF_LEAVE_TREND] }}
         />
         <KpiCard
           title="Departments"
           value={departments}
-          subtitle="functional units"
+          subtitle={`${departments} active functional units`}
           icon={<Building2 size={18} />}
-          iconClassName="bg-[var(--ef-purple-light)] text-[var(--ef-purple)]"
+          tone="purple"
+          trend={{ value: Math.round(((STAFF_DEPT_TREND[5] - STAFF_DEPT_TREND[4]) / Math.max(STAFF_DEPT_TREND[4], 1)) * 100), label: "vs last week" }}
+          sparkline={{ variant: "bar", data: [...STAFF_DEPT_TREND] }}
         />
       </div>
 
@@ -175,7 +190,7 @@ export default function StaffDirectoryPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((staff, idx) => (
-            <Card key={staff.id} className="hover:shadow-md transition-shadow">
+            <Card key={staff.id}>
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">

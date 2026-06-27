@@ -57,7 +57,7 @@ export default function ExamSchedulePage() {
       />
 
       {/* KPI grid — 4 cols */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Total Exams"
           value={EXAMS.length}

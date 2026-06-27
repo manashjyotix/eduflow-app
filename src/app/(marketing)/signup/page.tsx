@@ -84,7 +84,7 @@ export default function SignupPage() {
   if (submitted) {
     return (
       <div className="min-h-[calc(100vh-57px)] flex items-center justify-center px-4 py-12 fade-in">
-        <Card className="max-w-md w-full border-2 border-primary shadow-xl">
+        <Card className="max-w-md w-full border-2 border-primary">
           <CardContent className="p-10 text-center">
             <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
               <CheckCircle className="size-10 text-primary" />

@@ -98,7 +98,7 @@ export default function SchoolDrilldownPage() {
         {filtered.map(school => {
           const sm = STATUS_META[school.status]
           return (
-            <Card key={school.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelected(selected?.id === school.id ? null : school)}>
+            <Card key={school.id} className="cursor-pointer" onClick={() => setSelected(selected?.id === school.id ? null : school)}>
               <CardHeader className="flex-row items-center justify-between pb-2">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="size-9 rounded-lg bg-ef-brand-light text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">{school.name.charAt(0)}</div>
@@ -110,7 +110,7 @@ export default function SchoolDrilldownPage() {
                 <Badge variant={sm.variant}>● {sm.label}</Badge>
               </CardHeader>
               <CardContent className="pt-2">
-                <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-3 mb-3.5">
+                <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-3 mb-4">
                   {[
                     { label: "Students", value: school.students, icon: Users, color: "text-primary" },
                     { label: "Teachers", value: school.teachers, icon: GraduationCap, color: "text-ef-green" },

@@ -4,11 +4,11 @@ import Link from "next/link"
 import {
   AlertTriangle, CheckCircle2, Clock, Users, TrendingUp, Zap,
   UserX, Calendar, ArrowRight, Bell, RefreshCw, Printer,
-  Edit2, Eye, Sparkles, Search as SearchIcon,
+  Edit2, Eye, Search as SearchIcon,
 } from "lucide-react"
 import { PageHeader } from "@/components/shared/page-header"
 import { KpiCard } from "@/components/shared/kpi-card"
-import { WeatherGreeting } from "@/components/shared/weather-greeting"
+import { BirthdayCard } from "@/components/shared/birthday-card"
 import { MiniSparkline } from "@/components/shared/mini-sparkline"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +20,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@
 import { absenceStatusConfig } from "@/lib/status-badges"
 import { CountdownTimer } from "@/components/shared/countdown-timer"
 import { useTableSort, SortableHead } from "@/components/shared/sortable-table"
+import { WeatherGreeting } from "@/components/shared/weather-greeting"
 
 const STAT_DATE = "Thursday, 5 June 2026"
 
@@ -103,11 +104,10 @@ export default function ManagementDashboardPage() {
     : periodFilter === 1 ? COVERED_PERIODS.filter(p => ["P1", "P2", "P3", "P4"].includes(p.period))
     : COVERED_PERIODS.filter(p => ["P5", "P6", "P7"].includes(p.period))
 
-  const now = new Date()
-  const greeting = now.getHours() < 12 ? "Good morning" : now.getHours() < 17 ? "Good afternoon" : "Good evening"
-
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8">
+      <WeatherGreeting />
+
       <PageHeader
         icon={<Clock size={20} />}
         title="Morning Briefing"
@@ -128,25 +128,7 @@ export default function ManagementDashboardPage() {
         }
       />
 
-      <WeatherGreeting />
-
-      {/* Greeting banner */}
-      <Card className="border-0 text-white bg-gradient-to-br from-[#007AFF] to-[#0062CC]">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 mb-1 text-sm opacity-70">
-            <Sparkles className="size-4" />
-            <span>{STAT_DATE}</span>
-          </div>
-          <h2 className="text-2xl font-extrabold tracking-tight">{greeting}, Management! 🏫</h2>
-          <p className="text-sm opacity-70 mt-1">Management Office · Holy Child English Academy, Howly</p>
-          <div className="flex flex-wrap gap-2 mt-4">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold"><UserX className="size-3" /> 3 teachers absent</span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-ef-red/30 px-3 py-1.5 text-sm font-semibold"><AlertTriangle className="size-3" /> 2 uncovered gaps</span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold"><TrendingUp className="size-3" /> 71% coverage</span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold"><Clock className="size-3" /> P3 in progress</span>
-          </div>
-        </CardContent>
-      </Card>
+      <BirthdayCard />
 
       {/* Period Countdown Banner */}
       <div className="flex items-center gap-4 p-4 rounded-2xl border-2 border-destructive bg-ef-red-light">
@@ -164,7 +146,7 @@ export default function ManagementDashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard title="Absent Today" value="3" subtitle="+1 vs yesterday" icon={<UserX className="size-5" />} iconClassName="bg-destructive/10 text-destructive" sparkline={{ variant: "bar", data: MGMT_SPARKS.absent, color: "var(--ef-red)" }} />
         <KpiCard title="Proxy Filled" value="5 / 7" subtitle="71% fill rate" icon={<CheckCircle2 className="size-5" />} iconClassName="bg-success/20 text-success-foreground" sparkline={{ variant: "bar", data: MGMT_SPARKS.filled, color: "var(--ef-green)" }} />
         <KpiCard title="Open Gaps" value="2" subtitle="Needs action" icon={<AlertTriangle className="size-5" />} iconClassName="bg-warning/20 text-warning-foreground" sparkline={{ variant: "bar", data: MGMT_SPARKS.gaps, color: "var(--ef-amber)" }} />
@@ -381,7 +363,7 @@ export default function ManagementDashboardPage() {
             <Button variant="outline" size="sm"><Printer className="size-4" /> Export</Button>
           </div>
 
-          <div className="rounded-lg border border-border overflow-hidden">
+          <div className="rounded-lg border border-border overflow-hidden overflow-x-auto">
             <Table className="text-sm">
               <caption className="sr-only">Absent teachers with proxy coverage status</caption>
               <TableHeader>

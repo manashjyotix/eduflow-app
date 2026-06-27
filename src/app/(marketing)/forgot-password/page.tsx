@@ -81,7 +81,7 @@ export default function ForgotPasswordPage() {
 
         {/* ── Step 1: Enter email ──────────────────────────────────── */}
         {step === "email" && (
-          <Card className="shadow-lg">
+          <Card>
             <CardContent className="p-6">
               <div className="mb-6">
                 <h1 className="text-2xl font-bold text-foreground">Forgot your password?</h1>
@@ -137,7 +137,7 @@ export default function ForgotPasswordPage() {
 
         {/* ── Step 2: Code sent confirmation ─────────────────────── */}
         {step === "sent" && (
-          <Card className="shadow-lg">
+          <Card>
             <CardContent className="p-6 text-center">
               <div className="size-16 rounded-full bg-[var(--ef-brand-light)] dark:bg-[var(--ef-brand-muted)] flex items-center justify-center mx-auto mb-5">
                 <Mail className="size-8 text-primary" />
@@ -198,7 +198,7 @@ export default function ForgotPasswordPage() {
 
         {/* ── Step 3: New password ────────────────────────────────── */}
         {step === "reset" && (
-          <Card className="shadow-lg">
+          <Card>
             <CardContent className="p-6">
               <div className="mb-6">
                 <h1 className="text-2xl font-bold text-foreground">Set new password</h1>
@@ -272,7 +272,7 @@ export default function ForgotPasswordPage() {
 
         {/* ── Step 4: Done ────────────────────────────────────────── */}
         {step === "done" && (
-          <Card className="shadow-lg border-2 border-primary/20">
+          <Card className="border-2 border-primary/20">
             <CardContent className="p-8 text-center">
               <div className="size-16 rounded-full bg-[var(--ef-green-light)] dark:bg-[var(--ef-green-light)] flex items-center justify-center mx-auto mb-5">
                 <CheckCircle className="size-8 text-[var(--ef-green-dark)]" />

@@ -81,7 +81,7 @@ export function QRCheckInCard({ assignment, checkInUrl, onPrint }: QRCheckInCard
        */}
       <div className="flex flex-col items-center gap-5 py-2">
         {/* QR Code image */}
-        <div className="rounded-xl border-2 border-border bg-white p-3 shadow-sm">
+        <div className="rounded-xl border-2 border-border bg-white p-3 shadow-card">
           {qrError ? (
             <div className="flex size-[200px] items-center justify-center rounded-lg bg-muted text-xs text-muted-foreground text-center px-3">
               {qrError}

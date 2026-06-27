@@ -116,7 +116,7 @@ export default function SystemHealthPage() {
       />
 
       {/* Overall Status Banner */}
-      <div className={`rounded-xl px-5 py-3.5 flex items-center gap-3 ${allGood ? "bg-ef-green-light" : hasDegraded ? "bg-ef-amber-light" : "bg-ef-red-light"}`}>
+      <div className={`rounded-xl px-5 py-4 flex items-center gap-3 ${allGood ? "bg-ef-green-light" : hasDegraded ? "bg-ef-amber-light" : "bg-ef-red-light"}`}>
         <div className="flex items-center gap-2">
           {overallConfig.icon}
           <span className="text-[15px] font-bold">{overallConfig.label}</span>
@@ -131,7 +131,7 @@ export default function SystemHealthPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard title="API Uptime (30d)" value="99.97%" subtitle="+0.02% vs 1h ago" icon={<Globe className="size-5" />} iconClassName="bg-ef-green-light text-ef-green" sparkline={{ variant: "line", data: [99.95, 99.97, 99.99, 99.96, 99.97, 99.97], color: "var(--ef-green)" }} />
         <KpiCard title="Avg API Latency" value="42 ms" subtitle="−3ms vs 1h ago" icon={<Zap className="size-5" />} sparkline={{ variant: "line", data: [48, 52, 65, 51, 44, 42] }} />
         <KpiCard title="Error Rate (1h)" value="0.18%" subtitle="−0.1% vs 1h ago" icon={<AlertTriangle className="size-5" />} iconClassName="bg-ef-amber-light text-ef-amber" sparkline={{ variant: "bar", data: [0.2, 0.1, 0.3, 0.8, 0.2, 0.18], color: "var(--ef-amber)" }} />
@@ -145,6 +145,7 @@ export default function SystemHealthPage() {
           <Badge variant={allGood ? "success" : "warning"}>● {allGood ? "All Operational" : `${SERVICES.filter(s => s.status !== "operational").length} Degraded`}</Badge>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <caption className="sr-only">Service status with uptime and latency metrics</caption>
             <TableHeader>
@@ -173,6 +174,7 @@ export default function SystemHealthPage() {
               })}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -288,6 +290,7 @@ export default function SystemHealthPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <caption className="sr-only">Incident history with severity and resolution status</caption>
             <TableHeader>
@@ -315,6 +318,7 @@ export default function SystemHealthPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
         <CardFooter className="justify-between">
           <span className="text-xs text-ef-green-dark flex items-center gap-1"><CheckCircle2 className="size-3" /> 0 open incidents · 4 resolved in 30 days</span>

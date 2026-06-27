@@ -76,18 +76,19 @@ function BarSparkline({ data, color = "var(--ef-brand)", width = 80, height = 32
   // Empty → faint gray baseline stubs so the slot still reads as a chart.
   if (empty) {
     const count = data.length || 6
-    const barW = (width / count) - 2
+    const gap = 2
+    const barW = (width - gap * (count - 1)) / count
     const stubH = 3
     return (
       <svg width={width} height={height} className={cn("overflow-visible", className)} role="img" aria-label="No data">
         {Array.from({ length: count }).map((_, i) => (
           <rect
             key={i}
-            x={i * (barW + 2)}
+            x={i * (barW + gap)}
             y={height - stubH}
             width={barW}
             height={stubH}
-            rx={2}
+            rx={1.5}
             fill={EMPTY_COLOR}
             fillOpacity={0.3}
           />
@@ -96,21 +97,26 @@ function BarSparkline({ data, color = "var(--ef-brand)", width = 80, height = 32
     )
   }
   const max = Math.max(...data) || 1
-  const barW = (width / data.length) - 2
+  const gap = 3
+  const barW = (width - gap * (data.length - 1)) / data.length
+  // Leave headroom at the top so the tallest bar never fills the full slot
+  // height (which made bars look oversized next to the KPI icon).
+  const usableH = height * 0.8
   return (
     <svg width={width} height={height} className={cn("overflow-visible", className)} aria-hidden>
       {data.map((v, i) => {
-        const barH = (v / max) * height
+        // Non-zero values get a minimum height so small bars stay visible.
+        const barH = v > 0 ? Math.max(2, (v / max) * usableH) : 0
         return (
           <rect
             key={i}
-            x={i * (barW + 2)}
+            x={i * (barW + gap)}
             y={height - barH}
             width={barW}
             height={barH}
-            rx={2}
+            rx={1.5}
             fill={color}
-            fillOpacity={0.85}
+            fillOpacity={0.75}
           />
         )
       })}
@@ -124,11 +130,13 @@ interface ArcSparklineProps extends SparklineBaseProps {
   variant: "arc"
   value: number        // 0–100
   trackColor?: string
+  /** Ring thickness — defaults to 3 */
+  strokeWidth?: number
 }
 
-function ArcSparkline({ value, color = "var(--ef-brand)", trackColor = "var(--border)", width = 40, height = 40, className }: ArcSparklineProps) {
+function ArcSparkline({ value, color = "var(--ef-brand)", trackColor = "var(--border)", width = 40, height = 40, strokeWidth = 3, className }: ArcSparklineProps) {
   const empty = !value || value <= 0
-  const r = (Math.min(width, height) / 2) - 4
+  const r = (Math.min(width, height) / 2) - strokeWidth - 1
   const circ = 2 * Math.PI * r
   const offset = circ - (Math.min(100, Math.max(0, value)) / 100) * circ
   const cx = width / 2
@@ -139,18 +147,18 @@ function ArcSparkline({ value, color = "var(--ef-brand)", trackColor = "var(--bo
       className={cn("-rotate-90 overflow-visible", className)}
       {...(empty ? { role: "img", "aria-label": "No data" } : { "aria-hidden": true })}
     >
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke={trackColor} strokeWidth={3} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={trackColor} strokeWidth={strokeWidth} />
       {empty ? (
         // Empty → a faint gray dashed ring instead of a progress arc.
         <circle
           cx={cx} cy={cy} r={r} fill="none"
-          stroke={EMPTY_COLOR} strokeWidth={3}
+          stroke={EMPTY_COLOR} strokeWidth={strokeWidth}
           strokeOpacity={0.3} strokeDasharray="3 4"
         />
       ) : (
         <circle
           cx={cx} cy={cy} r={r} fill="none"
-          stroke={color} strokeWidth={3}
+          stroke={color} strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circ}
           strokeDashoffset={offset}

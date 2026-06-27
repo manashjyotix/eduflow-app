@@ -406,6 +406,14 @@ Section match required:  [ Preferred ▾ ]
 | `swap_approved` | Both Teachers | Management approves swap |
 | `subscription_expiring` | Admin | 7 days before plan expires |
 | `trial_ending` | Admin | 3 days before trial ends |
+| `birthday_wish` | The birthday user (all roles) | Fires for the full calendar day of the user's birthday (date-matched 24h) |
+
+> **Birthday Wish.** Every user is wished on their birthday with a branded
+> EduFlow birthday card. Staff (teacher/admin/management/super_admin) receive it
+> across **In-app + Push + SMS + WhatsApp**; family (parent/student) receive
+> **In-app** only. A student's card surfaces inside the Parent portal. The wish
+> also renders as a dashboard card next to the Weather greeting. (Prototype:
+> `src/data/birthdays.ts` + `components/shared/birthday-card.tsx`.)
 
 ### 7.2 Channels
 

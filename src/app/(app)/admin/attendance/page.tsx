@@ -12,6 +12,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { AttendanceEditInbox } from "@/components/domain/attendance/AttendanceEditInbox"
+import { useAttendance } from "@/context/attendance-context"
 import { cn } from "@/lib/utils"
 import { TEACHING_PERIODS } from "@/lib/constants"
 
@@ -53,6 +56,7 @@ export default function AttendancePage() {
   const [attendance, setAttendance] = useState<Record<string, AttStatus>>(
     Object.fromEntries(STUDENTS.map((s) => [s.id, "present"]))
   )
+  const { pendingCount } = useAttendance()
 
   function setStatus(id: string, status: AttStatus) {
     setAttendance((prev) => ({ ...prev, [id]: status }))
@@ -131,17 +135,55 @@ export default function AttendancePage() {
       </div>
 
       {/* ── Live KPI summary ── */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard title="Attendance %" value={`${pct}%`} subtitle="present + late" icon={<Check size={18} />} tone="brand" />
-        <KpiCard title="Present" value={counts.present} subtitle={`of ${counts.total}`} icon={<Check size={18} />} tone="green" />
-        <KpiCard title="Absent" value={counts.absent} subtitle={`of ${counts.total}`} icon={<X size={18} />} tone="red" />
-        <KpiCard title="Late" value={counts.late} subtitle={`of ${counts.total}`} icon={<Clock size={18} />} tone="amber" />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <KpiCard
+          title="Attendance %"
+          value={`${pct}%`}
+          subtitle={`${counts.present + counts.late} of ${counts.total} students in`}
+          icon={<Check size={18} />}
+          tone="brand"
+          trend={{ value: Math.round((pct - (HISTORY[1] ? Math.round(((HISTORY[1].present + HISTORY[1].late) / Math.max(HISTORY[1].present + HISTORY[1].absent + HISTORY[1].late, 1)) * 1000) / 10 : pct))), label: "vs yesterday" }}
+          sparkline={{ variant: "arc", value: Math.round(pct) }}
+        />
+        <KpiCard
+          title="Present"
+          value={counts.present}
+          subtitle={`of ${counts.total} students today`}
+          icon={<Check size={18} />}
+          tone="green"
+          trend={{ value: Math.round(((counts.present - (HISTORY[0]?.present ?? counts.present)) / Math.max(HISTORY[0]?.present ?? 1, 1)) * 100), label: "vs last recorded" }}
+          sparkline={{ variant: "bar", data: [...HISTORY].reverse().map(h => h.present) }}
+        />
+        <KpiCard
+          title="Absent"
+          value={counts.absent}
+          subtitle={counts.absent === 0 ? "Full house today" : `${counts.absent} missing today`}
+          icon={<X size={18} />}
+          tone="red"
+          trend={{ value: Math.round(((counts.absent - (HISTORY[0]?.absent ?? counts.absent)) / Math.max(HISTORY[0]?.absent ?? 1, 1)) * 100), label: "vs last recorded" }}
+          sparkline={{ variant: "bar", data: [...HISTORY].reverse().map(h => h.absent) }}
+        />
+        <KpiCard
+          title="Late"
+          value={counts.late}
+          subtitle={counts.late === 0 ? "No late arrivals" : `${counts.late} late arrival${counts.late > 1 ? "s" : ""}`}
+          icon={<Clock size={18} />}
+          tone="amber"
+          trend={{ value: Math.round(((counts.late - (HISTORY[0]?.late ?? counts.late)) / Math.max(HISTORY[0]?.late ?? 1, 1)) * 100), label: "vs last recorded" }}
+          sparkline={{ variant: "bar", data: [...HISTORY].reverse().map(h => h.late) }}
+        />
       </div>
 
       <Tabs defaultValue="today">
         <TabsList>
           <TabsTrigger value="today">Today</TabsTrigger>
           <TabsTrigger value="earlier">Earlier</TabsTrigger>
+          <TabsTrigger value="requests" className="gap-1.5">
+            Edit Requests
+            {pendingCount > 0 && (
+              <Badge variant="warning" className="h-5 px-1.5 text-[10px]">{pendingCount}</Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         {/* ── Today: mark roll ── */}
@@ -232,6 +274,11 @@ export default function AttendancePage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── Edit Requests: teacher modification inbox ── */}
+        <TabsContent value="requests" className="mt-4">
+          <AttendanceEditInbox reviewer="Arnab Paul" />
         </TabsContent>
       </Tabs>
     </div>

@@ -23,7 +23,7 @@ import { NextRequest, NextResponse } from "next/server"
 const ROLE_COOKIE = "user_role"
 
 /** All valid role values */
-const VALID_ROLES = ["admin", "management", "teacher", "parent", "super_admin"] as const
+const VALID_ROLES = ["admin", "management", "teacher", "parent", "super_admin", "driver"] as const
 type Role = (typeof VALID_ROLES)[number]
 
 /**
@@ -37,6 +37,7 @@ const ROLE_PREFIX_MAP: Record<string, Role> = {
   "/teacher":     "teacher",
   "/parent":      "parent",
   "/super-admin": "super_admin",
+  "/driver":      "driver",
 }
 
 /** Return the role required to access the given pathname, or null if no guard applies. */
@@ -100,6 +101,6 @@ export const config = {
      *   - /api/*   (API routes handle their own auth)
      *   - /favicon.ico, /public files
      */
-    "/(admin|management|teacher|parent|super-admin)/:path*",
+    "/(admin|management|teacher|parent|super-admin|driver)/:path*",
   ],
 }

@@ -12,6 +12,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   teacher:     "Priya Sharma",
   parent:      "Pankaj Das",
   super_admin: "Super Admin",
+  driver:      "Jiten Das",
 }
 
 export const ROLE_SUBTITLES: Record<Role, string> = {
@@ -20,6 +21,7 @@ export const ROLE_SUBTITLES: Record<Role, string> = {
   teacher:     "Mathematics · High Section",
   parent:      "Parent of Rohit Das",
   super_admin: "Platform Owner",
+  driver:      "Driver · Route 1 (Bus 1)",
 }
 
 export const ROLE_EMAILS: Record<Role, string> = {
@@ -28,6 +30,7 @@ export const ROLE_EMAILS: Record<Role, string> = {
   teacher:     "priya@hcea.edu",
   parent:      "parent@hcea.edu",
   super_admin: "superadmin@proxymanager.app",
+  driver:      "driver@hcea.edu",
 }
 
 export const ROLE_INITIALS: Record<Role, string> = {
@@ -36,6 +39,7 @@ export const ROLE_INITIALS: Record<Role, string> = {
   teacher:     "PS",
   parent:      "PD",
   super_admin: "SA",
+  driver:      "JD",
 }
 
 export const ROLE_PHONE: Record<Role, string> = {
@@ -44,6 +48,7 @@ export const ROLE_PHONE: Record<Role, string> = {
   teacher:     "+91 87654 32109",
   parent:      "+91 76543 21098",
   super_admin: "+91 99999 00000",
+  driver:      "+91 98640 00001",
 }
 
 export const ROLE_DEPARTMENT: Record<Role, string> = {
@@ -52,6 +57,7 @@ export const ROLE_DEPARTMENT: Record<Role, string> = {
   teacher:     "Mathematics & Science",
   parent:      "Parent / Guardian",
   super_admin: "Platform Operations",
+  driver:      "Transport",
 }
 
 export const ROLE_JOINED: Record<Role, string> = {
@@ -60,6 +66,7 @@ export const ROLE_JOINED: Record<Role, string> = {
   teacher:     "June 2023",
   parent:      "March 2025",
   super_admin: "January 2024",
+  driver:      "May 2026",
 }
 
 /** Tailwind bg class for avatar pill */
@@ -69,6 +76,7 @@ export const ROLE_AVATAR_COLOR: Record<Role, string> = {
   teacher:     "bg-warning",
   parent:      "bg-[var(--ef-purple)]",
   super_admin: "bg-destructive",
+  driver:      "bg-[var(--ef-cyan)]",
 }
 
 // ─── Context ───────────────────────────────────────────────────────────────────

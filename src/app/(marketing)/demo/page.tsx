@@ -85,7 +85,7 @@ export default function DemoPage() {
           {/* Form */}
           <div>
             {submitted ? (
-              <Card className="border-2 border-primary shadow-lg">
+              <Card className="border-2 border-primary">
                 <CardContent className="p-10 text-center">
                   <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
                     <CheckCircle className="size-8 text-primary" />
@@ -105,7 +105,7 @@ export default function DemoPage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="shadow-sm">
+              <Card>
                 <CardHeader>
                   <CardTitle className="text-xl">Book Your Demo</CardTitle>
                   <p className="text-sm text-muted-foreground">Fill in your details and we'll confirm your slot within 24 hours.</p>

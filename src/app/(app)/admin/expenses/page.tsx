@@ -9,7 +9,6 @@ import {
 } from "lucide-react"
 import { PageHeader } from "@/components/shared/page-header"
 import { KpiCard } from "@/components/shared/kpi-card"
-import { MiniSparkline } from "@/components/shared/mini-sparkline"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -153,36 +152,40 @@ export default function ExpensePage() {
       />
 
       {/* KPI Strip */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="This Month"
-          value="₹42,000"
-          subtitle="+₹3,500 vs May"
+          value={`₹${monthlyData[monthlyData.length - 1].amt.toLocaleString("en-IN")}`}
+          subtitle={`+₹${(monthlyData[monthlyData.length - 1].amt - monthlyData[monthlyData.length - 2].amt).toLocaleString("en-IN")} vs ${monthlyData[monthlyData.length - 2].month}`}
           icon={<Wallet className="size-5" />}
+          tone="brand"
+          trend={{ value: Math.round(((monthlyData[monthlyData.length - 1].amt - monthlyData[monthlyData.length - 2].amt) / Math.max(monthlyData[monthlyData.length - 2].amt, 1)) * 100), label: "vs last month" }}
           sparkline={{ variant: "bar", data: monthlyData.map(m => m.amt) }}
         />
         <KpiCard
           title="vs Last Month"
-          value="+9.1%"
-          subtitle="₹38,500 in May"
+          value={`${monthlyData[monthlyData.length - 1].amt >= monthlyData[monthlyData.length - 2].amt ? "+" : ""}${Math.round(((monthlyData[monthlyData.length - 1].amt - monthlyData[monthlyData.length - 2].amt) / Math.max(monthlyData[monthlyData.length - 2].amt, 1)) * 100)}%`}
+          subtitle={`₹${monthlyData[monthlyData.length - 2].amt.toLocaleString("en-IN")} in ${monthlyData[monthlyData.length - 2].month}`}
           icon={<TrendingUp className="size-5" />}
-          iconClassName="bg-ef-amber-light text-ef-amber"
-          sparkline={{ variant: "line", data: monthlyData.map(m => m.amt), color: "var(--ef-amber)" }}
+          tone="amber"
+          trend={{ value: Math.round(((monthlyData[monthlyData.length - 1].amt - monthlyData[monthlyData.length - 2].amt) / Math.max(monthlyData[monthlyData.length - 2].amt, 1)) * 100), label: "month-over-month" }}
+          sparkline={{ variant: "line", data: monthlyData.map(m => m.amt) }}
         />
         <KpiCard
           title="Pending Approval"
-          value="₹9,500"
-          subtitle="1 item needs review"
+          value={`₹${expenses.filter(e => e.status === "pending").reduce((s, e) => s + e.amount, 0).toLocaleString("en-IN")}`}
+          subtitle={`${expenses.filter(e => e.status === "pending").length} item${expenses.filter(e => e.status === "pending").length !== 1 ? "s" : ""} need${expenses.filter(e => e.status === "pending").length === 1 ? "s" : ""} review`}
           icon={<Clock className="size-5" />}
-          iconClassName="bg-ef-red-light text-ef-red"
+          tone="red"
         />
         <KpiCard
           title="YTD Expenses"
-          value="₹2.17L"
-          subtitle="Jan–Jun 2026"
+          value={`₹${(monthlyData.reduce((s, m) => s + m.amt, 0) / 100000).toFixed(2)}L`}
+          subtitle={`${monthlyData[0].month}–${monthlyData[monthlyData.length - 1].month} ${new Date().getFullYear()}`}
           icon={<Check className="size-5" />}
-          iconClassName="bg-ef-green-light text-ef-green"
-          sparkline={{ variant: "line", data: monthlyData.map(m => m.amt), color: "var(--ef-green)" }}
+          tone="green"
+          trend={{ value: Math.round(((monthlyData[monthlyData.length - 1].amt - monthlyData[0].amt) / Math.max(monthlyData[0].amt, 1)) * 100), label: "Jan vs now" }}
+          sparkline={{ variant: "line", data: monthlyData.map(m => m.amt) }}
         />
       </div>
 
@@ -218,7 +221,7 @@ export default function ExpensePage() {
               <PieChart className="size-4 text-ef-purple" /> Expense by Category
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-2.5">
+          <CardContent className="flex flex-col gap-3">
             {categoryBreakdown.map(c => (
               <div key={c.cat} className="flex items-center gap-3">
                 <div className="size-3 rounded-full shrink-0" style={{ background: c.color }} />
@@ -240,6 +243,7 @@ export default function ExpensePage() {
           <span className="text-xs text-muted-foreground">{expenses.length} entries</span>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table className="text-sm">
             <caption className="sr-only">Expense ledger entries</caption>
             <TableHeader>
@@ -271,6 +275,7 @@ export default function ExpensePage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

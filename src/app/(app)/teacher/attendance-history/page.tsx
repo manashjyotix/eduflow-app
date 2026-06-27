@@ -2,44 +2,10 @@
 import { useState } from "react"
 import {
   BookOpen, CheckCircle2, XCircle, Clock, TrendingUp,
-  Calendar, Filter, ChevronDown,
+  Calendar, Filter, PieChart, ClipboardList,
 } from "lucide-react"
-import dynamic from "next/dynamic"
-
-// ── Dynamic recharts imports (SSR-safe, code-split) ───────────────────────────
-const ResponsiveContainer = dynamic(
-  () => import("recharts").then((m) => ({ default: m.ResponsiveContainer })),
-  { ssr: false }
-)
-const BarChart = dynamic(
-  () => import("recharts").then((m) => ({ default: m.BarChart })),
-  { ssr: false }
-)
-const Bar = dynamic(
-  () => import("recharts").then((m) => ({ default: m.Bar })),
-  { ssr: false }
-)
-const XAxis = dynamic(
-  () => import("recharts").then((m) => ({ default: m.XAxis })),
-  { ssr: false }
-)
-const YAxis = dynamic(
-  () => import("recharts").then((m) => ({ default: m.YAxis })),
-  { ssr: false }
-)
-const Tooltip = dynamic(
-  () => import("recharts").then((m) => ({ default: m.Tooltip })),
-  { ssr: false }
-)
-const CartesianGrid = dynamic(
-  () => import("recharts").then((m) => ({ default: m.CartesianGrid })),
-  { ssr: false }
-)
-const ReferenceLine = dynamic(
-  () => import("recharts").then((m) => ({ default: m.ReferenceLine })),
-  { ssr: false }
-)
 import { PageHeader } from "@/components/shared/page-header"
+import { EduBarChart } from "@/components/shared/edu-bar-chart"
 import { KpiCard } from "@/components/shared/kpi-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -88,19 +54,7 @@ const STATUS_CONFIG: Record<AttStatus, { variant: "success" | "destructive" | "w
   on_leave: { variant: "secondary",   label: "On Leave", icon: Calendar },
 }
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name?: string; color?: string }[]; label?: string }) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-lg border bg-card px-3 py-2 shadow-md text-xs">
-      <p className="font-semibold mb-1">{label}</p>
-      <div className="flex items-center gap-1.5">
-        <span className="size-2 rounded-sm bg-primary" />
-        <span className="text-muted-foreground">Attendance:</span>
-        <span className="font-bold">{payload[0]?.value}%</span>
-      </div>
-    </div>
-  )
-}
+
 
 export default function AttendanceHistoryPage() {
   const [monthFilter, setMonthFilter] = useState("all")
@@ -120,6 +74,12 @@ export default function AttendanceHistoryPage() {
   const onLeaveDays  = ATT_HISTORY.filter(r => r.status === "on_leave").length
   const attendancePct = Math.round((presentDays / ATT_HISTORY.length) * 100)
 
+  // Attendance trend: Jun pct minus May pct (signed %)
+  const attTrend = Math.round(MONTHLY_ATT[5].pct - MONTHLY_ATT[4].pct)
+
+  // Approximate monthly present days from percentage (assuming ~22 working days/month)
+  const monthlyPresentDays = MONTHLY_ATT.map(m => Math.round(m.pct * 22 / 100))
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8">
       <PageHeader
@@ -129,68 +89,75 @@ export default function AttendanceHistoryPage() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Present Days"
           value={presentDays}
+          subtitle={`of ${ATT_HISTORY.length} working days`}
           icon={<CheckCircle2 className="size-5" />}
           iconClassName="bg-success/20 text-success-foreground"
-          sparkline={{ variant: "bar", data: [20,19,22,18,21,presentDays], color: "var(--ef-green)" }}
+          tone="green"
+          sparkline={{ variant: "bar", data: monthlyPresentDays, color: "var(--ef-green)" }}
         />
         <KpiCard
           title="Absent Days"
           value={absentDays}
+          subtitle={`${absentDays} day${absentDays !== 1 ? "s" : ""} missed`}
           icon={<XCircle className="size-5" />}
           iconClassName="bg-destructive/10 text-destructive"
+          tone="red"
           sparkline={{ variant: "bar", data: [1,2,0,3,1,absentDays], color: "var(--ef-red)" }}
         />
         <KpiCard
           title="Late Arrivals"
           value={lateDays}
+          subtitle={`${lateDays} late arrival${lateDays !== 1 ? "s" : ""} this period`}
           icon={<Clock className="size-5" />}
           iconClassName="bg-warning/20 text-warning-foreground"
+          tone="amber"
           sparkline={{ variant: "bar", data: [0,1,0,1,1,lateDays], color: "var(--ef-amber)" }}
         />
         <KpiCard
           title="Attendance %"
           value={`${attendancePct}%`}
+          subtitle={`Target: 85% · ${attendancePct >= 85 ? "On track" : "Below target"}`}
           icon={<TrendingUp className="size-5" />}
-          trend={{ value: 2, label: "vs last month" }}
+          tone={attendancePct >= 90 ? "green" : attendancePct >= 85 ? "brand" : "amber"}
+          trend={{ value: attTrend, label: "vs last month" }}
           sparkline={{ variant: "line", data: MONTHLY_ATT.map(m => m.pct) }}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly chart */}
-        <Card>
-          <CardHeader className="pb-3">
+        <Card className="flex flex-col">
+          <CardHeader className="flex-row items-center justify-between pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <TrendingUp className="size-4 text-primary" /> Monthly Attendance — 2026
             </CardTitle>
           </CardHeader>
           <Separator />
-          <CardContent className="p-4">
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={MONTHLY_ATT} margin={{ top: 8, right: 8, left: -16, bottom: 0 }} barCategoryGap="30%">
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-                <YAxis domain={[80, 100]} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={v => `${v}%`} width={34} />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--muted)", opacity: 0.4 }} />
-                <ReferenceLine y={85} stroke="var(--ef-amber)" strokeDasharray="4 2" strokeWidth={1.5} label={{ value: "Target 85%", position: "right", fontSize: 9, fill: "var(--muted-foreground)" }} />
-                <Bar dataKey="pct" name="Attendance" radius={[4,4,0,0]}>
-                  {MONTHLY_ATT.map((m, i) => (
-                    <rect key={i} fill={m.pct >= 90 ? "var(--ef-green)" : m.pct >= 85 ? "var(--ef-brand)" : "var(--ef-amber)"} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <CardContent className="p-4 flex-1 flex flex-col">
+            <div className="flex-1 min-h-[200px]">
+              <EduBarChart
+                data={MONTHLY_ATT}
+                series={[{ dataKey: "pct", name: "Attendance", color: "var(--ef-brand)" }]}
+                xKey="month"
+                fluid
+                showLabels
+                showYAxis={false}
+                tooltipFormatter={(v) => `${v}%`}
+              />
+            </div>
           </CardContent>
         </Card>
 
         {/* Breakdown donut */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">Attendance Breakdown</CardTitle>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <PieChart className="size-4 text-primary" /> Attendance Breakdown
+            </CardTitle>
           </CardHeader>
           <Separator />
           <CardContent className="p-4">
@@ -222,7 +189,9 @@ export default function AttendanceHistoryPage() {
       {/* Filters + Records */}
       <Card>
         <CardHeader className="flex-row items-center justify-between pb-3 gap-3 flex-wrap">
-          <CardTitle className="text-base font-semibold">Attendance Log</CardTitle>
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <ClipboardList className="size-4 text-primary" /> Attendance Log
+            </CardTitle>
           <div className="flex items-center gap-2">
             <Select value={monthFilter} onValueChange={setMonthFilter}>
               <SelectTrigger className="h-8 w-32 text-xs">

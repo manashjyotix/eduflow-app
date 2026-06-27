@@ -223,7 +223,7 @@ export default function OnboardingWizardPage() {
   if (done) {
     return (
       <div className="min-h-[calc(100vh-57px)] flex items-center justify-center px-4 py-12 fade-in">
-        <Card className="max-w-md w-full border-2 border-ef-green shadow-xl">
+        <Card className="max-w-md w-full border-2 border-ef-green">
           <CardContent className="p-10 text-center">
             <div className="size-20 rounded-full bg-ef-green-light flex items-center justify-center mx-auto mb-5">
               <CheckCircle className="size-10 text-ef-green" />

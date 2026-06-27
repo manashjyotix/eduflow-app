@@ -63,6 +63,14 @@ export default function ProxyBoardPage() {
   const totalGaps = approvedAbsences.reduce((s, a) => s + a.periods.length, 0)
   const assigned  = proxies.filter(p => p.status === "accepted" || p.status === "assigned").length
   const declined  = proxies.filter(p => p.status === "declined").length
+  const openGaps  = totalGaps - assigned
+  const coveragePct = totalGaps > 0 ? coveragePercent(assigned, totalGaps) : 100
+
+  // 7-day rolling history for sparklines (last 6 prev days + today)
+  const WEEKLY_GAPS     = [3, 2, 4, 3, 2, openGaps]
+  const WEEKLY_ASSIGNED = [2, 3, 2, 4, 3, assigned]
+  const WEEKLY_DECLINED = [0, 1, 0, 0, 1, declined]
+  const WEEKLY_COVERAGE = [55, 60, 58, 65, 70, coveragePct]
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -243,34 +251,38 @@ export default function ProxyBoardPage() {
       )}
 
       {/* ── KPI row ── */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Open Gaps"
-          value={totalGaps - assigned}
+          value={openGaps}
+          subtitle={openGaps === 0 ? "All periods covered" : `${approvedAbsences.length} teacher${approvedAbsences.length !== 1 ? "s" : ""} absent`}
           icon={<AlertTriangle className="size-5" />}
           iconClassName="bg-destructive/10 text-destructive"
-          sparkline={{ variant: "bar", data: [3, 2, 4, 3, 2, 3, totalGaps - assigned], color: "var(--ef-red)" }}
+          sparkline={{ variant: "bar", data: WEEKLY_GAPS, color: "var(--ef-red)" }}
         />
         <KpiCard
           title="Assigned"
           value={assigned}
+          subtitle={`${totalGaps > 0 ? Math.round((assigned / totalGaps) * 100) : 100}% of ${totalGaps} gap${totalGaps !== 1 ? "s" : ""} covered`}
           icon={<CheckCircle className="size-5" />}
           iconClassName="bg-success/20 text-success-foreground"
-          sparkline={{ variant: "bar", data: [2, 3, 2, 4, 3, 4, assigned], color: "var(--ef-green)" }}
+          sparkline={{ variant: "bar", data: WEEKLY_ASSIGNED, color: "var(--ef-green)" }}
         />
         <KpiCard
           title="Declined"
           value={declined}
+          subtitle={declined === 0 ? "No declined duties" : `${declined} teacher${declined !== 1 ? "s" : ""} declined`}
           icon={<UserX className="size-5" />}
           iconClassName="bg-warning/20 text-warning-foreground"
-          sparkline={{ variant: "bar", data: [0, 1, 0, 0, 1, 0, declined], color: "var(--ef-amber)" }}
+          sparkline={{ variant: "bar", data: WEEKLY_DECLINED, color: "var(--ef-amber)" }}
         />
         <KpiCard
           title="Coverage"
-          value={totalGaps > 0 ? `${coveragePercent(assigned, totalGaps)}%` : "100%"}
+          value={`${coveragePct}%`}
+          subtitle={coveragePct >= 100 ? "Full coverage achieved" : `${openGaps} period${openGaps !== 1 ? "s" : ""} still open`}
           icon={<PercentSquare className="size-5" />}
-          trend={{ value: assigned / Math.max(totalGaps, 1) >= 0.75 ? 5 : -5 }}
-          sparkline={{ variant: "line", data: [55, 60, 58, 65, 70, 57, totalGaps > 0 ? coveragePercent(assigned, totalGaps) : 100] }}
+          trend={{ value: coveragePct >= 75 ? Math.round(coveragePct - 70) : Math.round(coveragePct - 70) }}
+          sparkline={{ variant: "line", data: WEEKLY_COVERAGE }}
         />
       </div>
 

@@ -233,7 +233,7 @@ export default function FeaturesPage() {
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {STATS.map((s) => (
             <div key={s.label}>
-              <div className="text-3xl font-bold text-primary">{s.value}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-primary">{s.value}</div>
               <div className="text-sm text-muted-foreground mt-1">{s.label}</div>
             </div>
           ))}
@@ -243,14 +243,14 @@ export default function FeaturesPage() {
       {/* Role-based feature tabs */}
       <section className="max-w-6xl mx-auto px-4 md:px-6 py-16">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold mb-3">Built for every role</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">Built for every role</h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
             Every user sees a tailored experience. Admins get control, teachers get clarity, parents get peace of mind.
           </p>
         </div>
 
         <Tabs defaultValue="admin" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-10 h-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-10 h-auto">
             {Object.entries(ROLE_FEATURES).map(([key, role]) => (
               <TabsTrigger key={key} value={key} className="py-2.5 text-sm font-medium">
                 {role.label}
@@ -262,7 +262,7 @@ export default function FeaturesPage() {
             <TabsContent key={key} value={key}>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {role.features.map((feature) => (
-                  <Card key={feature.title} className={`border ${role.borderColor} hover:shadow-md transition-shadow`}>
+                  <Card key={feature.title} className={`border ${role.borderColor}`}>
                     <CardContent className="p-6">
                       <div className={`size-11 rounded-xl ${role.bgColor} flex items-center justify-center mb-4`}>
                         <feature.icon className={`size-5 ${role.color}`} />
@@ -286,7 +286,7 @@ export default function FeaturesPage() {
       {/* Feature comparison table */}
       <section className="max-w-6xl mx-auto px-4 md:px-6 py-16">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold mb-3">Why schools choose EduFlow</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">Why schools choose EduFlow</h2>
           <p className="text-muted-foreground">A complete platform vs. fragmented tools</p>
         </div>
         <div className="overflow-x-auto">
@@ -327,7 +327,7 @@ export default function FeaturesPage() {
 
       {/* Testimonials */}
       <section className="max-w-6xl mx-auto px-4 md:px-6 py-16">
-        <h2 className="text-3xl font-bold text-center mb-10">Loved by educators across India</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10 leading-tight">Loved by educators across India</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { name: "Dr. Anupam Das", role: "Principal, HCEA Howly", quote: "We went from 20-minute morning scrambles to instant proxy assignment. The board is brilliant." },

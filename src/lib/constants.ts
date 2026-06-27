@@ -25,7 +25,7 @@ export const PLANS = {
 } as const
 
 // ── Roles ──
-export const ROLES = ["super_admin", "admin", "management", "teacher", "parent"] as const
+export const ROLES = ["super_admin", "admin", "management", "teacher", "parent", "driver"] as const
 export type Role = typeof ROLES[number]
 
 export const ROLE_DEFAULT_ROUTES: Record<Role, string> = {
@@ -34,4 +34,5 @@ export const ROLE_DEFAULT_ROUTES: Record<Role, string> = {
   management:  "/management/dashboard",
   teacher:     "/teacher/dashboard",
   parent:      "/parent/dashboard",
+  driver:      "/driver/dashboard",
 }

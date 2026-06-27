@@ -103,7 +103,7 @@ export default function TenantManagementPage() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard title="Total Schools" value={totals.total} subtitle="All tenants" icon={<Building2 className="size-5" />} sparkline={{ variant: "bar", data: [4, 5, 6, 6, 7, 8] }} />
         <KpiCard title="Active" value={totals.active} subtitle="Paying schools" icon={<CheckCircle2 className="size-5" />} iconClassName="bg-ef-green-light text-ef-green" sparkline={{ variant: "line", data: [3, 4, 4, 5, 5, 5], color: "var(--ef-green)" }} />
         <KpiCard title="On Trial" value={totals.trial} subtitle="Free trial" icon={<Clock className="size-5" />} iconClassName="bg-ef-amber-light text-ef-amber" sparkline={{ variant: "bar", data: [1, 2, 3, 2, 3, 2], color: "var(--ef-amber)" }} />
@@ -153,6 +153,7 @@ export default function TenantManagementPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table className="text-sm">
             <caption className="sr-only">School tenants and their plan, status, and students</caption>
             <TableHeader>
@@ -210,6 +211,7 @@ export default function TenantManagementPage() {
               })}
             </TableBody>
           </Table>
+          </div>
           <div className="flex items-center justify-between px-4 py-3 border-t border-border">
             <span className="text-xs text-muted-foreground">Showing {filtered.length} of {TENANTS.length} schools</span>
             <div className="flex gap-2">
