@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Calendar } from "@/components/ui/calendar"
+import { ReadOnlySchedule } from "@/components/domain/exam/ReadOnlySchedule"
 import { EXAM_SCHEDULE } from "@/data/mock-academics"
 import { SCHOOL_SESSION, HOLIDAYS, WEEKLY_OFF_DAYS } from "@/data/school-session"
 
@@ -201,6 +202,9 @@ export default function ExamSchedulePage() {
           </Card>
         </div>
       </div>
+
+      {/* Published school-wide exam routine (read-only) from the routine builder */}
+      <ReadOnlySchedule />
     </div>
   )
 }
